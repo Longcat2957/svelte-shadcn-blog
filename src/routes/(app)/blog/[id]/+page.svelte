@@ -5,30 +5,26 @@
 
    let { data }: { data: PageData } = $props();
 
-   // 임시 테스트용 댓글 데이터 (서버 연동 전)
-   const mockComments = [
-       {
-           id: 1,
-           author_name: '테스터',
-           content: '정말 유익한 글이네요! 많은 도움이 되었습니다.',
-           created_at: new Date('2024-03-20T10:00:00'),
-           parent_id: null
-       },
-       {
-           id: 2,
-           author_name: 'SvelteFan',
-           content: 'Svelte 5의 Runes 문법이 정말 깔끔하군요. 관련해서 더 많은 글 부탁드립니다.',
-           created_at: new Date('2024-03-21T14:30:00'),
-           parent_id: null
-       },
-       {
-           id: 3,
-           author_name: '작성자',
-           content: '감사합니다! 조만간 다음 시리즈 연재 예정입니다.',
-           created_at: new Date('2024-03-21T16:00:00'),
-           parent_id: 2
-       }
-   ];
+   type Comment = {
+       id: number;
+       author_name: string;
+       content: string;
+       created_at: string;
+       parent_id: number | null;
+   };
+
+   let comments = $state<Comment[]>([]);
+
+   async function loadComments() {
+       const res = await fetch(`/api/posts/${data.post.id}/comments`);
+       if (!res.ok) return;
+       const payload = (await res.json()) as { items: Comment[] };
+       comments = payload.items;
+   }
+
+   $effect(() => {
+       loadComments();
+   });
 </script>
 
 <article class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -49,5 +45,11 @@
        {@html data.post.content}
    </div>
 
-   <CommentSection comments={mockComments} />
+   <CommentSection
+       postId={data.post.id}
+       comments={comments.map((c) => ({
+           ...c,
+           created_at: new Date(c.created_at)
+       }))}
+   />
 </article>

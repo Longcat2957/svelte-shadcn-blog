@@ -5,7 +5,6 @@
 
 <script lang="ts">
     import * as TreeView from '$lib/components/ui/tree-view';
-    import { sitemap, type SitemapItem } from '$lib/mock/sitemap';
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
     import FileIcon from '@lucide/svelte/icons/file';
@@ -15,29 +14,31 @@
     import { Button } from '$lib/components/ui/button';
 
     const currentPage = page;
+
+    interface CategoryNode {
+        id: number;
+        name: string;
+        children: CategoryNode[];
+    }
+
+    let categories = $derived($page.data.categories as CategoryNode[] ?? []);
 </script>
 
-{#snippet renderTreeView(items: SitemapItem[])}
+{#snippet renderTreeView(items: CategoryNode[])}
     {#each items as item}
-        {#if item.type === 'folder'}
-            <TreeView.Folder name={item.name} open={item.open} class="w-full">
-                {#if item.children}
-                    {@render renderTreeView(item.children)}
-                {/if}
+        {#if item.children && item.children.length > 0}
+            <TreeView.Folder name={item.name} open={true} class="w-full">
+                {@render renderTreeView(item.children)}
             </TreeView.Folder>
         {:else}
             {#snippet iconSnippet({ name }: { name: string })}
-                {#if item.icon}
-                    <item.icon class="size-4" />
-                {:else}
-                    <FileIcon class="size-4" />
-                {/if}
+                <FileIcon class="size-4" />
             {/snippet}
             <TreeView.File 
                 name={item.name} 
                 icon={iconSnippet} 
-                onclick={() => item.href && goto(item.href)} 
-                class={$currentPage.url.pathname === item.href ? 'bg-accent text-accent-foreground' : ''}
+                onclick={() => goto(`/?category=${item.id}`)} 
+                class={$currentPage.url.searchParams.get('category') === String(item.id) ? 'bg-accent text-accent-foreground' : ''}
             />
         {/if}
     {/each}
@@ -64,7 +65,9 @@
         <aside class="w-64 border-r border-border/50 h-[calc(100vh-3.5rem)] overflow-y-auto flex flex-col bg-background/50 backdrop-blur-sm sticky top-14 shrink-0 hidden md:flex">
             <div class="flex-1 py-6 overflow-y-auto px-4 space-y-4">
                 <TreeView.Root class="w-full">
-                    {@render renderTreeView(sitemap)}
+                    {#if categories.length > 0}
+                        {@render renderTreeView(categories)}
+                    {/if}
                 </TreeView.Root>
             </div>
 

@@ -1,17 +1,77 @@
 <script lang="ts">
-    import { posts } from '$lib/mock/posts';
+    import { page } from '$app/stores';
+    import { untrack } from 'svelte';
     import { Badge } from '$lib/components/ui/badge';
-    import SearchBar from '$lib/components/layout/search-bar.svelte';
-    import * as Pagination from "$lib/components/ui/pagination";
 
-    const allTags = [...new Set(posts.flatMap(p => p.tags))];
+    type PostSummary = {
+        id: number;
+        title: string;
+        description: string | null;
+        tags: string[];
+        createdAt: string;
+        updatedAt: string;
+        views: number;
+        categoryId: number;
+    };
+
+    let posts = $state<PostSummary[]>([]);
+    let tags = $state<string[]>([]);
     let selectedTag = $state<string | null>(null);
+    let selectedCategory = $derived($page.url.searchParams.get('category'));
+    let nextCursor = $state<number | null>(null);
+    let loading = $state(false);
 
-    const filteredPosts = $derived(
-        selectedTag 
-            ? posts.filter(p => p.tags.includes(selectedTag!))
-            : posts
-    );
+    const query = $derived($page.url.searchParams.get('q') ?? '');
+
+    async function loadTags() {
+        const res = await fetch('/api/tags');
+        if (!res.ok) return;
+        const data = (await res.json()) as { items: string[] };
+        tags = data.items;
+    }
+
+    async function loadPosts(reset: boolean) {
+        if (loading) return;
+        loading = true;
+
+        try {
+            const url = new URL('/api/posts', window.location.origin);
+            url.searchParams.set('limit', '20');
+            const cursor = reset ? null : nextCursor;
+            if (cursor) url.searchParams.set('cursor', String(cursor));
+            if (selectedTag) url.searchParams.set('tag', selectedTag);
+            if (selectedCategory) url.searchParams.set('categoryId', selectedCategory);
+            if (query) url.searchParams.set('q', query);
+
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const data = (await res.json()) as { items: PostSummary[]; nextCursor: number | null };
+
+            posts = reset ? data.items : [...posts, ...data.items];
+            nextCursor = data.nextCursor;
+        } finally {
+            loading = false;
+        }
+    }
+
+    $effect(() => {
+        loadTags();
+    });
+
+    $effect(() => {
+        // 태그 또는 카테고리 또는 쿼리 변경 시 재조회
+        const _q = query;
+        const _t = selectedTag;
+        const _c = selectedCategory;
+
+        untrack(() => {
+            posts = [];
+            nextCursor = null;
+            void loadPosts(true);
+        });
+    });
+
+    const filteredPosts = $derived(posts);
 </script>
 
 <div class="space-y-8">
@@ -29,7 +89,7 @@
             >
                 All
             </Badge>
-            {#each allTags as tag}
+            {#each tags as tag}
                 <Badge 
                     variant={selectedTag === tag ? "default" : "secondary"}
                     class="cursor-pointer"
@@ -48,7 +108,7 @@
                     {post.title}
                 </a>
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <time datetime={post.date}>{post.date}</time>
+                    <time datetime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
                     <span>•</span>
                     <div class="flex gap-1">
                          {#each post.tags as tag}
@@ -57,37 +117,23 @@
                     </div>
                 </div>
                 <p class="text-muted-foreground line-clamp-2 leading-relaxed">
-                    {post.description}
+                    {post.description ?? ''}
                 </p>
             </div>
         {/each}
     </div>
 
-    <div class="flex flex-col items-center pt-8 border-t">
-        <Pagination.Root count={100} perPage={10}>
-             {#snippet children({ pages, currentPage })}
-                <Pagination.Content>
-                    <Pagination.Item>
-                        <Pagination.PrevButton />
-                    </Pagination.Item>
-                    {#each pages as page (page.key)}
-                        {#if page.type === "page"}
-                            <Pagination.Item>
-                                <Pagination.Link {page} isActive={currentPage === page.value}>
-                                    {page.value}
-                                </Pagination.Link>
-                            </Pagination.Item>
-                        {:else}
-                            <Pagination.Item>
-                                <Pagination.Ellipsis />
-                            </Pagination.Item>
-                        {/if}
-                    {/each}
-                    <Pagination.Item>
-                        <Pagination.NextButton />
-                    </Pagination.Item>
-                </Pagination.Content>
-            {/snippet}
-        </Pagination.Root>
+    <div class="flex flex-col items-center gap-3 pt-8 border-t">
+        {#if nextCursor !== null}
+            <button
+                class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 disabled:opacity-50"
+                disabled={loading}
+                onclick={() => loadPosts(false)}
+            >
+                {loading ? 'Loading…' : 'Load more'}
+            </button>
+        {:else}
+            <p class="text-xs text-muted-foreground">더 이상 게시글이 없습니다.</p>
+        {/if}
     </div>
 </div>

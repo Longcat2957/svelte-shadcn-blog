@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Folder from '@lucide/svelte/icons/folder';
 	import FolderPlus from '@lucide/svelte/icons/folder-plus';
@@ -13,78 +12,80 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
 	interface Category {
-		id: string;
+		id: number;
 		name: string;
 		children: Category[];
 		isOpen: boolean;
 		isEditing: boolean;
 	}
 
-	let categories = $state<Category[]>([
-		{
-			id: '1',
-			name: 'Development',
-			isOpen: true,
-			isEditing: false,
-			children: [
-				{ id: '2', name: 'Svelte', isOpen: false, isEditing: false, children: [] },
-				{ id: '3', name: 'Typescript', isOpen: false, isEditing: false, children: [] }
-			]
-		},
-		{
-			id: '4',
-			name: 'Life',
-			isOpen: false,
-			isEditing: false,
-			children: [
-				{ id: '5', name: 'Review', isOpen: false, isEditing: false, children: [] }
-			]
-		}
-	]);
+	let categories = $state<Category[]>([]);
 
-	let rootInputRef: HTMLInputElement;
+	async function loadCategories() {
+		const res = await fetch('/api/admin/categories');
+		if (!res.ok) return;
+		const data = (await res.json()) as { items: { id: number; name: string; parentId: number | null; children: any[] }[] };
+		const decorate = (items: any[]): Category[] =>
+			items.map((c) => ({
+				id: c.id,
+				name: c.name,
+				children: decorate(c.children ?? []),
+				isOpen: true,
+				isEditing: false
+			}));
+		categories = decorate(data.items);
+	}
+
+	$effect(() => {
+		loadCategories();
+	});
 
 	function toggleFolder(category: Category) {
 		category.isOpen = !category.isOpen;
 	}
 
-	function addChildCategory(parent: Category) {
-		parent.isOpen = true;
-		const newChild: Category = {
-			id: Math.random().toString(36).substr(2, 9),
-			name: 'New Category',
-			isOpen: false,
-			isEditing: true, // 즉시 편집 모드
-			children: []
-		};
-		parent.children.push(newChild);
+	async function addChildCategory(parent: Category) {
+		const res = await fetch('/api/admin/categories', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ name: 'New Category', parentId: parent.id })
+		});
+		if (!res.ok) return;
+		await loadCategories();
 	}
 
-	function addRootCategory() {
-		const newCategory: Category = {
-			id: Math.random().toString(36).substr(2, 9),
-			name: 'New Root Category',
-			isOpen: false,
-			isEditing: true,
-			children: []
-		};
-		categories.push(newCategory);
+	async function addRootCategory() {
+		const res = await fetch('/api/admin/categories', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ name: 'New Root Category', parentId: null })
+		});
+		if (!res.ok) return;
+		await loadCategories();
 	}
 
-	function deleteCategory(id: string, list: Category[]) {
-		const index = list.findIndex((c) => c.id === id);
-		if (index !== -1) {
-			list.splice(index, 1);
-		} else {
-			for (const c of list) {
-				deleteCategory(id, c.children);
-			}
-		}
+	async function deleteCategory(id: number) {
+		const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+		if (!res.ok) return;
+		await loadCategories();
+	}
+
+	async function saveCategory(category: Category) {
+		const name = category.name.trim();
+		if (!name) return;
+		const res = await fetch(`/api/admin/categories/${category.id}`, {
+			method: 'PATCH',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ name })
+		});
+		if (!res.ok) return;
+		await loadCategories();
 	}
 
 	function handleKeydown(e: KeyboardEvent, category: Category) {
 		if (e.key === 'Enter') {
 			category.isEditing = false;
+			void saveCategory(category);
 		}
 	}
 </script>
@@ -188,7 +189,7 @@
 								<DropdownMenu.Content align="end">
 									<DropdownMenu.Item 
 										class="text-destructive focus:text-destructive"
-										onclick={() => deleteCategory(category.id, categories)}
+										onclick={() => deleteCategory(category.id)}
 									>
 										<Trash2 class="size-3.5 mr-2" />
 										삭제

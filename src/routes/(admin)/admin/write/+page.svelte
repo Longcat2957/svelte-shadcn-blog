@@ -2,7 +2,6 @@
     import { Input } from '$lib/components/ui/input';
     import { Textarea } from '$lib/components/ui/textarea';
     import { Button } from '$lib/components/ui/button';
-    import { sitemap, type SitemapItem } from '$lib/mock/sitemap';
     import Folder from '@lucide/svelte/icons/folder';
     import ChevronDown from '@lucide/svelte/icons/chevron-down';
     import Plus from '@lucide/svelte/icons/plus';
@@ -11,14 +10,98 @@
     import X from "@lucide/svelte/icons/x";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { Badge } from '$lib/components/ui/badge';
+	import { page } from '$app/stores';
 
     let title = $state('');
     let description = $state('');
     let content = $state('');
-    let selectedDirectory = $state('Blog/Development');
+	// 실제로는 category_id 사용
+	let categoryId = $state<number | null>(null);
     let viewMode = $state<'edit' | 'preview'>('edit');
     let tags = $state<string[]>([]);
     let tagInput = $state('');
+	let saving = $state(false);
+	let postId = $derived((() => {
+		const raw = $page.url.searchParams.get('id');
+		if (!raw) return null;
+		const n = Number(raw);
+		return Number.isFinite(n) ? n : null;
+	})());
+
+	type CategoryNode = { id: number; name: string; parentId: number | null; children: CategoryNode[] };
+	let categories = $state<CategoryNode[]>([]);
+	let categoryOptions = $derived(flattenCategories(categories));
+
+	function flattenCategories(items: CategoryNode[], path: string[] = []): { id: number; label: string }[] {
+		let out: { id: number; label: string }[] = [];
+		for (const c of items) {
+			const label = [...path, c.name].join(' / ');
+			out.push({ id: c.id, label });
+			out = [...out, ...flattenCategories(c.children ?? [], [...path, c.name])];
+		}
+		return out;
+	}
+
+	async function loadCategories() {
+		const res = await fetch('/api/admin/categories');
+		if (!res.ok) return;
+		const data = (await res.json()) as { items: CategoryNode[] };
+		categories = data.items;
+		if (categoryId === null && data.items.length > 0) {
+			categoryId = data.items[0]!.id;
+		}
+	}
+
+	async function loadPost(id: number) {
+		const res = await fetch(`/api/admin/posts/${id}`);
+		if (!res.ok) return;
+		const data = (await res.json()) as {
+			item: { title: string; description: string | null; content: string; tags: string[]; categoryId: number };
+		};
+		title = data.item.title;
+		description = data.item.description ?? '';
+		content = data.item.content;
+		tags = data.item.tags;
+		categoryId = data.item.categoryId;
+	}
+
+	async function save(publish: boolean) {
+		if (saving) return;
+		if (categoryId === null) return;
+		saving = true;
+		try {
+			const payload = {
+				title,
+				description: description || null,
+				content,
+				categoryId,
+				tags
+			};
+
+			if (postId) {
+				const res = await fetch(`/api/admin/posts/${postId}`, {
+					method: 'PATCH',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(payload)
+				});
+				if (!res.ok) return;
+				if (publish) {
+					await fetch(`/api/admin/posts/${postId}/publish`, { method: 'POST' });
+				}
+			} else {
+				const res = await fetch('/api/admin/posts', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ ...payload, published: publish })
+				});
+				if (!res.ok) return;
+				const data = (await res.json()) as { item: { id: number } };
+				window.location.href = `/admin/write?id=${data.item.id}`;
+			}
+		} finally {
+			saving = false;
+		}
+	}
 
     function addTag() {
         const trimmed = tagInput.trim();
@@ -32,22 +115,10 @@
         tags = tags.filter(t => t !== tag);
     }
 
-    // Flatten sitemap for selector
-    function getDirectories(items: SitemapItem[], path = ''): string[] {
-        let dirs: string[] = [];
-        for (const item of items) {
-            const currentPath = path ? `${path}/${item.name}` : item.name;
-            if (item.type === 'folder') {
-                dirs.push(currentPath);
-                if (item.children) {
-                    dirs = [...dirs, ...getDirectories(item.children, currentPath)];
-                }
-            }
-        }
-        return dirs;
-    }
-
-    const availableDirectories = getDirectories(sitemap);
+	$effect(() => {
+		loadCategories();
+		if (postId) loadPost(postId);
+	});
 </script>
 
 <div class="space-y-8 max-w-5xl mx-auto pb-12">
@@ -90,31 +161,32 @@
                     <Input id="description" placeholder="Short summary of the post..." bind:value={description} class="bg-card/50 backdrop-blur-sm" />
                 </div>
                 
-                <div class="space-y-2">
-                    <label for="directory" class="text-sm font-semibold text-foreground/80 ml-1">Directory / Category</label>
+				<div class="space-y-2">
+					<label for="directory" class="text-sm font-semibold text-foreground/80 ml-1">Category</label>
                     <DropdownMenu.Root>
                         <DropdownMenu.Trigger>
                              {#snippet child({ props })}
                                 <Button {...props} variant="outline" class="w-full justify-between bg-card/50 backdrop-blur-sm font-normal">
                                     <div class="flex items-center gap-2">
                                         <Folder class="size-4 text-muted-foreground" />
-                                        <span>{selectedDirectory || 'Select directory...'}</span>
+										<span>
+											{categoryOptions.find((c) => c.id === categoryId)?.label ?? 'Select category...'}
+										</span>
                                     </div>
                                     <ChevronDown class="size-4 opacity-50" />
                                 </Button>
                             {/snippet}
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content class="w-[--bits-dropdown-menu-anchor-width] max-h-64 overflow-y-auto">
-                            {#each availableDirectories as dir}
-                                <DropdownMenu.Item onclick={() => selectedDirectory = dir}>
-                                    {dir}
-                                </DropdownMenu.Item>
-                            {/each}
+							{#each categoryOptions as c}
+								<DropdownMenu.Item onclick={() => (categoryId = c.id)}>
+									{c.label}
+								</DropdownMenu.Item>
+							{/each}
                             <DropdownMenu.Separator />
-                            <DropdownMenu.Item class="text-primary font-medium">
-                                <Plus class="size-4 mr-2" />
-                                Create New Directory
-                            </DropdownMenu.Item>
+							<DropdownMenu.Item class="text-muted-foreground" disabled>
+								카테고리 생성/관리는 Categories 메뉴에서 진행하세요.
+							</DropdownMenu.Item>
                         </DropdownMenu.Content>
                     </DropdownMenu.Root>
                 </div>
@@ -158,9 +230,10 @@
             <div class="rounded-xl border bg-card/30 backdrop-blur-sm p-8 md:p-12 min-h-[700px]">
                 <div class="max-w-3xl mx-auto space-y-8">
                     <div class="space-y-4">
-                        <div class="flex items-center gap-2 text-sm text-primary font-medium">
-                            <Folder class="size-4" /> {selectedDirectory}
-                        </div>
+						<div class="flex items-center gap-2 text-sm text-primary font-medium">
+							<Folder class="size-4" />
+							{categoryOptions.find((c) => c.id === categoryId)?.label ?? ''}
+						</div>
                         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8">
                             {title || 'Untitiled Post'}
                         </h1>
@@ -197,8 +270,12 @@
                 Discard Changes
             </Button>
             <div class="flex gap-3">
-                <Button variant="secondary" class="bg-card/50">Save Draft</Button>
-                <Button class="px-8">Publish</Button>
+				<Button variant="secondary" class="bg-card/50" disabled={saving} onclick={() => save(false)}>
+					Save Draft
+				</Button>
+				<Button class="px-8" disabled={saving} onclick={() => save(true)}>
+					Publish
+				</Button>
             </div>
         </div>
     </div>

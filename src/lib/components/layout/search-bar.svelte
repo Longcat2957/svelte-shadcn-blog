@@ -2,6 +2,7 @@
     import { Input } from "$lib/components/ui/input";
     import Search from "@lucide/svelte/icons/search";
     import { cn } from "$lib/utils";
+    import { goto } from "$app/navigation";
 
     let { class: className, placeholder = "Search...", expandable = false } = $props<{ 
         class?: string;
@@ -14,8 +15,9 @@
 
     function handleSearch(e: SubmitEvent) {
         e.preventDefault();
-        // 실제 검색 로직은 여기에 구현 (현재는 mock이므로 콘솔 로그만)
-        console.log("Searching for:", searchQuery);
+        if (searchQuery.trim()) {
+            void goto(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+        }
     }
 </script>
 

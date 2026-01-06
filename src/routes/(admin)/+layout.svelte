@@ -11,7 +11,7 @@
     let { children } = $props();
     let mobileMenuOpen = $state(false);
 
-    import { adminSitemap } from '$lib/mock/sitemap';
+    import { adminSitemap } from '$lib/config/sitemap';
 
     const adminNavItems = adminSitemap;
 </script>

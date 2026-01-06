@@ -3,9 +3,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Input } from '$lib/components/ui/input';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Separator } from '$lib/components/ui/separator';
 	import * as Collapsible from '$lib/components/ui/collapsible';
-	import { enhance } from '$app/forms';
 
 	interface Comment {
 		id: number;
@@ -15,25 +13,58 @@
 		parent_id?: number | null;
 	}
 
-	let { comments = [] }: { comments: Comment[] } = $props();
+	let { comments = [], postId }: { comments: Comment[]; postId: number } = $props();
+	let items = $state<Comment[]>(comments);
 
 	// Organize comments into parent-child relationship
-	let rootComments = $derived(comments.filter((c) => !c.parent_id));
-	let getReplies = (parentId: number) => comments.filter((c) => c.parent_id === parentId);
+	let rootComments = $derived(items.filter((c) => !c.parent_id));
+	let getReplies = (parentId: number) => items.filter((c) => c.parent_id === parentId);
 
-	let newComment = $state({
-		author_name: '',
-		content: ''
+	$effect(() => {
+		items = comments;
 	});
 
 	let replyingTo = $state<number | null>(null);
+	let submitting = $state(false);
+
+	async function submitComment(form: HTMLFormElement) {
+		if (submitting) return;
+		submitting = true;
+		try {
+			const data = new FormData(form);
+			const authorName = String(data.get('author_name') ?? '').trim();
+			const content = String(data.get('content') ?? '').trim();
+			const parentIdRaw = data.get('parentId');
+			const parentId = parentIdRaw ? Number(parentIdRaw) : null;
+
+			if (!authorName || !content) return;
+
+			const res = await fetch('/api/posts/' + postId + '/comments', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ authorName, content, parentId })
+			});
+			if (!res.ok) return;
+
+			// 성공 시 리로드 (간단히)
+			const reload = await fetch('/api/posts/' + postId + '/comments');
+			if (!reload.ok) return;
+			const payload = (await reload.json()) as { items: { id: number; author_name: string; content: string; created_at: string; parent_id: number | null }[] };
+			items = payload.items.map((c) => ({ ...c, created_at: new Date(c.created_at) }));
+
+			form.reset();
+			replyingTo = null;
+		} finally {
+			submitting = false;
+		}
+	}
 </script>
 
 <Collapsible.Root class="group mt-12 border-t pt-2">
 	<Collapsible.Trigger class="flex w-full items-center justify-between py-4 hover:bg-muted/30">
 		<div class="flex items-center gap-2">
 			<span class="text-muted-foreground">💬</span>
-			<h2 class="text-base font-bold tracking-tight">댓글 ({comments.length})</h2>
+			<h2 class="text-base font-bold tracking-tight">댓글 ({items.length})</h2>
 		</div>
 		<span class="text-xs text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180">
 			▼
@@ -116,18 +147,13 @@
 						<!-- 대댓글 작성 폼 -->
 						{#if replyingTo === comment.id}
 							<div class="animate-in fade-in slide-in-from-top-2 pt-2 pl-11 duration-200">
-								<form
-									method="POST"
-									action="?/createComment"
-									use:enhance={() => {
-										return async ({ result }) => {
-											if (result.type === 'success') {
-												replyingTo = null;
-											}
-										};
-									}}
-									class="grid gap-3"
-								>
+							<form
+								class="grid gap-3"
+								onsubmit={(e) => {
+									e.preventDefault();
+									void submitComment(e.currentTarget);
+								}}
+							>
 									<input type="hidden" name="parentId" value={comment.id} />
 									<div class="flex items-center justify-between">
 										<h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -154,7 +180,9 @@
 										required
 									/>
 									<div class="flex justify-end">
-										<Button type="submit" size="sm" class="px-6 h-7 text-[11px]">답글 등록</Button>
+									<Button type="submit" size="sm" class="px-6 h-7 text-[11px]" disabled={submitting}>
+										답글 등록
+									</Button>
 									</div>
 								</form>
 							</div>
@@ -174,14 +202,11 @@
 				</div>
 
 				<form
-					method="POST"
-					action="?/createComment"
-					use:enhance={() => {
-						return async ({ formElement }) => {
-							formElement.reset();
-						};
-					}}
 					class="grid gap-3"
+					onsubmit={(e) => {
+						e.preventDefault();
+						void submitComment(e.currentTarget);
+					}}
 				>
 					<Input
 						name="author_name"
@@ -196,7 +221,9 @@
 						required
 					/>
 					<div class="flex justify-end">
-						<Button type="submit" size="sm" class="px-8">댓글 등록</Button>
+					<Button type="submit" size="sm" class="px-8" disabled={submitting}>
+						댓글 등록
+					</Button>
 					</div>
 				</form>
 			</div>
