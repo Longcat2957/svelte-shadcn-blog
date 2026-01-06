@@ -13,6 +13,7 @@
     import { Badge } from '$lib/components/ui/badge';
 
     let title = $state('');
+    let description = $state('');
     let content = $state('');
     let selectedDirectory = $state('Blog/Development');
     let viewMode = $state<'edit' | 'preview'>('edit');
@@ -82,6 +83,11 @@
                 <div class="space-y-2">
                     <label for="title" class="text-sm font-semibold text-foreground/80 ml-1">Title</label>
                     <Input id="title" placeholder="Enter a catchy title..." bind:value={title} class="bg-card/50 backdrop-blur-sm" />
+                </div>
+
+                <div class="space-y-2">
+                    <label for="description" class="text-sm font-semibold text-foreground/80 ml-1">Description</label>
+                    <Input id="description" placeholder="Short summary of the post..." bind:value={description} class="bg-card/50 backdrop-blur-sm" />
                 </div>
                 
                 <div class="space-y-2">
@@ -158,6 +164,11 @@
                         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8">
                             {title || 'Untitiled Post'}
                         </h1>
+                        {#if description}
+                            <p class="text-xl text-muted-foreground leading-relaxed">
+                                {description}
+                            </p>
+                        {/if}
                         <div class="flex flex-wrap gap-2 py-2">
                             {#each tags as tag}
                                 <Badge variant="outline">{tag}</Badge>
