@@ -52,9 +52,11 @@ import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import PenBox from '@lucide/svelte/icons/pen-box';
 import UserRoundPen from '@lucide/svelte/icons/user-round-pen';
 import Navigation from '@lucide/svelte/icons/navigation';
+import FolderTree from '@lucide/svelte/icons/folder-tree';
 
 export const adminSitemap = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { name: 'Write Post', icon: PenBox, href: '/admin/write' },
+    { name: 'Categories', icon: FolderTree, href: '/admin/categories' },
     { name: 'Edit About', icon: UserRoundPen, href: '/admin/about' }
 ];

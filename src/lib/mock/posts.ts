@@ -1,7 +1,6 @@
 export const posts = [
     {
         id: '1',
-        slug: 'hello-world',
         title: 'Hello World: My First Post',
         description: 'Just a starting point for my new blog.',
         date: '2024-01-01',
@@ -10,7 +9,6 @@ export const posts = [
     },
     {
         id: '2',
-        slug: 'why-svelte',
         title: 'Why I Chose Svelte 5',
         description: 'Exploring the new features of Svelte 5 and Runes.',
         date: '2024-01-15',
@@ -19,7 +17,6 @@ export const posts = [
     },
     {
         id: '3',
-        slug: 'designing-with-shadcn',
         title: 'Minimalist Design with Shadcn UI',
         description: 'How to keep things clean but functional.',
         date: '2024-02-10',

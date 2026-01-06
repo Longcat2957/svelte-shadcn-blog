@@ -44,7 +44,7 @@
     <div class="grid gap-8">
         {#each filteredPosts as post}
             <div class="group flex flex-col gap-2">
-                <a href="/blog/{post.slug}" class="text-xl font-semibold hover:underline decoration-primary decoration-2 underline-offset-4">
+                <a href="/blog/{post.id}" class="text-xl font-semibold hover:underline decoration-primary decoration-2 underline-offset-4">
                     {post.title}
                 </a>
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
