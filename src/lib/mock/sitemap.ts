@@ -56,6 +56,5 @@ import Navigation from '@lucide/svelte/icons/navigation';
 export const adminSitemap = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { name: 'Write Post', icon: PenBox, href: '/admin/write' },
-    { name: 'Edit About', icon: UserRoundPen, href: '/admin/about' },
-    { name: 'Navigation', icon: Navigation, href: '/admin/navigation' }
+    { name: 'Edit About', icon: UserRoundPen, href: '/admin/about' }
 ];

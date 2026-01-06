@@ -8,12 +8,28 @@
     import Plus from '@lucide/svelte/icons/plus';
     import Eye from '@lucide/svelte/icons/eye';
     import Edit3 from '@lucide/svelte/icons/edit-3';
+    import X from "@lucide/svelte/icons/x";
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+    import { Badge } from '$lib/components/ui/badge';
 
     let title = $state('');
     let content = $state('');
     let selectedDirectory = $state('Blog/Development');
     let viewMode = $state<'edit' | 'preview'>('edit');
+    let tags = $state<string[]>([]);
+    let tagInput = $state('');
+
+    function addTag() {
+        const trimmed = tagInput.trim();
+        if (trimmed && !tags.includes(trimmed)) {
+            tags = [...tags, trimmed];
+        }
+        tagInput = '';
+    }
+
+    function removeTag(tag: string) {
+        tags = tags.filter(t => t !== tag);
+    }
 
     // Flatten sitemap for selector
     function getDirectories(items: SitemapItem[], path = ''): string[] {
@@ -97,6 +113,33 @@
                     </DropdownMenu.Root>
                 </div>
             </div>
+
+            <div class="space-y-2">
+                <label for="tags" class="text-sm font-semibold text-foreground/80 ml-1">Tags</label>
+                <div class="flex flex-wrap gap-2 mb-2">
+                    {#each tags as tag}
+                        <Badge variant="secondary" class="gap-1 pr-1">
+                            {tag}
+                            <button 
+                                onclick={() => removeTag(tag)}
+                                class="hover:text-destructive transition-colors outline-none"
+                            >
+                                <X class="size-3" />
+                            </button>
+                        </Badge>
+                    {/each}
+                </div>
+                <div class="flex gap-2">
+                    <Input 
+                        id="tags" 
+                        placeholder="Add a tag..." 
+                        bind:value={tagInput} 
+                        class="bg-card/50 backdrop-blur-sm"
+                        onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    />
+                    <Button variant="outline" onclick={addTag}>Add</Button>
+                </div>
+            </div>
             
             <div class="space-y-2">
                 <label for="content" class="text-sm font-semibold text-foreground/80 ml-1">Content (Markdown)</label>
@@ -115,6 +158,11 @@
                         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8">
                             {title || 'Untitiled Post'}
                         </h1>
+                        <div class="flex flex-wrap gap-2 py-2">
+                            {#each tags as tag}
+                                <Badge variant="outline">{tag}</Badge>
+                            {/each}
+                        </div>
                         <div class="text-sm text-muted-foreground">Written on January 6, 2026</div>
                     </div>
                     

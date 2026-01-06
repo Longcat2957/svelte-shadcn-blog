@@ -9,6 +9,7 @@
     import { ThemeSelector } from "$lib/components/ui/theme-selector";
     import { page } from "$app/stores";
     import { sidebarOpen } from "$lib/components/layout/sidebar.svelte";
+    import SearchBar from "./search-bar.svelte";
 
     let { onMenuClick } = $props<{ onMenuClick?: () => void }>();
 </script>
@@ -31,6 +32,10 @@
         <nav class="hidden md:flex items-center gap-4 text-sm font-medium">
             <a href="/about" class="transition-colors hover:text-foreground/80 {$page.url.pathname === '/about' ? 'text-foreground' : 'text-foreground/60'}">About</a>
         </nav>
+    </div>
+
+    <div class="flex flex-1 items-center justify-end px-4">
+        <SearchBar class="hidden md:flex" expandable={true} />
     </div>
 
     <div class="flex items-center gap-2">
@@ -70,7 +75,7 @@
                     {:else}
                         <DropdownMenu.Item onclick={login}>
                             <User class="mr-2 h-4 w-4" />
-                            <span>Login (Mock)</span>
+                            <span>Login</span>
                         </DropdownMenu.Item>
                     {/if}
                 </DropdownMenu.Content>
