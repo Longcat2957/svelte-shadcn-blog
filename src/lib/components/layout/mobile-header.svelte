@@ -24,7 +24,7 @@
                         <TreeView.File 
                             name={child.name} 
                             icon={iconSnippet} 
-                            onclick={() => navigate(child.href)} 
+                            onclick={() => child.href && navigate(child.href)} 
                             class={$page.url.pathname === child.href ? 'bg-accent text-accent-foreground' : ''}
                         />
                     {/each}

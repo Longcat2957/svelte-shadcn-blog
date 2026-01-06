@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
-    import { authState } from '$lib/mock/auth.svelte';
     import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
     import PenBox from '@lucide/svelte/icons/pen-box';
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
@@ -17,11 +16,10 @@
     const adminNavItems = adminSitemap;
 </script>
 
-{#if authState.isLoggedIn || $page.url.pathname.startsWith('/admin/login')}
-    {#if $page.url.pathname.startsWith('/admin/login')}
-        {@render children()}
-    {:else}
-        <div class="flex flex-col min-h-screen">
+{#if $page.url.pathname.startsWith('/admin/login')}
+    {@render children()}
+{:else}
+    <div class="flex flex-col min-h-screen">
             <!-- Top Navigation Area (Synced with App) -->
             <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div class="container mx-auto max-w-6xl">
@@ -87,21 +85,4 @@
                 </div>
             </div>
         </div>
-    {/if}
-{:else}
-    <div class="min-h-screen flex items-center justify-center bg-background">
-        <div class="text-center space-y-6 max-w-sm px-4">
-            <div class="inline-flex size-16 items-center justify-center rounded-full bg-muted">
-                <Settings class="size-8 text-muted-foreground" />
-            </div>
-            <div class="space-y-2">
-                <h1 class="text-2xl font-bold tracking-tight">Access Denied</h1>
-                <p class="text-muted-foreground">You must be logged in with administrative privileges to access this area.</p>
-            </div>
-            <div class="flex flex-col gap-2">
-                <Button class="w-full" onclick={() => (window.location.href = '/admin/login')}>Go to Login</Button>
-                <Button variant="ghost" class="w-full" onclick={() => (window.location.href = '/')}>Back to Home</Button>
-            </div>
-        </div>
-    </div>
 {/if}

@@ -21,8 +21,18 @@
 
 <script lang="ts">
     import { cn } from '$lib/utils.js';
-    import type { ComponentProps } from 'svelte';
-    import { Button } from '$lib/components/ui/button/index.js';
+    import { Button, type ButtonVariant } from '$lib/components/ui/button/index.js';
+    import type { Snippet } from 'svelte';
+    import type { HTMLButtonAttributes } from 'svelte/elements';
+
+    type InputGroupButtonProps = {
+        ref?: HTMLElement | null;
+        class?: string;
+        children?: Snippet;
+        type?: HTMLButtonAttributes['type'];
+        variant?: ButtonVariant;
+        size?: InputGroupButtonSize;
+    } & Omit<HTMLButtonAttributes, 'type' | 'class'>;
 
     let {
         ref = $bindable(null),
@@ -32,9 +42,7 @@
         variant = 'ghost',
         size = 'xs',
         ...restProps
-    }: Omit<ComponentProps<typeof Button>, 'href' | 'size'> & {
-        size?: InputGroupButtonSize;
-    } = $props();
+    }: InputGroupButtonProps = $props();
 </script>
 
 <Button

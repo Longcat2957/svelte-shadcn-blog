@@ -1,17 +1,12 @@
 <script lang="ts">
     import { Input } from '$lib/components/ui/input';
     import { Button } from '$lib/components/ui/button';
-    import { goto } from '$app/navigation';
-    import { login } from '$lib/mock/auth.svelte';
+    import { enhance } from '$app/forms';
 
-    let email = $state('');
+    let { form } = $props<{ form?: { message?: string } }>();
+
+    let username = $state('');
     let password = $state('');
-
-    function handleLogin() {
-        // Mock login
-        login();
-        goto('/admin');
-    }
 </script>
 
 <div class="flex items-center justify-center min-h-[calc(100vh-4rem)]">
@@ -20,17 +15,22 @@
         <h1 class="text-2xl font-bold">Admin Login</h1>
         <p class="text-muted-foreground">Enter your credentials to access the dashboard.</p>
     </div>
-    
-    <div class="space-y-4">
+
+    <form method="POST" use:enhance class="space-y-4">
         <div class="space-y-2">
-            <label for="email" class="text-sm font-medium">Email</label>
-            <Input id="email" type="email" placeholder="admin@example.com" bind:value={email} />
+            <label for="username" class="text-sm font-medium">Username</label>
+            <Input id="username" name="username" placeholder="admin" bind:value={username} autocomplete="username" />
         </div>
         <div class="space-y-2">
             <label for="password" class="text-sm font-medium">Password</label>
-            <Input id="password" type="password" bind:value={password} />
+            <Input id="password" name="password" type="password" placeholder="Password" bind:value={password} autocomplete="current-password" />
         </div>
-        <Button class="w-full" onclick={handleLogin}>Login</Button>
-    </div>
+
+        {#if form?.message}
+            <p class="text-sm text-destructive">{form.message}</p>
+        {/if}
+
+        <Button class="w-full" type="submit">Login</Button>
+    </form>
     </div>
 </div>

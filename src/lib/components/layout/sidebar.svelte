@@ -13,6 +13,8 @@
     import ChevronRight from '@lucide/svelte/icons/chevron-right';
     import { sidebarOpen as openStore } from './sidebar.svelte';
     import { Button } from '$lib/components/ui/button';
+
+    const currentPage = page;
 </script>
 
 {#snippet renderTreeView(items: SitemapItem[])}
@@ -35,7 +37,7 @@
                 name={item.name} 
                 icon={iconSnippet} 
                 onclick={() => item.href && goto(item.href)} 
-                class={$page?.url?.pathname === item.href ? 'bg-accent text-accent-foreground' : ''}
+                class={$currentPage.url.pathname === item.href ? 'bg-accent text-accent-foreground' : ''}
             />
         {/if}
     {/each}
