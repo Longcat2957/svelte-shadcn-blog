@@ -1,13 +1,12 @@
 <script lang="ts">
 	import Markdown from 'svelte-exmarkdown';
-	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
 	import { rehypeExtractCode } from './rehype-extract-code';
 	import CodeBlock from './code-block.svelte';
 
 	type Props = { md: string; class?: string };
 	let { md, class: className }: Props = $props();
 
-	const plugins = [gfmPlugin(), { rehypePlugin: rehypeExtractCode }];
+	const plugins = [{ rehypePlugin: rehypeExtractCode }];
 </script>
 
 {#snippet customPre(props: any)}

@@ -20,6 +20,7 @@
   import typescript from "svelte-highlight/languages/typescript";
   import xml from "svelte-highlight/languages/xml";
   import yaml from "svelte-highlight/languages/yaml";
+  import { dockerfile } from "svelte-highlight/languages";
   import githubDark from "svelte-highlight/styles/github-dark";
   import type { HTMLAttributes } from 'svelte/elements';
   
@@ -60,7 +61,8 @@
     html: xml,
     svelte: xml,
     yaml,
-    yml: yaml
+    yml: yaml,
+    dockerfile: dockerfile
   };
 
   const language = languages[lang] || xml; 
@@ -71,7 +73,7 @@
 </svelte:head>
 
 {#if code}
-  <Highlight {language} {code} />
+  <Highlight {language} {code} class="not-prose rounded-md" />
 {:else}
   <pre {...rest}>{@render rest.children?.()}</pre>
 {/if}
