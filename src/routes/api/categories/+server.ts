@@ -32,4 +32,3 @@ export const GET: RequestHandler = async () => {
     const rows = await db.select().from(category);
     return json({ items: buildTree(rows) });
 };
-

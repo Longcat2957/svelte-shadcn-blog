@@ -3,6 +3,8 @@
     import { Badge } from '$lib/components/ui/badge';
     import Plus from '@lucide/svelte/icons/plus';
     import { untrack } from 'svelte';
+    import * as Alert from '$lib/components/ui/alert';
+    import { readErrorMessage } from '$lib/utils/http';
 
     type DashboardStats = {
         postsTotal: number;
@@ -27,20 +29,24 @@
     let filter = $state<'all' | 'published' | 'draft'>('all');
     let nextCursor = $state<number | null>(null);
     let loading = $state(false);
+    let errorMessage = $state<string | null>(null);
 
     const statCards = $derived(
         stats
             ? [
-                    { label: 'Total Posts', value: stats.postsTotal },
-                    { label: 'Published', value: stats.publishedTotal },
-                    { label: 'Drafts', value: stats.draftTotal }
-                ]
+                  { label: 'Total Posts', value: stats.postsTotal },
+                  { label: 'Published', value: stats.publishedTotal },
+                  { label: 'Drafts', value: stats.draftTotal }
+              ]
             : []
     );
 
     async function loadDashboard() {
         const res = await fetch('/api/admin/dashboard');
-        if (!res.ok) return;
+        if (!res.ok) {
+            errorMessage = await readErrorMessage(res);
+            return;
+        }
         const data = (await res.json()) as { stats: DashboardStats };
         stats = data.stats;
     }
@@ -51,7 +57,7 @@
         try {
             const url = new URL('/api/admin/posts', window.location.origin);
             url.searchParams.set('limit', '20');
-            
+
             if (!reset && nextCursor) {
                 url.searchParams.set('cursor', String(nextCursor));
             }
@@ -60,9 +66,12 @@
             if (filter === 'draft') url.searchParams.set('published', 'false');
 
             const res = await fetch(url);
-            if (!res.ok) return;
+            if (!res.ok) {
+                errorMessage = await readErrorMessage(res);
+                return;
+            }
             const data = (await res.json()) as { items: PostItem[]; nextCursor: number | null };
-            
+
             posts = reset ? data.items : [...posts, ...data.items];
             nextCursor = data.nextCursor;
         } finally {
@@ -90,10 +99,24 @@
         </Button>
     </div>
 
+    {#if errorMessage}
+        <Alert.Root variant="destructive" class="flex items-start justify-between gap-4">
+            <div>
+                <Alert.Title>요청이 처리되지 않았습니다</Alert.Title>
+                <Alert.Description>{errorMessage}</Alert.Description>
+            </div>
+            <Button variant="ghost" size="sm" class="shrink-0" onclick={() => (errorMessage = null)}
+                >닫기</Button
+            >
+        </Alert.Root>
+    {/if}
+
     <!-- Stats Cards -->
     <div class="grid gap-4 md:grid-cols-3">
         {#each statCards as stat}
-            <div class="rounded-xl border bg-card/50 backdrop-blur-sm text-card-foreground shadow-sm p-6 transition-all hover:bg-card">
+            <div
+                class="rounded-xl border bg-card/50 p-6 text-card-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card"
+            >
                 <div class="flex flex-col space-y-1.5">
                     <h3 class="text-sm font-medium text-muted-foreground">{stat.label}</h3>
                 </div>
@@ -108,22 +131,31 @@
     <div class="space-y-6 pt-4">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold tracking-tight">Posts</h2>
-            <div class="flex p-1 bg-muted rounded-lg border">
-                <button 
-                    class="px-3 py-1 text-sm font-medium rounded-md transition-colors {filter === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => filter = 'all'}
+            <div class="flex rounded-lg border bg-muted p-1">
+                <button
+                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
+                    'all'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'}"
+                    onclick={() => (filter = 'all')}
                 >
                     All
                 </button>
-                <button 
-                    class="px-3 py-1 text-sm font-medium rounded-md transition-colors {filter === 'published' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => filter = 'published'}
+                <button
+                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
+                    'published'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'}"
+                    onclick={() => (filter = 'published')}
                 >
                     Published
                 </button>
-                <button 
-                    class="px-3 py-1 text-sm font-medium rounded-md transition-colors {filter === 'draft' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => filter = 'draft'}
+                <button
+                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
+                    'draft'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'}"
+                    onclick={() => (filter = 'draft')}
                 >
                     Drafts
                 </button>
@@ -131,25 +163,37 @@
         </div>
 
         <!-- Post List -->
-        <div class="flex flex-col divide-y divide-border/40 bg-card/30 backdrop-blur-sm rounded-xl border">
+        <div
+            class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm"
+        >
             {#each posts as post}
-                <div class="group flex items-center justify-between py-5 px-6 hover:bg-muted/30 transition-colors first:rounded-t-xl last:rounded-b-xl">
-                    <div class="flex flex-col gap-1 min-w-0 pr-4">
+                <div
+                    class="group flex items-center justify-between px-6 py-5 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30"
+                >
+                    <div class="flex min-w-0 flex-col gap-1 pr-4">
                         <div class="flex items-center gap-3">
-                            <span class="font-bold tracking-tight text-lg truncate group-hover:text-primary transition-colors">
+                            <span
+                                class="truncate text-lg font-bold tracking-tight transition-colors group-hover:text-primary"
+                            >
                                 {post.title}
                             </span>
                             {#if !post.published}
-                                <Badge variant="secondary" class="text-[10px] h-5 px-1.5 shrink-0">Draft</Badge>
+                                <Badge variant="secondary" class="h-5 shrink-0 px-1.5 text-[10px]"
+                                    >Draft</Badge
+                                >
                             {/if}
                         </div>
-                        
+
                         <div class="flex items-center gap-3 text-xs text-muted-foreground">
                             <time class="font-mono">
-                                {new Date(post.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                                {new Date(post.createdAt).toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit'
+                                })}
                             </time>
                             {#if post.tags.length > 0}
-                                <span class="w-[1px] h-3 bg-border"></span>
+                                <span class="h-3 w-[1px] bg-border"></span>
                                 <div class="flex gap-2">
                                     {#each post.tags as tag}
                                         <span>#{tag}</span>
@@ -158,15 +202,18 @@
                             {/if}
                         </div>
                     </div>
-                    
-                    <Button variant="outline" size="sm" class="h-8 shrink-0" href={`/admin/write?id=${post.id}`}>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-8 shrink-0"
+                        href={`/admin/write?id=${post.id}`}
+                    >
                         Edit
                     </Button>
                 </div>
             {:else}
-                <div class="py-12 text-center text-muted-foreground text-sm">
-                    No posts found.
-                </div>
+                <div class="py-12 text-center text-muted-foreground text-sm">No posts found.</div>
             {/each}
         </div>
 

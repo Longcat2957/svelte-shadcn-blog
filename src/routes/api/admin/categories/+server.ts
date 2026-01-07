@@ -56,10 +56,7 @@ export const POST: RequestHandler = async (event) => {
         if (!parent) return json({ message: 'parent category not found' }, { status: 404 });
     }
 
-    const [created] = await db
-        .insert(category)
-        .values({ name, parent_id: parentId })
-        .returning();
+    const [created] = await db.insert(category).values({ name, parent_id: parentId }).returning();
 
     return json(
         {
@@ -73,4 +70,3 @@ export const POST: RequestHandler = async (event) => {
         { status: 201 }
     );
 };
-

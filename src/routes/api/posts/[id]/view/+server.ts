@@ -26,4 +26,3 @@ export const POST: RequestHandler = async (event) => {
     if (!updated) return json({ message: 'post not found' }, { status: 404 });
     return json({ views: updated.views });
 };
-

@@ -12,4 +12,3 @@ export const GET: RequestHandler = async () => {
     }
     return json({ items: [...set].sort() });
 };
-

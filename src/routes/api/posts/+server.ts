@@ -11,7 +11,10 @@ function parseOptionalInt(v: string | null): number | null {
 }
 
 export const GET: RequestHandler = async (event) => {
-    const limit = Math.min(Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1), 100);
+    const limit = Math.min(
+        Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1),
+        100
+    );
     const cursor = parseOptionalInt(event.url.searchParams.get('cursor'));
     const categoryId = parseOptionalInt(event.url.searchParams.get('categoryId'));
     const tag = (event.url.searchParams.get('tag') ?? '').trim();

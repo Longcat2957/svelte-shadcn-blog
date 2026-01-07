@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { category } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { category, post } from '$lib/server/db/schema';
+import { eq, inArray } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
 
 function parseId(id: string) {
@@ -38,11 +38,7 @@ export const PATCH: RequestHandler = async (event) => {
         next.parent_id = parentId;
     }
 
-    const [updated] = await db
-        .update(category)
-        .set(next)
-        .where(eq(category.id, id))
-        .returning();
+    const [updated] = await db.update(category).set(next).where(eq(category.id, id)).returning();
 
     if (!updated) return json({ message: 'category not found' }, { status: 404 });
 
@@ -64,8 +60,54 @@ export const DELETE: RequestHandler = async (event) => {
     const id = parseId(event.params.id);
     if (id === null) return json({ message: 'invalid id' }, { status: 400 });
 
-    const [deleted] = await db.delete(category).where(eq(category.id, id)).returning({ id: category.id });
-    if (!deleted) return json({ message: 'category not found' }, { status: 404 });
-    return new Response(null, { status: 204 });
-};
+    try {
+        // 삭제 대상(해당 카테고리 + 모든 자손 카테고리)을 구해서,
+        // 그 중 하나라도 post와 연결되어 있으면 삭제를 명시적으로 차단한다.
+        const rows = await db
+            .select({ id: category.id, parentId: category.parent_id })
+            .from(category);
+        const childrenByParent = new Map<number, number[]>();
+        for (const r of rows) {
+            if (r.parentId === null) continue;
+            const list = childrenByParent.get(r.parentId) ?? [];
+            list.push(r.id);
+            childrenByParent.set(r.parentId, list);
+        }
 
+        const toCheck: number[] = [];
+        const seen = new Set<number>();
+        const queue: number[] = [id];
+        while (queue.length > 0) {
+            const cur = queue.shift()!;
+            if (seen.has(cur)) continue;
+            seen.add(cur);
+            toCheck.push(cur);
+            const children = childrenByParent.get(cur) ?? [];
+            for (const childId of children) queue.push(childId);
+        }
+
+        const foundPost = await db.query.post.findFirst({
+            columns: { id: true },
+            where: inArray(post.category_id, toCheck)
+        });
+
+        if (foundPost) {
+            return json(
+                {
+                    code: 'CATEGORY_IN_USE',
+                    message: '포스트가 연결된 카테고리는 삭제할 수 없습니다.'
+                },
+                { status: 409 }
+            );
+        }
+
+        const [deleted] = await db
+            .delete(category)
+            .where(eq(category.id, id))
+            .returning({ id: category.id });
+        if (!deleted) return json({ message: 'category not found' }, { status: 404 });
+        return new Response(null, { status: 204 });
+    } catch {
+        return json({ message: '카테고리 삭제 중 오류가 발생했습니다.' }, { status: 500 });
+    }
+};

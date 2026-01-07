@@ -1,7 +1,6 @@
 import { scrypt, timingSafeEqual, randomBytes } from 'node:crypto';
 
 type ScryptHash = {
-
     algo: 'scrypt';
     salt: string;
     hash: string;

@@ -41,4 +41,3 @@ export const GET: RequestHandler = async (event) => {
         recentPosts
     });
 };
-

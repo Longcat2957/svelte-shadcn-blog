@@ -85,7 +85,8 @@ export const PATCH: RequestHandler = async (event) => {
     }
 
     if (body.tags !== undefined) {
-        if (!Array.isArray(body.tags)) return json({ message: 'tags must be an array' }, { status: 400 });
+        if (!Array.isArray(body.tags))
+            return json({ message: 'tags must be an array' }, { status: 400 });
         next.tags = body.tags;
     }
 
@@ -123,4 +124,3 @@ export const DELETE: RequestHandler = async (event) => {
     if (!deleted) return json({ message: 'post not found' }, { status: 404 });
     return new Response(null, { status: 204 });
 };
-

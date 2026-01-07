@@ -77,12 +77,14 @@ export const POST: RequestHandler = async (event) => {
 
     if (!authorName) return json({ message: 'authorName is required' }, { status: 400 });
     if (!content) return json({ message: 'content is required' }, { status: 400 });
-    if (isSecret && !password) return json({ message: '비밀 댓글은 비밀번호가 필요합니다.' }, { status: 400 });
+    if (isSecret && !password)
+        return json({ message: '비밀 댓글은 비밀번호가 필요합니다.' }, { status: 400 });
 
     if (parentId !== null) {
         const parent = await db.query.comment.findFirst({ where: eq(comment.id, parentId) });
         if (!parent) return json({ message: 'parent comment not found' }, { status: 404 });
-        if (parent.post_id !== postId) return json({ message: 'parentId mismatch' }, { status: 400 });
+        if (parent.post_id !== postId)
+            return json({ message: 'parentId mismatch' }, { status: 400 });
     }
 
     const [created] = await db

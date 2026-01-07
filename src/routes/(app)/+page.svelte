@@ -81,20 +81,20 @@
             <h1 class="text-3xl font-bold tracking-tight">Latest Posts</h1>
             <p class="text-muted-foreground">Thoughts on development, design, and more.</p>
         </div>
-        
+
         <div class="flex flex-wrap gap-2">
-            <Badge 
-                variant={selectedTag === null ? "default" : "secondary"}
+            <Badge
+                variant={selectedTag === null ? 'default' : 'secondary'}
                 class="cursor-pointer"
-                onclick={() => selectedTag = null}
+                onclick={() => (selectedTag = null)}
             >
                 All
             </Badge>
             {#each tags as tag}
-                <Badge 
-                    variant={selectedTag === tag ? "default" : "secondary"}
+                <Badge
+                    variant={selectedTag === tag ? 'default' : 'secondary'}
                     class="cursor-pointer"
-                    onclick={() => selectedTag = tag}
+                    onclick={() => (selectedTag = tag)}
                 >
                     {tag}
                 </Badge>
@@ -104,22 +104,31 @@
 
     <div class="flex flex-col divide-y divide-border/40">
         {#each filteredPosts as post}
-            <a href="/blog/{post.id}" class="group py-6 outline-none hover:bg-muted/30 -mx-4 px-4 rounded-lg transition-colors">
+            <a
+                href="/blog/{post.id}"
+                class="group -mx-4 rounded-lg px-4 py-6 transition-colors outline-none hover:bg-muted/30"
+            >
                 <article class="flex flex-col gap-2">
                     <div class="flex items-start justify-between gap-4">
-                        <h2 class="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                        <h2
+                            class="text-xl font-bold tracking-tight transition-colors group-hover:text-primary"
+                        >
                             {post.title}
                         </h2>
-                        <time 
-                            datetime={post.createdAt} 
-                            class="text-xs font-mono text-muted-foreground whitespace-nowrap shrink-0 mt-1.5"
+                        <time
+                            datetime={post.createdAt}
+                            class="mt-1.5 shrink-0 font-mono text-xs whitespace-nowrap text-muted-foreground"
                         >
-                            {new Date(post.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                            {new Date(post.createdAt).toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            })}
                         </time>
                     </div>
-                    
+
                     {#if post.description}
-                        <p class="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                        <p class="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                             {post.description}
                         </p>
                     {/if}
@@ -127,7 +136,7 @@
                     <div class="flex items-center gap-3 pt-1">
                         <div class="flex gap-2 text-xs text-muted-foreground">
                             {#each post.tags as tag}
-                                <span class="hover:text-foreground transition-colors">#{tag}</span>
+                                <span class="transition-colors hover:text-foreground">#{tag}</span>
                             {/each}
                         </div>
                     </div>
@@ -136,10 +145,10 @@
         {/each}
     </div>
 
-    <div class="flex flex-col items-center gap-3 pt-8 border-t">
+    <div class="flex flex-col items-center gap-3 border-t pt-8">
         {#if nextCursor !== null}
             <button
-                class="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 disabled:opacity-50"
+                class="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground disabled:opacity-50"
                 disabled={loading}
                 onclick={() => loadPosts(false)}
             >

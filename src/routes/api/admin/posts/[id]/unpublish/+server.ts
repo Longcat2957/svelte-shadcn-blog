@@ -19,7 +19,11 @@ export const POST: RequestHandler = async (event) => {
     const id = parseId(event.params.id);
     if (id === null) return json({ message: 'invalid id' }, { status: 400 });
 
-    const [updated] = await db.update(post).set({ published: false }).where(eq(post.id, id)).returning();
+    const [updated] = await db
+        .update(post)
+        .set({ published: false })
+        .where(eq(post.id, id))
+        .returning();
     if (!updated) return json({ message: 'post not found' }, { status: 404 });
 
     return json({
@@ -37,4 +41,3 @@ export const POST: RequestHandler = async (event) => {
         }
     });
 };
-

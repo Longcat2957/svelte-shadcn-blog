@@ -7,11 +7,11 @@
     import Save from '@lucide/svelte/icons/save';
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 
-    let { 
-        title: initialTitle = '', 
-        content: initialContent = '', 
+    let {
+        title: initialTitle = '',
+        content: initialContent = '',
         pageName = 'Page',
-        onSave = () => {} 
+        onSave = () => {}
     } = $props<{
         title?: string;
         content?: string;
@@ -29,7 +29,7 @@
     }
 </script>
 
-<div class="space-y-8 max-w-5xl mx-auto pb-12">
+<div class="mx-auto max-w-5xl space-y-8 pb-12">
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
             <Button variant="ghost" size="icon" href="/admin/navigation">
@@ -37,25 +37,27 @@
             </Button>
             <div class="space-y-1">
                 <h1 class="text-3xl font-bold tracking-tight">Edit {pageName}</h1>
-                <p class="text-sm text-muted-foreground">Modify the content of your {pageName} page.</p>
+                <p class="text-sm text-muted-foreground">
+                    Modify the content of your {pageName} page.
+                </p>
             </div>
         </div>
-        
+
         <div class="flex items-center gap-3">
-            <div class="flex bg-muted p-1 rounded-lg border shadow-sm mr-2">
-                <Button 
-                    variant={viewMode === 'edit' ? 'secondary' : 'ghost'} 
-                    size="sm" 
-                    class="gap-2 h-8" 
-                    onclick={() => viewMode = 'edit'}
+            <div class="mr-2 flex rounded-lg border bg-muted p-1 shadow-sm">
+                <Button
+                    variant={viewMode === 'edit' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    class="h-8 gap-2"
+                    onclick={() => (viewMode = 'edit')}
                 >
                     <Edit3 class="size-4" /> Edit
                 </Button>
-                <Button 
-                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'} 
-                    size="sm" 
-                    class="gap-2 h-8" 
-                    onclick={() => viewMode = 'preview'}
+                <Button
+                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    class="h-8 gap-2"
+                    onclick={() => (viewMode = 'preview')}
                 >
                     <Eye class="size-4" /> Preview
                 </Button>
@@ -70,34 +72,54 @@
         {#if viewMode === 'edit'}
             <div class="space-y-4">
                 <div class="space-y-2">
-                    <label for="title" class="text-sm font-semibold text-foreground/80 ml-1">Page Title</label>
-                    <Input id="title" bind:value={title} placeholder="Enter page title..." class="bg-card/50 backdrop-blur-sm text-lg font-medium h-12" />
+                    <label for="title" class="ml-1 text-sm font-semibold text-foreground/80"
+                        >Page Title</label
+                    >
+                    <Input
+                        id="title"
+                        bind:value={title}
+                        placeholder="Enter page title..."
+                        class="h-12 bg-card/50 text-lg font-medium backdrop-blur-sm"
+                    />
                 </div>
-                
+
                 <div class="space-y-2">
-                    <label for="content" class="text-sm font-semibold text-foreground/80 ml-1">Content (Markdown)</label>
-                    <div class="rounded-lg border bg-card/50 backdrop-blur-sm overflow-hidden focus-within:ring-1 focus-within:ring-ring transition-all">
-                        <Textarea id="content" bind:value={content} placeholder="Write your page content in Markdown..." class="min-h-[600px] border-0 focus-visible:ring-0 resize-none p-4 leading-relaxed" />
+                    <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
+                        >Content (Markdown)</label
+                    >
+                    <div
+                        class="overflow-hidden rounded-lg border bg-card/50 backdrop-blur-sm transition-all focus-within:ring-1 focus-within:ring-ring"
+                    >
+                        <Textarea
+                            id="content"
+                            bind:value={content}
+                            placeholder="Write your page content in Markdown..."
+                            class="min-h-[600px] resize-none border-0 p-4 leading-relaxed focus-visible:ring-0"
+                        />
                     </div>
                 </div>
             </div>
         {:else}
             <!-- Preview Mode -->
-            <div class="rounded-xl border bg-card/30 backdrop-blur-sm p-8 md:p-12 min-h-[700px]">
-                <div class="max-w-3xl mx-auto space-y-8">
+            <div class="min-h-[700px] rounded-xl border bg-card/30 p-8 backdrop-blur-sm md:p-12">
+                <div class="mx-auto max-w-3xl space-y-8">
                     <div class="space-y-4">
-                        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8">
+                        <h1
+                            class="text-4xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8 md:text-5xl"
+                        >
                             {title || 'Untitled Page'}
                         </h1>
                     </div>
-                    
-                    <div class="prose dark:prose-invert max-w-none">
+
+                    <div class="prose max-w-none dark:prose-invert">
                         {#if content}
-                            <div class="whitespace-pre-wrap leading-relaxed text-foreground/90">
+                            <div class="leading-relaxed whitespace-pre-wrap text-foreground/90">
                                 {content}
                             </div>
                         {:else}
-                            <p class="text-muted-foreground italic text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
+                            <p
+                                class="rounded-lg border-2 border-dashed bg-muted/20 py-20 text-center text-muted-foreground italic"
+                            >
                                 No content to preview. Start writing in the Edit tab!
                             </p>
                         {/if}

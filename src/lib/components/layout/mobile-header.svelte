@@ -17,7 +17,7 @@
         children: CategoryNode[];
     }
 
-    let categories = $derived($page.data.categories as CategoryNode[] ?? []);
+    let categories = $derived(($page.data.categories as CategoryNode[]) ?? []);
 </script>
 
 {#snippet renderTreeView(items: CategoryNode[])}
@@ -30,18 +30,22 @@
             {#snippet iconSnippet({ name }: { name: string })}
                 <FileIcon class="size-4" />
             {/snippet}
-            <TreeView.File 
-                name={item.name} 
-                icon={iconSnippet} 
-                onclick={() => navigate(`/?category=${item.id}`)} 
-                class={$page.url.searchParams.get('category') === String(item.id) ? 'bg-accent text-accent-foreground' : ''}
+            <TreeView.File
+                name={item.name}
+                icon={iconSnippet}
+                onclick={() => navigate(`/?category=${item.id}`)}
+                class={$page.url.searchParams.get('category') === String(item.id)
+                    ? 'bg-accent text-accent-foreground'
+                    : ''}
             />
         {/if}
     {/each}
 {/snippet}
 
 {#if open}
-    <div class="fixed inset-0 top-14 z-50 bg-background/95 backdrop-blur border-t p-4 overflow-y-auto md:hidden">
+    <div
+        class="fixed inset-0 top-14 z-50 overflow-y-auto border-t bg-background/95 p-4 backdrop-blur md:hidden"
+    >
         <TreeView.Root class="w-full text-left">
             {#if categories.length > 0}
                 {@render renderTreeView(categories)}

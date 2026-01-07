@@ -21,7 +21,7 @@
         children: CategoryNode[];
     }
 
-    let categories = $derived($page.data.categories as CategoryNode[] ?? []);
+    let categories = $derived(($page.data.categories as CategoryNode[]) ?? []);
 </script>
 
 {#snippet renderTreeView(items: CategoryNode[])}
@@ -34,24 +34,26 @@
             {#snippet iconSnippet({ name }: { name: string })}
                 <FileIcon class="size-4" />
             {/snippet}
-            <TreeView.File 
-                name={item.name} 
-                icon={iconSnippet} 
-                onclick={() => goto(`/?category=${item.id}`)} 
-                class={$currentPage.url.searchParams.get('category') === String(item.id) ? 'bg-accent text-accent-foreground' : ''}
+            <TreeView.File
+                name={item.name}
+                icon={iconSnippet}
+                onclick={() => goto(`/?category=${item.id}`)}
+                class={$currentPage.url.searchParams.get('category') === String(item.id)
+                    ? 'bg-accent text-accent-foreground'
+                    : ''}
             />
         {/if}
     {/each}
 {/snippet}
 
-<div class="relative flex flex-col h-full bg-background">
+<div class="relative flex h-full flex-col bg-background">
     <!-- Overlay Toggle Button on Border -->
-    <div class="absolute -right-3 top-6 z-40 hidden md:block">
+    <div class="absolute top-6 -right-3 z-40 hidden md:block">
         <Button
             variant="outline"
             size="icon"
-            class="h-6 w-6 rounded-full bg-background shadow-md border-border/50 hover:bg-accent transition-all"
-            onclick={() => openStore.update(v => !v)}
+            class="h-6 w-6 rounded-full border-border/50 bg-background shadow-md transition-all hover:bg-accent"
+            onclick={() => openStore.update((v) => !v)}
         >
             {#if $openStore}
                 <ChevronLeft class="size-3.5" />
@@ -62,8 +64,10 @@
     </div>
 
     {#if $openStore}
-        <aside class="w-64 border-r border-border/50 h-[calc(100vh-3.5rem)] overflow-y-auto flex flex-col bg-background/50 backdrop-blur-sm sticky top-14 shrink-0 hidden md:flex">
-            <div class="flex-1 py-6 overflow-y-auto px-4 space-y-4">
+        <aside
+            class="sticky top-14 flex hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
+        >
+            <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
                 <TreeView.Root class="w-full">
                     {#if categories.length > 0}
                         {@render renderTreeView(categories)}
@@ -71,12 +75,12 @@
                 </TreeView.Root>
             </div>
 
-            <div class="p-4 border-t flex justify-center items-center">
+            <div class="flex items-center justify-center border-t p-4">
                 <span class="text-xs text-muted-foreground">© 2024 Blog</span>
             </div>
         </aside>
     {:else}
         <!-- Minimized State Border -->
-        <div class="w-px bg-border/50 h-[calc(100vh-3.5rem)] sticky top-14 hidden md:block"></div>
+        <div class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-px bg-border/50 md:block"></div>
     {/if}
 </div>

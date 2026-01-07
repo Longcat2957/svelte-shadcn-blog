@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
-    import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-    import User from "@lucide/svelte/icons/user";
-    import LogOut from "@lucide/svelte/icons/log-out";
-    import Settings from "@lucide/svelte/icons/settings";
-    import Menu from "@lucide/svelte/icons/menu";
-    import { ThemeSelector } from "$lib/components/ui/theme-selector";
-    import { page } from "$app/stores";
-    import { sidebarOpen } from "$lib/components/layout/sidebar.svelte";
-    import SearchBar from "./search-bar.svelte";
+    import { Button } from '$lib/components/ui/button';
+    import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+    import User from '@lucide/svelte/icons/user';
+    import LogOut from '@lucide/svelte/icons/log-out';
+    import Settings from '@lucide/svelte/icons/settings';
+    import Menu from '@lucide/svelte/icons/menu';
+    import { ThemeSelector } from '$lib/components/ui/theme-selector';
+    import { page } from '$app/stores';
+    import { sidebarOpen } from '$lib/components/layout/sidebar.svelte';
+    import SearchBar from './search-bar.svelte';
     import { browser } from '$app/environment';
 
     let { onMenuClick } = $props<{ onMenuClick?: () => void }>();
@@ -35,23 +35,28 @@
     }
 </script>
 
-<div class="flex h-14 items-center justify-between w-full px-4 md:px-8">
+<div class="flex h-14 w-full items-center justify-between px-4 md:px-8">
     <div class="flex items-center gap-6">
         <div class="flex items-center gap-4">
             <Button variant="ghost" size="icon" class="md:hidden" onclick={onMenuClick}>
                 <Menu class="h-5 w-5" />
                 <span class="sr-only">Toggle menu</span>
             </Button>
-            
+
             <div class="flex items-center gap-2">
-                <a href="/" class="flex items-center space-x-2 mr-2">
-                    <span class="font-bold inline-block text-lg">My Blog</span>
+                <a href="/" class="mr-2 flex items-center space-x-2">
+                    <span class="inline-block text-lg font-bold">My Blog</span>
                 </a>
             </div>
         </div>
-        
-        <nav class="hidden md:flex items-center gap-4 text-sm font-medium">
-            <a href="/about" class="transition-colors hover:text-foreground/80 {$page.url.pathname === '/about' ? 'text-foreground' : 'text-foreground/60'}">About</a>
+
+        <nav class="hidden items-center gap-4 text-sm font-medium md:flex">
+            <a
+                href="/about"
+                class="transition-colors hover:text-foreground/80 {$page.url.pathname === '/about'
+                    ? 'text-foreground'
+                    : 'text-foreground/60'}">About</a
+            >
         </nav>
     </div>
 
@@ -74,7 +79,7 @@
                 <DropdownMenu.Content align="end" class="w-56">
                     <DropdownMenu.Label class="font-normal">
                         <div class="flex flex-col space-y-1">
-                            <p class="text-sm font-medium leading-none">
+                            <p class="text-sm leading-none font-medium">
                                 {isLoggedIn ? 'Admin User' : 'Guest'}
                             </p>
                             <p class="text-xs leading-none text-muted-foreground">

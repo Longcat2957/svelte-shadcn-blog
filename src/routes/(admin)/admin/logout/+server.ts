@@ -6,4 +6,3 @@ export const POST: RequestHandler = async ({ cookies }) => {
     cookies.delete(AUTH_COOKIE_NAME, { path: '/' });
     throw redirect(303, '/admin/login');
 };
-

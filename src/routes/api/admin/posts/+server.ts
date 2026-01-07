@@ -15,7 +15,10 @@ export const GET: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
     if (auth) return auth;
 
-    const limit = Math.min(Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1), 100);
+    const limit = Math.min(
+        Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1),
+        100
+    );
     const cursor = parseOptionalInt(event.url.searchParams.get('cursor'));
     const publishedParam = event.url.searchParams.get('published');
     const categoryId = parseOptionalInt(event.url.searchParams.get('categoryId'));
@@ -82,7 +85,8 @@ export const POST: RequestHandler = async (event) => {
 
     if (!title) return json({ message: 'title is required' }, { status: 400 });
     if (!content) return json({ message: 'content is required' }, { status: 400 });
-    if (typeof categoryId !== 'number') return json({ message: 'categoryId is required' }, { status: 400 });
+    if (typeof categoryId !== 'number')
+        return json({ message: 'categoryId is required' }, { status: 400 });
     if (!Array.isArray(tags)) return json({ message: 'tags must be an array' }, { status: 400 });
 
     const cat = await db.query.category.findFirst({ where: eq(category.id, categoryId) });

@@ -26,16 +26,10 @@ const KEY_LEN = 64;
 async function hashPassword(pw) {
     const salt = randomBytes(16).toString('base64url');
     const derivedKey = await new Promise((resolve, reject) => {
-        scrypt(
-            pw,
-            salt,
-            KEY_LEN,
-            { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P },
-            (err, buf) => {
-                if (err) return reject(err);
-                resolve(buf);
-            }
-        );
+        scrypt(pw, salt, KEY_LEN, { N: SCRYPT_N, r: SCRYPT_R, p: SCRYPT_P }, (err, buf) => {
+            if (err) return reject(err);
+            resolve(buf);
+        });
     });
 
     return `scrypt$${salt}$${derivedKey.toString('base64url')}`;

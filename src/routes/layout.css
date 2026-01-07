@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@plugin "@tailwindcss/typography";
+@plugin '@tailwindcss/typography';
 
 @import 'tw-animate-css';
 
@@ -162,7 +162,12 @@
     body {
         @apply bg-background text-foreground;
     }
-    code, pre, kbd, samp {
-        font-family: 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    code,
+    pre,
+    kbd,
+    samp {
+        font-family:
+            'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+            'Courier New', monospace !important;
     }
 }

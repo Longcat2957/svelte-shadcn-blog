@@ -8,7 +8,7 @@ config();
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL not found in environment variables');
 
 const client = postgres(process.env.DATABASE_URL, {
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: false }
 });
 const db = drizzle(client);
 
