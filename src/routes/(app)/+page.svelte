@@ -2,6 +2,7 @@
     import { page } from '$app/stores';
     import { untrack } from 'svelte';
     import { Badge } from '$lib/components/ui/badge';
+    import Calendar from '@lucide/svelte/icons/calendar';
 
     type PostSummary = {
         id: number;
@@ -101,25 +102,37 @@
         </div>
     </div>
 
-    <div class="grid gap-8">
+    <div class="flex flex-col divide-y divide-border/40">
         {#each filteredPosts as post}
-            <div class="group flex flex-col gap-2">
-                <a href="/blog/{post.id}" class="text-xl font-semibold hover:underline decoration-primary decoration-2 underline-offset-4">
-                    {post.title}
-                </a>
-                <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <time datetime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
-                    <span>•</span>
-                    <div class="flex gap-1">
-                         {#each post.tags as tag}
-                             <Badge variant="secondary" class="rounded-sm px-1 py-0 text-xs font-normal">{tag}</Badge>
-                         {/each}
+            <a href="/blog/{post.id}" class="group py-6 outline-none hover:bg-muted/30 -mx-4 px-4 rounded-lg transition-colors">
+                <article class="flex flex-col gap-2">
+                    <div class="flex items-start justify-between gap-4">
+                        <h2 class="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                            {post.title}
+                        </h2>
+                        <time 
+                            datetime={post.createdAt} 
+                            class="text-xs font-mono text-muted-foreground whitespace-nowrap shrink-0 mt-1.5"
+                        >
+                            {new Date(post.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                        </time>
                     </div>
-                </div>
-                <p class="text-muted-foreground line-clamp-2 leading-relaxed">
-                    {post.description ?? ''}
-                </p>
-            </div>
+                    
+                    {#if post.description}
+                        <p class="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                            {post.description}
+                        </p>
+                    {/if}
+
+                    <div class="flex items-center gap-3 pt-1">
+                        <div class="flex gap-2 text-xs text-muted-foreground">
+                            {#each post.tags as tag}
+                                <span class="hover:text-foreground transition-colors">#{tag}</span>
+                            {/each}
+                        </div>
+                    </div>
+                </article>
+            </a>
         {/each}
     </div>
 

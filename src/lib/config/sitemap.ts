@@ -15,6 +15,5 @@ export type SitemapItem = {
 export const adminSitemap = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { name: 'Write Post', icon: PenBox, href: '/admin/write' },
-    { name: 'Categories', icon: FolderTree, href: '/admin/categories' },
-    { name: 'Edit About', icon: UserRoundPen, href: '/admin/about' }
+    { name: 'Categories', icon: FolderTree, href: '/admin/categories' }
 ];

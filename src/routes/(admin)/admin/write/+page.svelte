@@ -2,6 +2,7 @@
     import { Input } from '$lib/components/ui/input';
     import { Textarea } from '$lib/components/ui/textarea';
     import { Button } from '$lib/components/ui/button';
+    import { Switch } from '$lib/components/ui/switch';
     import Folder from '@lucide/svelte/icons/folder';
     import ChevronDown from '@lucide/svelte/icons/chevron-down';
     import Plus from '@lucide/svelte/icons/plus';
@@ -21,6 +22,7 @@
     let viewMode = $state<'edit' | 'preview'>('edit');
     let tags = $state<string[]>([]);
     let tagInput = $state('');
+    let published = $state(false);
 	let saving = $state(false);
 	let postId = $derived((() => {
 		const raw = $page.url.searchParams.get('id');
@@ -57,16 +59,17 @@
 		const res = await fetch(`/api/admin/posts/${id}`);
 		if (!res.ok) return;
 		const data = (await res.json()) as {
-			item: { title: string; description: string | null; content: string; tags: string[]; categoryId: number };
+			item: { title: string; description: string | null; content: string; tags: string[]; categoryId: number; published: boolean };
 		};
 		title = data.item.title;
 		description = data.item.description ?? '';
 		content = data.item.content;
 		tags = data.item.tags;
 		categoryId = data.item.categoryId;
+		published = data.item.published;
 	}
 
-	async function save(publish: boolean) {
+	async function save() {
 		if (saving) return;
 		if (categoryId === null) return;
 		saving = true;
@@ -76,7 +79,8 @@
 				description: description || null,
 				content,
 				categoryId,
-				tags
+				tags,
+				published
 			};
 
 			if (postId) {
@@ -86,14 +90,11 @@
 					body: JSON.stringify(payload)
 				});
 				if (!res.ok) return;
-				if (publish) {
-					await fetch(`/api/admin/posts/${postId}/publish`, { method: 'POST' });
-				}
 			} else {
 				const res = await fetch('/api/admin/posts', {
 					method: 'POST',
 					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ ...payload, published: publish })
+					body: JSON.stringify(payload)
 				});
 				if (!res.ok) return;
 				const data = (await res.json()) as { item: { id: number } };
@@ -129,24 +130,33 @@
             <p class="text-sm text-muted-foreground">Create or edit your blog post with markdown support.</p>
         </div>
         
-        <div class="flex bg-muted p-1 rounded-lg border shadow-sm">
-            <Button 
-                variant={viewMode === 'edit' ? 'secondary' : 'ghost'} 
-                size="sm" 
-                class="gap-2 h-8" 
-                onclick={() => viewMode = 'edit'}
-            >
-                <Edit3 class="size-4" /> Edit
-            </Button>
-            <Button 
-                variant={viewMode === 'preview' ? 'secondary' : 'ghost'} 
-                size="sm" 
-                class="gap-2 h-8" 
-                onclick={() => viewMode = 'preview'}
-            >
-                <Eye class="size-4" /> Preview
-            </Button>
-        </div>
+        <div class="flex items-center gap-4">
+			<div class="flex items-center gap-2">
+				<Switch id="published" bind:checked={published} />
+				<label for="published" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+					Published
+				</label>
+			</div>
+
+			<div class="flex bg-muted p-1 rounded-lg border shadow-sm">
+				<Button 
+					variant={viewMode === 'edit' ? 'secondary' : 'ghost'} 
+					size="sm" 
+					class="gap-2 h-8" 
+					onclick={() => viewMode = 'edit'}
+				>
+					<Edit3 class="size-4" /> Edit
+				</Button>
+				<Button 
+					variant={viewMode === 'preview' ? 'secondary' : 'ghost'} 
+					size="sm" 
+					class="gap-2 h-8" 
+					onclick={() => viewMode = 'preview'}
+				>
+					<Eye class="size-4" /> Preview
+				</Button>
+			</div>
+		</div>
     </div>
 
     <div class="space-y-6">
@@ -267,11 +277,8 @@
                 Discard Changes
             </Button>
             <div class="flex gap-3">
-				<Button variant="secondary" class="bg-card/50" disabled={saving} onclick={() => save(false)}>
-					Save Draft
-				</Button>
-				<Button class="px-8" disabled={saving} onclick={() => save(true)}>
-					Publish
+				<Button class="px-8" disabled={saving} onclick={() => save()}>
+					Save
 				</Button>
             </div>
         </div>
