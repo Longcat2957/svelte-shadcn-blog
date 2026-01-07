@@ -16,6 +16,7 @@ export const user = pgTable('user', {
     id: serial('id').primaryKey(),
     username: text('username').notNull().unique(), // 로그인 ID
     password: text('password').notNull(), // 해시된 비밀번호
+    avatar_url: text('avatar_url'), // 사용자(관리자) 아바타 이미지 URL
     created_at: timestamp('created_at').defaultNow().notNull()
 });
 

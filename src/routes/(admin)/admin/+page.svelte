@@ -5,6 +5,7 @@
     import { untrack } from 'svelte';
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
+    import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
 
     type DashboardStats = {
         postsTotal: number;
@@ -131,35 +132,14 @@
     <div class="space-y-6 pt-4">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold tracking-tight">Posts</h2>
-            <div class="flex rounded-lg border bg-muted p-1">
-                <button
-                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
-                    'all'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => (filter = 'all')}
-                >
-                    All
-                </button>
-                <button
-                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
-                    'published'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => (filter = 'published')}
-                >
-                    Published
-                </button>
-                <button
-                    class="rounded-md px-3 py-1 text-sm font-medium transition-colors {filter ===
-                    'draft'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'}"
-                    onclick={() => (filter = 'draft')}
-                >
-                    Drafts
-                </button>
-            </div>
+            <SegmentedToggle
+                bind:value={filter}
+                items={[
+                    { value: 'all', label: 'All' },
+                    { value: 'published', label: 'Published' },
+                    { value: 'draft', label: 'Drafts' }
+                ]}
+            />
         </div>
 
         <!-- Post List -->
@@ -227,3 +207,4 @@
         {/if}
     </div>
 </div>
+

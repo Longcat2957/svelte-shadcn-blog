@@ -15,6 +15,7 @@
     import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
+    import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
 
     let title = $state('');
     let description = $state('');
@@ -176,24 +177,13 @@
                 </label>
             </div>
 
-            <div class="flex rounded-lg border bg-muted p-1 shadow-sm">
-                <Button
-                    variant={viewMode === 'edit' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    class="h-8 gap-2"
-                    onclick={() => (viewMode = 'edit')}
-                >
-                    <Edit3 class="size-4" /> Edit
-                </Button>
-                <Button
-                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    class="h-8 gap-2"
-                    onclick={() => (viewMode = 'preview')}
-                >
-                    <Eye class="size-4" /> Preview
-                </Button>
-            </div>
+            <SegmentedToggle
+                bind:value={viewMode}
+                items={[
+                    { value: 'edit', label: 'Edit' },
+                    { value: 'preview', label: 'Preview' }
+                ]}
+            />
         </div>
     </div>
 
@@ -375,3 +365,4 @@
         </div>
     </div>
 </div>
+

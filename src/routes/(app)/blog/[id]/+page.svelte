@@ -3,6 +3,7 @@
     import { Badge } from '$lib/components/ui/badge';
     import CommentSection from '$lib/components/blog/comment-section.svelte';
     import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
+    import * as Avatar from '$lib/components/ui/avatar';
 
     let { data }: { data: PageData } = $props();
 
@@ -37,28 +38,20 @@
         </h1>
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        ><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle
-                            cx="12"
-                            cy="7"
-                            r="4"
-                        /></svg
-                    >
-                </div>
+                <Avatar.Root class="h-10 w-10 border">
+                    {#if data.author?.avatarUrl}
+                        <Avatar.Image
+                            src={data.author.avatarUrl}
+                            alt={data.author.username}
+                            referrerpolicy="no-referrer"
+                        />
+                    {/if}
+                    <Avatar.Fallback class="bg-muted text-xs text-muted-foreground">
+                        {data.author?.username?.slice(0, 1) ?? 'A'}
+                    </Avatar.Fallback>
+                </Avatar.Root>
                 <div class="flex flex-col text-sm">
-                    <span class="font-medium text-foreground">Admin</span>
+                    <span class="font-medium text-foreground">{data.author?.username ?? 'Admin'}</span>
                     <time class="text-muted-foreground" datetime={data.post.date}
                         >{data.post.date}</time
                     >
@@ -88,3 +81,4 @@
         }))}
     />
 </article>
+
