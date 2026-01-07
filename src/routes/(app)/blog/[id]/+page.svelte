@@ -2,6 +2,7 @@
    import type { PageData } from './$types';
    import { Badge } from '$lib/components/ui/badge';
    import CommentSection from '$lib/components/blog/comment-section.svelte';
+   import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
 
    let { data }: { data: PageData } = $props();
 
@@ -41,9 +42,10 @@
        </div>
    </div>
    <hr />
-   <div class="prose prose-zinc dark:prose-invert min-h-[400px] max-w-none">
-       {@html data.post.content}
-   </div>
+   <MarkdownRenderer
+       class="prose prose-zinc dark:prose-invert min-h-[400px] max-w-none"
+       md={data.post.content}
+   />
 
    <CommentSection
        postId={data.post.id}

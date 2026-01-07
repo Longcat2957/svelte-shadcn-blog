@@ -11,6 +11,7 @@
     import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
     import { Badge } from '$lib/components/ui/badge';
 	import { page } from '$app/stores';
+	import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
 
     let title = $state('');
     let description = $state('');
@@ -250,17 +251,13 @@
                         <div class="text-sm text-muted-foreground">Written on January 6, 2026</div>
                     </div>
                     
-                    <div class="prose dark:prose-invert max-w-none">
-                        {#if content}
-                            <div class="whitespace-pre-wrap leading-relaxed text-foreground/90">
-                                {content}
-                            </div>
-                        {:else}
-                            <p class="text-muted-foreground italic text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
-                                No content to preview. Start writing in the Edit tab!
-                            </p>
-                        {/if}
-                    </div>
+					{#if content}
+						<MarkdownRenderer class="prose dark:prose-invert max-w-none" md={content} />
+					{:else}
+						<p class="text-muted-foreground italic text-center py-20 bg-muted/20 rounded-lg border-2 border-dashed">
+							No content to preview. Start writing in the Edit tab!
+						</p>
+					{/if}
                 </div>
             </div>
         {/if}
