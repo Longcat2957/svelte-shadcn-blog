@@ -2,7 +2,6 @@
     import { page } from '$app/stores';
     import { untrack } from 'svelte';
     import { Badge } from '$lib/components/ui/badge';
-    import Calendar from '@lucide/svelte/icons/calendar';
 
     type PostSummary = {
         id: number;
@@ -19,6 +18,34 @@
     let tags = $state<string[]>([]);
     let selectedTag = $state<string | null>(null);
     let selectedCategory = $derived($page.url.searchParams.get('category'));
+
+    type CategoryNode = {
+        id: number;
+        name: string;
+        children: CategoryNode[];
+    };
+
+    const categories = $derived(($page.data.categories as CategoryNode[]) ?? []);
+
+    function findCategoryName(nodes: CategoryNode[], id: number): string | null {
+        for (const n of nodes) {
+            if (n.id === id) return n.name;
+            const child = findCategoryName(n.children ?? [], id);
+            if (child) return child;
+        }
+        return null;
+    }
+
+    const selectedCategoryId = $derived.by(() => {
+        if (!selectedCategory) return null;
+        const n = Number(selectedCategory);
+        return Number.isFinite(n) ? n : null;
+    });
+
+    const selectedCategoryName = $derived.by(() => {
+        if (selectedCategoryId === null) return null;
+        return findCategoryName(categories, selectedCategoryId);
+    });
     let nextCursor = $state<number | null>(null);
     let loading = $state(false);
 
@@ -41,7 +68,9 @@
             const cursor = reset ? null : nextCursor;
             if (cursor) url.searchParams.set('cursor', String(cursor));
             if (selectedTag) url.searchParams.set('tag', selectedTag);
-            if (selectedCategory) url.searchParams.set('categoryId', selectedCategory);
+            if (selectedCategoryId !== null) {
+                url.searchParams.set('categoryId', String(selectedCategoryId));
+            }
             if (query) url.searchParams.set('q', query);
 
             const res = await fetch(url);
@@ -63,7 +92,7 @@
         // 태그 또는 카테고리 또는 쿼리 변경 시 재조회
         const _q = query;
         const _t = selectedTag;
-        const _c = selectedCategory;
+        const _c = selectedCategoryId;
 
         untrack(() => {
             posts = [];
@@ -78,8 +107,12 @@
 <div class="space-y-8">
     <div class="space-y-6">
         <div class="space-y-2">
-            <h1 class="text-3xl font-bold tracking-tight">Latest Posts</h1>
-            <p class="text-muted-foreground">Thoughts on development, design, and more.</p>
+            <h1 class="text-3xl font-bold tracking-tight">
+                {selectedCategoryName ?? 'Latest Posts'}
+            </h1>
+            {#if selectedCategoryId === null}
+                <p class="text-muted-foreground">Thoughts on development, design, and more.</p>
+            {/if}
         </div>
 
         <div class="flex flex-wrap gap-2">
