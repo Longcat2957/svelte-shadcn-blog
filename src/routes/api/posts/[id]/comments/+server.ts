@@ -20,17 +20,29 @@ export const GET: RequestHandler = async (event) => {
     });
     if (!foundPost) return json({ message: 'post not found' }, { status: 404 });
 
-    const items = await db
+    const itemsRaw = await db
         .select({
             id: comment.id,
             author_name: comment.author_name,
             content: comment.content,
             created_at: comment.created_at,
-            parent_id: comment.parent_id
+            parent_id: comment.parent_id,
+            is_secret: comment.is_secret
         })
         .from(comment)
         .where(eq(comment.post_id, postId))
         .orderBy(asc(comment.created_at));
+
+    const isAdmin = !!event.locals.user;
+    const items = itemsRaw.map((item) => {
+        if (item.is_secret && !isAdmin) {
+            return {
+                ...item,
+                content: '비밀 댓글입니다.'
+            };
+        }
+        return item;
+    });
 
     return json({ items });
 };
@@ -48,15 +60,24 @@ export const POST: RequestHandler = async (event) => {
     });
     if (!foundPost) return json({ message: 'post not found' }, { status: 404 });
 
-    const body = await readJson<{ authorName?: string; content?: string; parentId?: number | null }>(event);
+    const body = await readJson<{
+        authorName?: string;
+        content?: string;
+        parentId?: number | null;
+        password?: string;
+        isSecret?: boolean;
+    }>(event);
     if (body instanceof Response) return body;
 
     const authorName = (body.authorName ?? '').trim();
     const content = (body.content ?? '').trim();
     const parentId = body.parentId ?? null;
+    const password = (body.password ?? '').trim();
+    const isSecret = !!body.isSecret;
 
     if (!authorName) return json({ message: 'authorName is required' }, { status: 400 });
     if (!content) return json({ message: 'content is required' }, { status: 400 });
+    if (isSecret && !password) return json({ message: '비밀 댓글은 비밀번호가 필요합니다.' }, { status: 400 });
 
     if (parentId !== null) {
         const parent = await db.query.comment.findFirst({ where: eq(comment.id, parentId) });
@@ -70,7 +91,9 @@ export const POST: RequestHandler = async (event) => {
             post_id: postId,
             author_name: authorName,
             content,
-            parent_id: parentId
+            parent_id: parentId,
+            password: password || null,
+            is_secret: isSecret
         })
         .returning();
 
@@ -81,7 +104,8 @@ export const POST: RequestHandler = async (event) => {
                 author_name: created.author_name,
                 content: created.content,
                 created_at: created.created_at,
-                parent_id: created.parent_id
+                parent_id: created.parent_id,
+                is_secret: created.is_secret
             }
         },
         { status: 201 }

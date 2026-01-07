@@ -4,6 +4,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Collapsible from '$lib/components/ui/collapsible';
+	import { Lock } from '@lucide/svelte';
 
 	interface Comment {
 		id: number;
@@ -11,6 +12,7 @@
 		content: string;
 		created_at: Date;
 		parent_id?: number | null;
+		is_secret?: boolean;
 	}
 
 	let { comments = [], postId }: { comments: Comment[]; postId: number } = $props();
@@ -34,22 +36,31 @@
 			const data = new FormData(form);
 			const authorName = String(data.get('author_name') ?? '').trim();
 			const content = String(data.get('content') ?? '').trim();
+			const password = String(data.get('password') ?? '').trim();
+			const isSecret = data.get('isSecret') === 'on';
 			const parentIdRaw = data.get('parentId');
 			const parentId = parentIdRaw ? Number(parentIdRaw) : null;
 
 			if (!authorName || !content) return;
+			if (isSecret && !password) {
+				alert('비밀 댓글은 비밀번호가 필요합니다.');
+				return;
+			}
 
 			const res = await fetch('/api/posts/' + postId + '/comments', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ authorName, content, parentId })
+				body: JSON.stringify({ authorName, content, parentId, password, isSecret })
 			});
-			if (!res.ok) return;
+			if (!res.ok) {
+				alert('오류가 발생했습니다.');
+				return;
+			}
 
 			// 성공 시 리로드 (간단히)
 			const reload = await fetch('/api/posts/' + postId + '/comments');
 			if (!reload.ok) return;
-			const payload = (await reload.json()) as { items: { id: number; author_name: string; content: string; created_at: string; parent_id: number | null }[] };
+			const payload = (await reload.json()) as { items: Comment[] };
 			items = payload.items.map((c) => ({ ...c, created_at: new Date(c.created_at) }));
 
 			form.reset();
@@ -101,9 +112,17 @@
 												{comment.created_at.toLocaleDateString()}
 											</time>
 										</div>
-										<p class="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-											{comment.content}
-										</p>
+										<div class="space-y-1">
+											{#if comment.is_secret}
+												<div class="flex items-center gap-1.5 text-xs text-muted-foreground/80 font-medium">
+													<Lock class="h-3 w-3" />
+													<span>비밀 댓글</span>
+												</div>
+											{/if}
+											<p class="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90 {comment.is_secret && comment.content === '비밀 댓글입니다.' ? 'text-muted-foreground italic' : ''}">
+												{comment.content}
+											</p>
+										</div>
 										<div class="flex items-center gap-4">
 											<button
 												onclick={() => (replyingTo = replyingTo === comment.id ? null : comment.id)}
@@ -135,9 +154,17 @@
 															{reply.created_at.toLocaleDateString()}
 														</time>
 													</div>
-													<p class="whitespace-pre-wrap text-xs leading-relaxed text-foreground/85">
-														{reply.content}
-													</p>
+													<div class="space-y-1">
+														{#if reply.is_secret}
+															<div class="flex items-center gap-1.5 text-[10px] text-muted-foreground/80 font-medium">
+																<Lock class="h-2.5 w-2.5" />
+																<span>비밀 댓글</span>
+															</div>
+														{/if}
+														<p class="whitespace-pre-wrap text-xs leading-relaxed text-foreground/85 {reply.is_secret && reply.content === '비밀 댓글입니다.' ? 'text-muted-foreground italic' : ''}">
+															{reply.content}
+														</p>
+													</div>
 												</div>
 											</div>
 										{/each}
@@ -179,10 +206,22 @@
 										class="min-h-[70px] resize-none bg-transparent text-xs"
 										required
 									/>
-									<div class="flex justify-end">
-									<Button type="submit" size="sm" class="px-6 h-7 text-[11px]" disabled={submitting}>
-										답글 등록
-									</Button>
+									<div class="flex items-center justify-between gap-3">
+										<div class="flex items-center gap-3">
+											<Input 
+												type="password" 
+												name="password" 
+												placeholder="비밀번호" 
+												class="h-7 w-24 text-[11px] bg-transparent" 
+											/>
+											<label class="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+												<input type="checkbox" name="isSecret" class="rounded border-muted-foreground/30 bg-transparent text-primary focus:ring-1 focus:ring-primary/20 w-3 h-3" />
+												비밀글
+											</label>
+										</div>
+										<Button type="submit" size="sm" class="px-6 h-7 text-[11px]" disabled={submitting}>
+											답글 등록
+										</Button>
 									</div>
 								</form>
 							</div>
@@ -220,10 +259,22 @@
 						class="min-h-[80px] resize-none bg-transparent text-sm"
 						required
 					/>
-					<div class="flex justify-end">
-					<Button type="submit" size="sm" class="px-8" disabled={submitting}>
-						댓글 등록
-					</Button>
+					<div class="flex items-center justify-between gap-4">
+						<div class="flex items-center gap-4">
+							<Input 
+								type="password" 
+								name="password" 
+								placeholder="비밀번호" 
+								class="h-9 w-32 text-sm bg-transparent" 
+							/>
+							<label class="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none font-medium">
+								<input type="checkbox" name="isSecret" class="rounded border-muted-foreground/30 bg-transparent text-primary focus:ring-1 focus:ring-primary/20" />
+								비밀글
+							</label>
+						</div>
+						<Button type="submit" size="sm" class="px-8" disabled={submitting}>
+							댓글 등록
+						</Button>
 					</div>
 				</form>
 			</div>

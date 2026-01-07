@@ -54,6 +54,8 @@ export const comment = pgTable('comment', {
     post_id: integer('post_id').references(() => post.id, { onDelete: 'cascade' }).notNull(),
     parent_id: integer('parent_id').references((): any => comment.id, { onDelete: 'cascade' }),
     author_name: text('author_name').notNull(),
+    password: text('password'),
+    is_secret: boolean('is_secret').default(false).notNull(),
     content: text('content').notNull(),
     created_at: timestamp('created_at').defaultNow().notNull(),
 });
