@@ -30,7 +30,9 @@
 
 <article class="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-4">
     <div class="space-y-6">
-        <h1 class="text-4xl leading-tight font-extrabold tracking-tight lg:text-5xl">
+        <h1
+            class="max-w-full text-4xl leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] break-words lg:text-5xl"
+        >
             {data.post.title}
         </h1>
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

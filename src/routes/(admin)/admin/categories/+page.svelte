@@ -9,6 +9,11 @@
     import Pencil from '@lucide/svelte/icons/pencil';
     import FolderTree from '@lucide/svelte/icons/folder-tree';
     import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+    import ChevronUp from '@lucide/svelte/icons/chevron-up';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+    import Check from '@lucide/svelte/icons/check';
+    import X from '@lucide/svelte/icons/x';
+    // Drag & Drop은 추후 추가 (현재는 버튼 기반 reorder만 유지)
     import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage, readErrorPayload } from '$lib/utils/http';
@@ -19,6 +24,7 @@
         children: Category[];
         isOpen: boolean;
         isEditing: boolean;
+        originalName: string;
     }
 
     let categories = $state<Category[]>([]);
@@ -32,16 +38,23 @@
             errorMessage = await readErrorMessage(res);
             return;
         }
-        const data = (await res.json()) as {
-            items: { id: number; name: string; parentId: number | null; children: any[] }[];
+        type ApiCategory = {
+            id: number;
+            name: string;
+            parentId: number | null;
+            children: ApiCategory[];
         };
-        const decorate = (items: any[]): Category[] =>
+        const data = (await res.json()) as {
+            items: ApiCategory[];
+        };
+        const decorate = (items: ApiCategory[]): Category[] =>
             items.map((c) => ({
                 id: c.id,
                 name: c.name,
                 children: decorate(c.children ?? []),
                 isOpen: true,
-                isEditing: false
+                isEditing: false,
+                originalName: c.name
             }));
         categories = decorate(data.items);
     }
@@ -55,7 +68,13 @@
     }
 
     function startEditing(category: Category) {
+        category.originalName = category.name;
         category.isEditing = true;
+    }
+
+    function cancelEditing(category: Category) {
+        category.name = category.originalName;
+        category.isEditing = false;
     }
 
     async function addChildCategory(parent: Category) {
@@ -107,6 +126,10 @@
     async function saveCategory(category: Category) {
         const name = category.name.trim();
         if (!name) return;
+        if (name === category.originalName.trim()) {
+            category.isEditing = false;
+            return;
+        }
         const res = await fetch(`/api/admin/categories/${category.id}`, {
             method: 'PATCH',
             headers: { 'content-type': 'application/json' },
@@ -120,10 +143,53 @@
         await loadCategories();
     }
 
+    async function persistOrder(parentId: number | null, orderedIds: number[]) {
+        const res = await fetch('/api/admin/categories/reorder', {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ parentId, orderedIds })
+        });
+        if (!res.ok) {
+            errorVariant = 'destructive';
+            errorMessage = await readErrorMessage(res);
+        }
+    }
+
+    function moveWithin(list: Category[], fromIdx: number, toIdx: number) {
+        const next = [...list];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved!);
+        return next;
+    }
+
+    async function moveUp(parentId: number | null, siblings: Category[], idx: number) {
+        if (idx <= 0) return;
+        const next = moveWithin(siblings, idx, idx - 1);
+        await persistOrder(
+            parentId,
+            next.map((c) => c.id)
+        );
+        await loadCategories();
+    }
+
+    async function moveDown(parentId: number | null, siblings: Category[], idx: number) {
+        if (idx >= siblings.length - 1) return;
+        const next = moveWithin(siblings, idx, idx + 1);
+        await persistOrder(
+            parentId,
+            next.map((c) => c.id)
+        );
+        await loadCategories();
+    }
+
     function handleKeydown(e: KeyboardEvent, category: Category) {
         if (e.key === 'Enter') {
-            category.isEditing = false;
+            e.preventDefault();
             void saveCategory(category);
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEditing(category);
         }
     }
 </script>
@@ -167,7 +233,13 @@
         </div>
 
         <div class="min-h-[400px] p-2">
-            {#snippet categoryRow(category: Category, depth: number)}
+            {#snippet categoryRow(
+                category: Category,
+                depth: number,
+                parentId: number | null,
+                siblings: Category[],
+                index: number
+            )}
                 <div class="group relative">
                     <div
                         class="flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 {category.isEditing
@@ -194,6 +266,30 @@
                         <!-- Icon -->
                         <Folder class="size-4 shrink-0 text-primary/70" />
 
+                        <!-- Reorder buttons (same parent) -->
+                        <div class="flex items-center gap-0.5">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="size-7"
+                                title="위로"
+                                onclick={() => moveUp(parentId, siblings, index)}
+                                disabled={index === 0}
+                            >
+                                <ChevronUp class="size-3.5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="size-7"
+                                title="아래로"
+                                onclick={() => moveDown(parentId, siblings, index)}
+                                disabled={index === siblings.length - 1}
+                            >
+                                <ChevronDownIcon class="size-3.5" />
+                            </Button>
+                        </div>
+
                         <!-- Content -->
                         <div class="min-w-0 flex-1">
                             {#if category.isEditing}
@@ -201,7 +297,7 @@
                                     class="w-full border-none bg-transparent p-0 text-sm font-medium focus:ring-0"
                                     bind:value={category.name}
                                     onkeydown={(e) => handleKeydown(e, category)}
-                                    onblur={() => (category.isEditing = false)}
+                                    onblur={() => void saveCategory(category)}
                                     aria-label="카테고리 이름"
                                 />
                             {:else}
@@ -220,6 +316,26 @@
                         <div
                             class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
                         >
+                            {#if category.isEditing}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-7"
+                                    title="저장"
+                                    onclick={() => void saveCategory(category)}
+                                >
+                                    <Check class="size-3.5" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-7"
+                                    title="취소"
+                                    onclick={() => cancelEditing(category)}
+                                >
+                                    <X class="size-3.5" />
+                                </Button>
+                            {/if}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -233,7 +349,7 @@
                                 variant="ghost"
                                 size="icon"
                                 class="size-7 transition-colors hover:text-primary"
-                                onclick={() => (category.isEditing = true)}
+                                onclick={() => startEditing(category)}
                             >
                                 <Pencil class="size-3.5" />
                             </Button>
@@ -261,8 +377,14 @@
                         <div
                             class="ml-2.5 animate-in border-l border-border/50 fade-in slide-in-from-top-1"
                         >
-                            {#each category.children as child (child.id)}
-                                {@render categoryRow(child, depth + 1)}
+                            {#each category.children as child, idx (child.id)}
+                                {@render categoryRow(
+                                    child,
+                                    depth + 1,
+                                    category.id,
+                                    category.children,
+                                    idx
+                                )}
                             {/each}
                         </div>
                     {/if}
@@ -283,8 +405,8 @@
                 </div>
             {:else}
                 <div class="py-2">
-                    {#each categories as category (category.id)}
-                        {@render categoryRow(category, 0)}
+                    {#each categories as category, idx (category.id)}
+                        {@render categoryRow(category, 0, null, categories, idx)}
                     {/each}
                 </div>
             {/if}

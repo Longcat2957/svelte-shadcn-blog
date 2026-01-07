@@ -20,12 +20,26 @@ export const user = pgTable('user', {
 });
 
 // Categories Table - 계층형 카테고리 구조
-export const category = pgTable('category', {
-    id: serial('id').primaryKey(),
-    name: text('name').notNull(),
-    parent_id: integer('parent_id').references((): any => category.id, { onDelete: 'cascade' }),
-    created_at: timestamp('created_at').defaultNow().notNull()
-});
+export const category = pgTable(
+    'category',
+    {
+        id: serial('id').primaryKey(),
+        name: text('name').notNull(),
+        // 같은 parent_id 그룹 내에서 정렬 순서를 제어한다.
+        sort_order: integer('sort_order').default(0).notNull(),
+        parent_id: integer('parent_id').references((): any => category.id, { onDelete: 'cascade' }),
+        created_at: timestamp('created_at').defaultNow().notNull()
+    },
+    (table) => {
+        return {
+            parentSortIdx: index('category_parent_sort_idx').on(
+                table.parent_id,
+                table.sort_order,
+                table.id
+            )
+        };
+    }
+);
 
 // Posts Table - 블로그 포스트 데이터
 export const post = pgTable(

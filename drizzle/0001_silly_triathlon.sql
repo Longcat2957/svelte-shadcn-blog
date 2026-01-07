@@ -1,0 +1,1 @@
+CREATE INDEX "category_parent_sort_idx" ON "category" USING btree ("parent_id","sort_order","id");

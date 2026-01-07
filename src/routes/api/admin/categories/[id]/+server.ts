@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
 
 function parseId(id: string) {
@@ -22,7 +22,7 @@ export const PATCH: RequestHandler = async (event) => {
     const body = await readJson<{ name?: string; parentId?: number | null }>(event);
     if (body instanceof Response) return body;
 
-    const next: { name?: string; parent_id?: number | null } = {};
+    const next: { name?: string; parent_id?: number | null; sort_order?: number } = {};
     if (body.name !== undefined) {
         const name = body.name.trim();
         if (!name) return json({ message: 'name cannot be empty' }, { status: 400 });
@@ -35,7 +35,14 @@ export const PATCH: RequestHandler = async (event) => {
             const parent = await db.query.category.findFirst({ where: eq(category.id, parentId) });
             if (!parent) return json({ message: 'parent category not found' }, { status: 404 });
         }
+
+        // 부모가 바뀌면 새 parent 내 맨 뒤로 sort_order를 붙인다.
+        const [{ maxSort }] = await db
+            .select({ maxSort: sql<number | null>`max(${category.sort_order})` })
+            .from(category)
+            .where(sql`${category.parent_id} is not distinct from ${parentId}`);
         next.parent_id = parentId;
+        next.sort_order = (maxSort ?? -1) + 1;
     }
 
     const [updated] = await db.update(category).set(next).where(eq(category.id, id)).returning();
