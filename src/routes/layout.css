@@ -39,6 +39,15 @@
     font-display: swap;
 }
 
+/* D2Coding */
+@font-face {
+    font-family: 'D2Coding';
+    src: url('/fonts/D2Coding.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --radius: 0.625rem;
     --background: oklch(1 0 0);
@@ -152,5 +161,8 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+    code, pre, kbd, samp {
+        font-family: 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     }
 }
