@@ -3,4 +3,4 @@
 	import { md } from './markdown';
 </script>
 
-<MarkdownRenderer class="prose prose-zinc dark:prose-invert max-w-none" {md} />
+<MarkdownRenderer class="prose prose-zinc dark:prose-invert max-w-none pb-24" {md} />

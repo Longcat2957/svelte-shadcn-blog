@@ -1,15 +1,19 @@
 <script lang="ts">
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
-	import rehypeHighlight from 'rehype-highlight';
-	import 'highlight.js/styles/github-dark.css';
+	import { rehypeExtractCode } from './rehype-extract-code';
+	import CodeBlock from './code-block.svelte';
 
 	type Props = { md: string; class?: string };
 	let { md, class: className }: Props = $props();
 
-	const plugins = [gfmPlugin(), { rehypePlugin: rehypeHighlight }];
+	const plugins = [gfmPlugin(), { rehypePlugin: rehypeExtractCode }];
 </script>
 
+{#snippet customPre(props: any)}
+	<CodeBlock {...props} />
+{/snippet}
+
 <div class={className}>
-	<Markdown {md} {plugins} />
+	<Markdown {md} {plugins} pre={customPre} />
 </div>
