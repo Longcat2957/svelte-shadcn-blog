@@ -5,6 +5,6 @@
     let { children, class: className }: TreeViewRootProps = $props();
 </script>
 
-<div class={cn('flex flex-col', className)}>
+<div class={cn('flex w-full min-w-0 flex-col', className)}>
     {@render children?.()}
 </div>

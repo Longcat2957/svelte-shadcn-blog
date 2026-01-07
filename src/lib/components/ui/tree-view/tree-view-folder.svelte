@@ -16,7 +16,10 @@
 </script>
 
 <Collapsible.Root bind:open>
-    <Collapsible.Trigger class={cn('flex place-items-center gap-1 py-1', className)} {onclick}>
+    <Collapsible.Trigger
+        class={cn('flex w-full min-w-0 place-items-center gap-1 py-1 text-left', className)}
+        {onclick}
+    >
         {#if icon}
             {@render icon({ name, open })}
         {:else if open}
@@ -24,12 +27,12 @@
         {:else}
             <FolderIcon class="size-4" />
         {/if}
-        <span>{name}</span>
+        <span class="min-w-0 flex-1 truncate" title={name}>{name}</span>
     </Collapsible.Trigger>
-    <Collapsible.Content class="ml-1 border-l">
+    <Collapsible.Content class="ml-1 min-w-0 border-l">
         <div class="relative flex place-items-start">
             <div class="mx-1 h-full w-px bg-border"></div>
-            <div class="flex flex-col gap-1">
+            <div class="flex w-full min-w-0 flex-col gap-1">
                 {@render children?.()}
             </div>
         </div>

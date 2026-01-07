@@ -155,8 +155,8 @@
         <aside
             class="sticky top-14 flex hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
         >
-            <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
-                <TreeView.Root class="w-full">
+            <div class="flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-6">
+                <TreeView.Root class="w-full min-w-0">
                     {#if categories.length > 0}
                         {@render renderTreeView(categories)}
                     {/if}
