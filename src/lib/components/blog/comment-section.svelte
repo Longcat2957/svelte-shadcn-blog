@@ -65,7 +65,10 @@
             const reload = await fetch('/api/posts/' + props.postId + '/comments');
             if (!reload.ok) return;
             const payload = (await reload.json()) as { items: Comment[] };
-            itemsOverride = payload.items.map((c) => ({ ...c, created_at: new Date(c.created_at) }));
+            itemsOverride = payload.items.map((c) => ({
+                ...c,
+                created_at: new Date(c.created_at)
+            }));
 
             form.reset();
             replyingTo = null;
