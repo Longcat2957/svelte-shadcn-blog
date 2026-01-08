@@ -223,7 +223,7 @@
                                 })}
                             </time>
                             {#if post.tags.length > 0}
-                                <span class="h-3 w-[1px] bg-border"></span>
+                                <span class="h-3 w-px bg-border"></span>
                                 <div class="flex gap-2">
                                     {#each post.tags as tag}
                                         <button

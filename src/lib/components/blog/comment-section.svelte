@@ -15,16 +15,20 @@
         is_secret?: boolean;
     }
 
-    let { comments = [], postId }: { comments: Comment[]; postId: number } = $props();
-    let items = $state<Comment[]>(comments);
+    const props = $props<{ comments?: Comment[]; postId: number }>();
+    // props.comments는 reactive 값이므로, 로컬 state 초기화 시점에 직접 읽으면
+    // “초기 값만 캡처” 경고가 날 수 있습니다.
+    // - 기본은 props.comments를 사용
+    // - 새 댓글 등록/리로드 이후에는 override 값을 우선 사용
+    let itemsOverride = $state<Comment[] | null>(null);
+    const normalizedPropComments: Comment[] = $derived(
+        (props.comments ?? []).map((c: Comment) => ({ ...c, created_at: new Date(c.created_at) }))
+    );
+    const items: Comment[] = $derived(itemsOverride ?? normalizedPropComments);
 
     // Organize comments into parent-child relationship
-    let rootComments = $derived(items.filter((c) => !c.parent_id));
-    let getReplies = (parentId: number) => items.filter((c) => c.parent_id === parentId);
-
-    $effect(() => {
-        items = comments;
-    });
+    let rootComments = $derived(items.filter((c: Comment) => !c.parent_id));
+    let getReplies = (parentId: number) => items.filter((c: Comment) => c.parent_id === parentId);
 
     let replyingTo = $state<number | null>(null);
     let submitting = $state(false);
@@ -47,7 +51,7 @@
                 return;
             }
 
-            const res = await fetch('/api/posts/' + postId + '/comments', {
+            const res = await fetch('/api/posts/' + props.postId + '/comments', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({ authorName, content, parentId, password, isSecret })
@@ -58,10 +62,10 @@
             }
 
             // 성공 시 리로드 (간단히)
-            const reload = await fetch('/api/posts/' + postId + '/comments');
+            const reload = await fetch('/api/posts/' + props.postId + '/comments');
             if (!reload.ok) return;
             const payload = (await reload.json()) as { items: Comment[] };
-            items = payload.items.map((c) => ({ ...c, created_at: new Date(c.created_at) }));
+            itemsOverride = payload.items.map((c) => ({ ...c, created_at: new Date(c.created_at) }));
 
             form.reset();
             replyingTo = null;
@@ -236,12 +240,12 @@
                                                 name="author_name"
                                                 placeholder="이름"
                                                 required
-                                                class="h-8 max-w-[150px] bg-transparent text-xs"
+                                                class="h-8 max-w-37.5 bg-transparent text-xs"
                                             />
                                             <Textarea
                                                 name="content"
                                                 placeholder="답글을 입력하세요..."
-                                                class="min-h-[70px] resize-none bg-transparent text-xs"
+                                                class="min-h-17.5 resize-none bg-transparent text-xs"
                                                 required
                                             />
                                             <div class="flex items-center justify-between gap-3">
@@ -302,12 +306,12 @@
                         name="author_name"
                         placeholder="이름"
                         required
-                        class="h-8 max-w-[180px] bg-transparent text-sm"
+                        class="h-8 max-w-45 bg-transparent text-sm"
                     />
                     <Textarea
                         name="content"
                         placeholder="댓글을 입력하세요..."
-                        class="min-h-[80px] resize-none bg-transparent text-sm"
+                        class="min-h-20 resize-none bg-transparent text-sm"
                         required
                     />
                     <div class="flex items-center justify-between gap-4">

@@ -71,7 +71,9 @@
         dockerfile: dockerfile
     };
 
-    const language = languages[lang] || xml;
+    // `lang`는 $props()에서 온 reactive 값이므로 파생값으로 계산해야
+    // 변경 시점에 하이라이트 언어도 함께 갱신됩니다.
+    const language = $derived(languages[lang] || xml);
 
     let copied = $state(false);
     let cleanCode = $derived(code.endsWith('\n') ? code.slice(0, -1) : code);
@@ -115,7 +117,7 @@
         <div class="flex overflow-x-auto py-3">
             <!-- Line Numbers -->
             <div
-                class="min-w-[3rem] flex-none border-r border-border pr-2 pl-2 text-right text-muted-foreground/50 select-none"
+                class="min-w-12 flex-none border-r border-border pr-2 pl-2 text-right text-muted-foreground/50 select-none"
             >
                 {#each lines as _, i}
                     <div class="leading-6">{i + 1}</div>
@@ -127,7 +129,7 @@
                 <Highlight
                     {language}
                     code={cleanCode}
-                    class="not-prose !font-inherit !m-0 !bg-transparent !p-0 !leading-6 whitespace-pre [&_code]:!m-0 [&_code]:!bg-transparent [&_code]:!px-0.5 [&_code]:!py-0"
+                    class="not-prose font-inherit! m-0! bg-transparent! p-0! leading-6! whitespace-pre [&_code]:m-0! [&_code]:bg-transparent! [&_code]:px-0.5! [&_code]:py-0!"
                 />
             </div>
         </div>

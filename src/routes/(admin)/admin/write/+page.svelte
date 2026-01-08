@@ -386,7 +386,7 @@
 
 {#snippet previewArea(fullPage = true)}
     {#if fullPage}
-        <div class="min-h-[700px] rounded-xl border bg-card/30 p-8 backdrop-blur-sm md:p-12">
+        <div class="min-h-175 rounded-xl border bg-card/30 p-8 backdrop-blur-sm md:p-12">
             <div class="mx-auto max-w-3xl space-y-8">
                 <div class="space-y-4">
                     <div class="flex items-center gap-2 text-sm font-medium text-primary">
@@ -488,7 +488,7 @@
                 <div class="flex h-full flex-col gap-6 overflow-y-auto pr-4">
                     {@render inputFields(true)}
                     {@render tagPicker()}
-                    <div class="min-h-[400px] flex-1">
+                    <div class="min-h-100 flex-1">
                         {@render editorArea('min-h-full')}
                     </div>
                 </div>

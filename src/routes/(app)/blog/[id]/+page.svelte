@@ -45,7 +45,7 @@
 <article class="animate-in duration-500 fade-in slide-in-from-bottom-4">
     <div class="space-y-6">
         <h1
-            class="max-w-full text-4xl leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] break-words lg:text-5xl"
+            class="max-w-full text-4xl leading-tight font-extrabold tracking-tight wrap-anywhere lg:text-5xl"
         >
             {data.post.title}
         </h1>
@@ -99,7 +99,7 @@
     </div>
     <hr class="mt-2" />
     <MarkdownRenderer
-        class="prose min-h-[400px] max-w-none pt-4 prose-zinc dark:prose-invert"
+        class="prose min-h-100 max-w-none pt-4 prose-zinc dark:prose-invert"
         md={data.post.content}
     />
 

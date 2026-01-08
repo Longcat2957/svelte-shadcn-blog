@@ -24,11 +24,11 @@
     <div class="flex min-h-screen flex-col">
         <!-- Top Navigation Area (Synced with App) -->
         <header
-            class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+            class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
         >
             <div
                 class="container mx-auto transition-all duration-300 {adminLayoutState.fullWidth
-                    ? 'max-w-[1800px]'
+                    ? 'max-w-450'
                     : 'max-w-6xl'}"
             >
                 <TopNav onMenuClick={() => (mobileMenuOpen = !mobileMenuOpen)} />
@@ -39,16 +39,16 @@
         <div class="flex w-full flex-1 justify-center border-x border-transparent">
             <div
                 class="relative container mx-auto flex min-h-[calc(100vh-3.5rem)] flex-col border-x border-border/50 transition-all duration-300 md:flex-row {adminLayoutState.fullWidth
-                    ? 'max-w-[1800px]'
+                    ? 'max-w-450'
                     : 'max-w-6xl'}"
             >
                 <!-- Admin Sidebar (Styled like App Sidebar) -->
                 <aside
-                    class="sticky top-14 flex hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
+                    class="sticky top-14 flex h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
                 >
                     <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
                         <div
-                            class="mb-2 px-3 text-[10px] font-bold tracking-[0.1em] text-muted-foreground/70 uppercase"
+                            class="mb-2 px-3 text-[10px] font-bold tracking-widest text-muted-foreground/70 uppercase"
                         >
                             Admin Menu
                         </div>

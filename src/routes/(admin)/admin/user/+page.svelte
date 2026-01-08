@@ -189,7 +189,7 @@
                 </div>
 
                 <div class="flex justify-end pt-4">
-                    <Button onclick={save} disabled={saving} class="min-w-[120px]">
+                    <Button onclick={save} disabled={saving} class="min-w-30">
                         {#if saving}
                             <Loader2 class="mr-2 size-4 animate-spin" />
                             Saving...

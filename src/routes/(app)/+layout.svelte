@@ -16,7 +16,7 @@
 <div class="flex min-h-screen flex-col">
     <!-- Top Navigation Area -->
     <header
-        class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
     >
         <div class="container mx-auto max-w-6xl">
             <TopNav onMenuClick={() => (mobileMenuOpen = !mobileMenuOpen)} />

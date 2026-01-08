@@ -232,7 +232,7 @@
             </div>
         </div>
 
-        <div class="min-h-[400px] p-2">
+        <div class="min-h-100 p-2">
             {#snippet categoryRow(
                 category: Category,
                 depth: number,
