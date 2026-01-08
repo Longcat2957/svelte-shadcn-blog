@@ -12,6 +12,7 @@
     let mobileMenuOpen = $state(false);
 
     import { adminSitemap } from '$lib/config/sitemap';
+    import { adminLayoutState } from '$lib/state/admin.svelte';
 
     const adminNavItems = adminSitemap;
 </script>
@@ -24,7 +25,11 @@
         <header
             class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         >
-            <div class="container mx-auto max-w-6xl">
+            <div
+                class="container mx-auto transition-all duration-300 {adminLayoutState.fullWidth
+                    ? 'max-w-[1800px]'
+                    : 'max-w-6xl'}"
+            >
                 <TopNav onMenuClick={() => (mobileMenuOpen = !mobileMenuOpen)} />
             </div>
         </header>
@@ -32,7 +37,9 @@
         <!-- Main Content Area -->
         <div class="flex w-full flex-1 justify-center border-x border-transparent">
             <div
-                class="relative container mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl flex-col border-x border-border/50 md:flex-row"
+                class="relative container mx-auto flex min-h-[calc(100vh-3.5rem)] flex-col border-x border-border/50 transition-all duration-300 md:flex-row {adminLayoutState.fullWidth
+                    ? 'max-w-[1800px]'
+                    : 'max-w-6xl'}"
             >
                 <!-- Admin Sidebar (Styled like App Sidebar) -->
                 <aside

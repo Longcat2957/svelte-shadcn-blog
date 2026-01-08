@@ -16,13 +16,14 @@
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
     import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
+    import { adminLayoutState } from '$lib/state/admin.svelte';
 
     let title = $state('');
     let description = $state('');
     let content = $state('');
     // 실제로는 category_id 사용
     let categoryId = $state<number | null>(null);
-    let viewMode = $state<'edit' | 'preview'>('edit');
+    let viewMode = $state<'edit' | 'preview' | 'split'>('edit');
     let tags = $state<string[]>([]);
     let tagInput = $state('');
     let published = $state(false);
@@ -155,9 +156,181 @@
         loadCategories();
         if (postId) loadPost(postId);
     });
+
+    // Effect to toggle full width layout when in split mode
+    $effect(() => {
+        adminLayoutState.fullWidth = viewMode === 'split';
+        return () => {
+            adminLayoutState.fullWidth = false;
+        };
+    });
 </script>
 
-<div class="mx-auto max-w-5xl space-y-8 pb-12">
+<!-- Snippets -->
+{#snippet inputFields(isSplit = false)}
+    <div class="grid gap-6 {isSplit ? 'md:grid-cols-1' : 'md:grid-cols-2'}">
+        <div class="space-y-2">
+            <label for="title" class="ml-1 text-sm font-semibold text-foreground/80">Title</label>
+            <Input
+                id="title"
+                placeholder="Enter a catchy title..."
+                bind:value={title}
+                class="bg-card/50 backdrop-blur-sm"
+            />
+        </div>
+
+        <div class="space-y-2">
+            <label for="description" class="ml-1 text-sm font-semibold text-foreground/80"
+                >Description</label
+            >
+            <Input
+                id="description"
+                placeholder="Short summary of the post..."
+                bind:value={description}
+                class="bg-card/50 backdrop-blur-sm"
+            />
+        </div>
+
+        <div class="space-y-2">
+            <label for="directory" class="ml-1 text-sm font-semibold text-foreground/80"
+                >Category</label
+            >
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                    {#snippet child({ props })}
+                        <Button
+                            {...props}
+                            variant="outline"
+                            class="w-full justify-between bg-card/50 font-normal backdrop-blur-sm"
+                        >
+                            <div class="flex items-center gap-2">
+                                <Folder class="size-4 text-muted-foreground" />
+                                <span>
+                                    {categoryOptions.find((c) => c.id === categoryId)?.label ??
+                                        'Select category...'}
+                                </span>
+                            </div>
+                            <ChevronDown class="size-4 opacity-50" />
+                        </Button>
+                    {/snippet}
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content
+                    class="max-h-64 w-[--bits-dropdown-menu-anchor-width] overflow-y-auto"
+                >
+                    {#each categoryOptions as c}
+                        <DropdownMenu.Item onclick={() => (categoryId = c.id)}>
+                            {c.label}
+                        </DropdownMenu.Item>
+                    {/each}
+                    <DropdownMenu.Separator />
+                    <DropdownMenu.Item class="text-muted-foreground" disabled>
+                        카테고리 생성/관리는 Categories 메뉴에서 진행하세요.
+                    </DropdownMenu.Item>
+                </DropdownMenu.Content>
+            </DropdownMenu.Root>
+        </div>
+    </div>
+{/snippet}
+
+{#snippet tagPicker()}
+    <div class="space-y-2">
+        <label for="tags" class="ml-1 text-sm font-semibold text-foreground/80">Tags</label>
+        <div class="mb-2 flex flex-wrap gap-2">
+            {#each tags as tag}
+                <Badge variant="secondary" class="gap-1 pr-1">
+                    {tag}
+                    <button
+                        onclick={() => removeTag(tag)}
+                        class="transition-colors outline-none hover:text-destructive"
+                    >
+                        <X class="size-3" />
+                    </button>
+                </Badge>
+            {/each}
+        </div>
+        <div class="flex gap-2">
+            <Input
+                id="tags"
+                placeholder="Add a tag..."
+                bind:value={tagInput}
+                class="bg-card/50 backdrop-blur-sm"
+                onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            />
+            <Button variant="outline" onclick={addTag}>Add</Button>
+        </div>
+    </div>
+{/snippet}
+
+{#snippet editorArea(minHeightClass = 'min-h-[600px]')}
+    <div class="space-y-2 h-full flex flex-col">
+        <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
+            >Content (Markdown)</label
+        >
+        <div
+            class="flex-1 overflow-hidden rounded-lg border bg-card/50 backdrop-blur-sm transition-all focus-within:ring-1 focus-within:ring-ring"
+        >
+            <Textarea
+                id="content"
+                placeholder="Write your post content here..."
+                class="{minHeightClass} w-full resize-none border-0 p-4 focus-visible:ring-0 h-full"
+                bind:value={content}
+            />
+        </div>
+    </div>
+{/snippet}
+
+{#snippet previewArea(fullPage = true)}
+    {#if fullPage}
+        <div class="min-h-[700px] rounded-xl border bg-card/30 p-8 backdrop-blur-sm md:p-12">
+            <div class="mx-auto max-w-3xl space-y-8">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-sm font-medium text-primary">
+                        <Folder class="size-4" />
+                        {categoryOptions.find((c) => c.id === categoryId)?.label ?? ''}
+                    </div>
+                    <h1
+                        class="text-4xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8 md:text-5xl"
+                    >
+                        {title || 'Untitiled Post'}
+                    </h1>
+                    {#if description}
+                        <p class="text-xl leading-relaxed text-muted-foreground">
+                            {description}
+                        </p>
+                    {/if}
+                    <div class="flex flex-wrap gap-2 py-2">
+                        {#each tags as tag}
+                            <Badge variant="outline">{tag}</Badge>
+                        {/each}
+                    </div>
+                    <div class="text-sm text-muted-foreground">Written on January 6, 2026</div>
+                </div>
+
+                {#if content}
+                    <MarkdownRenderer class="prose max-w-none dark:prose-invert" md={content} />
+                {:else}
+                    <p
+                        class="rounded-lg border-2 border-dashed bg-muted/20 py-20 text-center text-muted-foreground italic"
+                    >
+                        No content to preview. Start writing in the Edit tab!
+                    </p>
+                {/if}
+            </div>
+        </div>
+    {:else}
+        <!-- Split View Preview (simplified wrapper) -->
+        <div class="space-y-4 pr-4">
+            <h1 class="text-3xl font-bold border-b pb-4">{title || 'Untitled'}</h1>
+            {#if content}
+                <MarkdownRenderer class="prose max-w-none dark:prose-invert" md={content} />
+            {:else}
+                <p class="text-muted-foreground italic">No content to preview.</p>
+            {/if}
+        </div>
+    {/if}
+{/snippet}
+
+<div class="mx-auto space-y-8 pb-12 {viewMode === 'split' ? 'h-[calc(100vh-8rem)]' : 'max-w-5xl'}">
     <div class="flex items-center justify-between">
         <div class="space-y-1">
             <h1 class="text-3xl font-bold tracking-tight">Write Post</h1>
@@ -181,13 +354,14 @@
                 bind:value={viewMode}
                 items={[
                     { value: 'edit', label: 'Edit' },
+                    { value: 'split', label: 'Split' },
                     { value: 'preview', label: 'Preview' }
                 ]}
             />
         </div>
     </div>
 
-    <div class="space-y-6">
+    <div class="space-y-6 {viewMode === 'split' ? 'h-[calc(100%-4rem)]' : ''}">
         {#if errorMessage}
             <Alert.Root variant="destructive" class="flex items-start justify-between gap-4">
                 <div>
@@ -203,155 +377,35 @@
             </Alert.Root>
         {/if}
 
-        {#if viewMode === 'edit'}
-            <div class="grid gap-6 md:grid-cols-2">
-                <div class="space-y-2">
-                    <label for="title" class="ml-1 text-sm font-semibold text-foreground/80"
-                        >Title</label
-                    >
-                    <Input
-                        id="title"
-                        placeholder="Enter a catchy title..."
-                        bind:value={title}
-                        class="bg-card/50 backdrop-blur-sm"
-                    />
-                </div>
-
-                <div class="space-y-2">
-                    <label for="description" class="ml-1 text-sm font-semibold text-foreground/80"
-                        >Description</label
-                    >
-                    <Input
-                        id="description"
-                        placeholder="Short summary of the post..."
-                        bind:value={description}
-                        class="bg-card/50 backdrop-blur-sm"
-                    />
-                </div>
-
-                <div class="space-y-2">
-                    <label for="directory" class="ml-1 text-sm font-semibold text-foreground/80"
-                        >Category</label
-                    >
-                    <DropdownMenu.Root>
-                        <DropdownMenu.Trigger>
-                            {#snippet child({ props })}
-                                <Button
-                                    {...props}
-                                    variant="outline"
-                                    class="w-full justify-between bg-card/50 font-normal backdrop-blur-sm"
-                                >
-                                    <div class="flex items-center gap-2">
-                                        <Folder class="size-4 text-muted-foreground" />
-                                        <span>
-                                            {categoryOptions.find((c) => c.id === categoryId)
-                                                ?.label ?? 'Select category...'}
-                                        </span>
-                                    </div>
-                                    <ChevronDown class="size-4 opacity-50" />
-                                </Button>
-                            {/snippet}
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Content
-                            class="max-h-64 w-[--bits-dropdown-menu-anchor-width] overflow-y-auto"
-                        >
-                            {#each categoryOptions as c}
-                                <DropdownMenu.Item onclick={() => (categoryId = c.id)}>
-                                    {c.label}
-                                </DropdownMenu.Item>
-                            {/each}
-                            <DropdownMenu.Separator />
-                            <DropdownMenu.Item class="text-muted-foreground" disabled>
-                                카테고리 생성/관리는 Categories 메뉴에서 진행하세요.
-                            </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                    </DropdownMenu.Root>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <label for="tags" class="ml-1 text-sm font-semibold text-foreground/80">Tags</label>
-                <div class="mb-2 flex flex-wrap gap-2">
-                    {#each tags as tag}
-                        <Badge variant="secondary" class="gap-1 pr-1">
-                            {tag}
-                            <button
-                                onclick={() => removeTag(tag)}
-                                class="transition-colors outline-none hover:text-destructive"
-                            >
-                                <X class="size-3" />
-                            </button>
-                        </Badge>
-                    {/each}
-                </div>
-                <div class="flex gap-2">
-                    <Input
-                        id="tags"
-                        placeholder="Add a tag..."
-                        bind:value={tagInput}
-                        class="bg-card/50 backdrop-blur-sm"
-                        onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    />
-                    <Button variant="outline" onclick={addTag}>Add</Button>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
-                    >Content (Markdown)</label
-                >
-                <div
-                    class="overflow-hidden rounded-lg border bg-card/50 backdrop-blur-sm transition-all focus-within:ring-1 focus-within:ring-ring"
-                >
-                    <Textarea
-                        id="content"
-                        placeholder="Write your post content here..."
-                        class="min-h-[600px] resize-none border-0 p-4 focus-visible:ring-0"
-                        bind:value={content}
-                    />
-                </div>
-            </div>
-        {:else}
-            <!-- Preview Mode -->
-            <div class="min-h-[700px] rounded-xl border bg-card/30 p-8 backdrop-blur-sm md:p-12">
-                <div class="mx-auto max-w-3xl space-y-8">
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-2 text-sm font-medium text-primary">
-                            <Folder class="size-4" />
-                            {categoryOptions.find((c) => c.id === categoryId)?.label ?? ''}
-                        </div>
-                        <h1
-                            class="text-4xl font-extrabold tracking-tight underline decoration-primary/30 underline-offset-8 md:text-5xl"
-                        >
-                            {title || 'Untitiled Post'}
-                        </h1>
-                        {#if description}
-                            <p class="text-xl leading-relaxed text-muted-foreground">
-                                {description}
-                            </p>
-                        {/if}
-                        <div class="flex flex-wrap gap-2 py-2">
-                            {#each tags as tag}
-                                <Badge variant="outline">{tag}</Badge>
-                            {/each}
-                        </div>
-                        <div class="text-sm text-muted-foreground">Written on January 6, 2026</div>
+        {#if viewMode === 'split'}
+            <div class="grid grid-cols-2 gap-8 h-full min-h-0">
+                <!-- Left Pane: Editor -->
+                <div class="flex flex-col gap-6 overflow-y-auto pr-4 h-full">
+                    {@render inputFields(true)}
+                    {@render tagPicker()}
+                    <div class="flex-1 min-h-[400px]">
+                        {@render editorArea('min-h-full')}
                     </div>
+                </div>
 
-                    {#if content}
-                        <MarkdownRenderer class="prose max-w-none dark:prose-invert" md={content} />
-                    {:else}
-                        <p
-                            class="rounded-lg border-2 border-dashed bg-muted/20 py-20 text-center text-muted-foreground italic"
-                        >
-                            No content to preview. Start writing in the Edit tab!
-                        </p>
-                    {/if}
+                <!-- Right Pane: Preview -->
+                <div class="overflow-y-auto border-l pl-8 h-full">
+                    {@render previewArea(false)}
                 </div>
             </div>
+        {:else if viewMode === 'edit'}
+            {@render inputFields()}
+            {@render tagPicker()}
+            {@render editorArea()}
+        {:else}
+            {@render previewArea(true)}
         {/if}
 
-        <div class="flex items-center justify-between border-t pt-6">
+        <div
+            class="flex items-center justify-between border-t pt-6 {viewMode === 'split'
+                ? 'bg-background py-4'
+                : ''}"
+        >
             <Button
                 variant="ghost"
                 href="/admin"
