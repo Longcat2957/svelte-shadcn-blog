@@ -65,16 +65,16 @@
     }
 
     async function loadPosts() {
-        // Allow loading to re-trigger if params changed, but debounce if needed? 
+        // Allow loading to re-trigger if params changed, but debounce if needed?
         // For now, simple lock.
-        if (loading) return; 
+        if (loading) return;
         loading = true;
 
         try {
             const url = new URL('/api/posts', window.location.origin);
             url.searchParams.set('limit', String(perPage));
             url.searchParams.set('page', String(currentPage));
-            
+
             if (selectedTag) url.searchParams.set('tag', selectedTag);
             if (selectedCategoryId !== null) {
                 url.searchParams.set('categoryId', String(selectedCategoryId));
@@ -83,7 +83,7 @@
 
             const res = await fetch(url);
             if (!res.ok) return;
-            
+
             const data = (await res.json()) as { items: PostSummary[]; totalCount: number };
 
             posts = data.items;
@@ -118,9 +118,9 @@
         untrack(() => {
             // Need to clear "loading" if it was stuck? No.
             // Reset loader?
-            // To allow re-fetch if currently loading but params changed? 
+            // To allow re-fetch if currently loading but params changed?
             // Ideally we should abort controller, but for simplicity:
-            loading = false; 
+            loading = false;
             void loadPosts();
         });
     });
@@ -162,7 +162,10 @@
         </div>
     </div>
 
-    <div class="flex flex-col divide-y divide-border/40 transition-opacity duration-200" class:opacity-50={loading}>
+    <div
+        class="flex flex-col divide-y divide-border/40 transition-opacity duration-200"
+        class:opacity-50={loading}
+    >
         {#each filteredPosts as post}
             <a
                 href="/blog/{post.id}"
@@ -203,11 +206,9 @@
                 </article>
             </a>
         {/each}
-        
+
         {#if filteredPosts.length === 0 && !loading}
-            <div class="py-12 text-center text-muted-foreground">
-                No posts found.
-            </div>
+            <div class="py-12 text-center text-muted-foreground">No posts found.</div>
         {/if}
     </div>
 
@@ -231,7 +232,7 @@
                             </Pagination.Item>
                         {/if}
                     {/each}
-                    
+
                     <Pagination.Item>
                         <Pagination.NextButton />
                     </Pagination.Item>

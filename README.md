@@ -11,29 +11,29 @@ Svelte 5(Runes) + TailwindCSS + shadcn-svelte(bits-ui) 기반 UI, Drizzle ORM(Po
 ## 주요 기능
 
 - **블로그 글(Posts)**
-  - 마크다운 기반 콘텐츠
-  - 발행/비공개(published) 관리
-  - 조회수(views) 증가 API
-  - 목록/검색(q)/태그(tag)/카테고리(categoryId) 필터링
+    - 마크다운 기반 콘텐츠
+    - 발행/비공개(published) 관리
+    - 조회수(views) 증가 API
+    - 목록/검색(q)/태그(tag)/카테고리(categoryId) 필터링
 - **카테고리(Categories)**
-  - 계층형 트리 구조(parent/children)
-  - 관리자에서 정렬(reorder) 및 이동(move)
+    - 계층형 트리 구조(parent/children)
+    - 관리자에서 정렬(reorder) 및 이동(move)
 - **태그(Tags)**
-  - Postgres `text[]` 컬럼으로 관리 (별도 조인 테이블 없이)
-  - 태그 목록 API 제공
+    - Postgres `text[]` 컬럼으로 관리 (별도 조인 테이블 없이)
+    - 태그 목록 API 제공
 - **댓글(Comments)**
-  - 글 단위 댓글 작성/조회
-  - 대댓글(parent_id)
-  - 비밀댓글(is_secret) + 비밀번호
-  - 관리자는 비밀댓글 원문 조회 가능
+    - 글 단위 댓글 작성/조회
+    - 대댓글(parent_id)
+    - 비밀댓글(is_secret) + 비밀번호
+    - 관리자는 비밀댓글 원문 조회 가능
 - **관리자(Admin) 영역**
-  - `/admin/login` 로그인
-  - `/admin` 대시보드
-  - 글 작성/편집, 카테고리 관리, 사용자(관리자) 관리
+    - `/admin/login` 로그인
+    - `/admin` 대시보드
+    - 글 작성/편집, 카테고리 관리, 사용자(관리자) 관리
 - **이미지 업로드(Cloudflare Images)**
-  - 관리자에서 이미지 업로드 API 제공
-  - Cloudflare Images로 업로드 후 URL 반환
-  - `/admin/write` 에서 **클립보드 붙여넣기(Ctrl+V)** 뿐 아니라 **파일 선택 업로드**도 지원
+    - 관리자에서 이미지 업로드 API 제공
+    - Cloudflare Images로 업로드 후 URL 반환
+    - `/admin/write` 에서 **클립보드 붙여넣기(Ctrl+V)** 뿐 아니라 **파일 선택 업로드**도 지원
 
 ---
 
@@ -66,12 +66,12 @@ cp .env.example .env
 
 필수 환경변수:
 
-| 키 | 설명 |
-|---|---|
-| `DATABASE_URL` | PostgreSQL 연결 문자열 |
-| `JWT_SECRET` | 관리자 로그인 JWT 서명용 시크릿 |
-| `CF_API_TOKEN` | Cloudflare API Token (Images: Edit 권한 필요) |
-| `CF_ACCOUNT_ID` | Cloudflare Account ID |
+| 키              | 설명                                          |
+| --------------- | --------------------------------------------- |
+| `DATABASE_URL`  | PostgreSQL 연결 문자열                        |
+| `JWT_SECRET`    | 관리자 로그인 JWT 서명용 시크릿               |
+| `CF_API_TOKEN`  | Cloudflare API Token (Images: Edit 권한 필요) |
+| `CF_ACCOUNT_ID` | Cloudflare Account ID                         |
 
 참고:
 
@@ -119,16 +119,16 @@ pnpm dev
 ## 경로 안내
 
 - 사용자 영역
-  - `/` : 홈
-  - `/blog/[id]` : 글 상세
-  - `/about` : 소개 페이지
+    - `/` : 홈
+    - `/blog/[id]` : 글 상세
+    - `/about` : 소개 페이지
 
 - 관리자 영역
-  - `/admin/login` : 로그인
-  - `/admin` : 대시보드
-  - `/admin/write` : 글 작성
-  - `/admin/categories` : 카테고리 관리
-  - `/admin/user` : 사용자(관리자) 관리
+    - `/admin/login` : 로그인
+    - `/admin` : 대시보드
+    - `/admin/write` : 글 작성
+    - `/admin/categories` : 카테고리 관리
+    - `/admin/user` : 사용자(관리자) 관리
 
 ---
 
@@ -139,7 +139,7 @@ pnpm dev
 ### Public API
 
 - `GET /api/posts`
-  - query: `limit`, `cursor`, `categoryId`, `tag`, `q`
+    - query: `limit`, `cursor`, `categoryId`, `tag`, `q`
 - `GET /api/posts/[id]`
 - `POST /api/posts/[id]/view` (조회수 증가)
 - `GET /api/categories`
@@ -160,20 +160,20 @@ pnpm dev
 
 ## 스크립트
 
-| 명령 | 설명 |
-|---|---|
-| `pnpm dev` | 개발 서버 실행 |
-| `pnpm build` | 프로덕션 빌드 |
-| `pnpm preview` | 빌드 결과 미리보기 |
-| `pnpm check` | svelte-check |
-| `pnpm lint` | eslint + prettier 체크 |
-| `pnpm format` | prettier 포맷 |
+| 명령                  | 설명                      |
+| --------------------- | ------------------------- |
+| `pnpm dev`            | 개발 서버 실행            |
+| `pnpm build`          | 프로덕션 빌드             |
+| `pnpm preview`        | 빌드 결과 미리보기        |
+| `pnpm check`          | svelte-check              |
+| `pnpm lint`           | eslint + prettier 체크    |
+| `pnpm format`         | prettier 포맷             |
 | `pnpm register:admin` | 관리자 계정 생성 스크립트 |
-| `pnpm db:push` | 스키마를 DB에 푸시 |
-| `pnpm db:migrate` | 마이그레이션 적용 |
-| `pnpm db:generate` | 마이그레이션 생성 |
-| `pnpm db:studio` | Drizzle Studio |
-| `pnpm db:drop` | DB 초기화(주의) |
+| `pnpm db:push`        | 스키마를 DB에 푸시        |
+| `pnpm db:migrate`     | 마이그레이션 적용         |
+| `pnpm db:generate`    | 마이그레이션 생성         |
+| `pnpm db:studio`      | Drizzle Studio            |
+| `pnpm db:drop`        | DB 초기화(주의)           |
 
 ---
 

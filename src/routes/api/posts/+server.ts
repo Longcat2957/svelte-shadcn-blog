@@ -26,7 +26,7 @@ export const GET: RequestHandler = async (event) => {
     filters.push(eq(post.published, true));
 
     if (categoryId !== null) filters.push(eq(post.category_id, categoryId));
-    
+
     if (tag) {
         // text[] contains: tag = ANY(tags)
         filters.push(sql`${tag} = any(${post.tags})`);
@@ -60,10 +60,10 @@ export const GET: RequestHandler = async (event) => {
         .limit(limit)
         .offset(offset);
 
-    return json({ 
-        items, 
-        totalCount: total?.count ?? 0, 
-        page, 
-        limit 
+    return json({
+        items,
+        totalCount: total?.count ?? 0,
+        page,
+        limit
     });
 };

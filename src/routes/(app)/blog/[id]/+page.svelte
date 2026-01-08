@@ -87,7 +87,7 @@
             </div>
 
             <div
-                class="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                class="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
                 {#each data.post.tags as tag}
                     <Badge variant="secondary" class="rounded-md px-2 py-0.5 text-xs font-normal"
@@ -99,7 +99,7 @@
     </div>
     <hr class="mt-2" />
     <MarkdownRenderer
-        class="prose min-h-[400px] max-w-none prose-zinc dark:prose-invert pt-4"
+        class="prose min-h-[400px] max-w-none pt-4 prose-zinc dark:prose-invert"
         md={data.post.content}
     />
 

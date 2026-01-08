@@ -1,20 +1,22 @@
 <script lang="ts">
-    import { Button } from "$lib/components/ui/button";
-    import Github from "@lucide/svelte/icons/github";
-    import Twitter from "@lucide/svelte/icons/twitter";
-    import { PUBLIC_GITHUB_URL, PUBLIC_TWITTER_URL } from "$env/static/public";
+    import { Button } from '$lib/components/ui/button';
+    import Github from '@lucide/svelte/icons/github';
+    import Twitter from '@lucide/svelte/icons/twitter';
+    import { PUBLIC_GITHUB_URL, PUBLIC_TWITTER_URL } from '$env/static/public';
 </script>
 
-<footer class="w-full border-t py-6 md:px-8 md:py-0 bg-background">
+<footer class="w-full border-t bg-background py-6 md:px-8 md:py-0">
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-        <p class="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
+        <p
+            class="text-center text-sm leading-loose text-balance text-muted-foreground md:text-left"
+        >
             Built by <a
                 href="https://github.com/Longcat2957"
                 class="font-medium underline underline-offset-4"
             >
                 Longcat2957
-            </a>.
-            The source code is available on <a
+            </a>. The source code is available on
+            <a
                 href="https://github.com/Longcat2957/svelte-shadcn-blog"
                 class="font-medium underline underline-offset-4"
             >

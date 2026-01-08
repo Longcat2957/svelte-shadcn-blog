@@ -5,7 +5,7 @@ const envPath = path.resolve('.env');
 const envContent = fs.readFileSync(envPath, 'utf-8');
 
 const env = {};
-envContent.split('\n').forEach(line => {
+envContent.split('\n').forEach((line) => {
     const match = line.match(/^([^=]+)=(.*)$/);
     if (match) {
         let value = match[2].trim();

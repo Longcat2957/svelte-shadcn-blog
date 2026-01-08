@@ -45,7 +45,7 @@
 
             <div class="flex items-center gap-2">
                 <a href="/" class="mr-2 flex items-center space-x-2">
-                    <span class="inline-block text-lg font-bold">My Blog</span>
+                    <span class="inline-block text-lg font-bold">Blog</span>
                 </a>
             </div>
         </div>

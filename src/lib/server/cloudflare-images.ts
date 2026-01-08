@@ -26,14 +26,14 @@ export class CloudflareImages {
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`Cloudflare Upload Error: Status ${response.status}`, errorText);
-            
+
             let message = `Cloudflare Upload Failed: ${response.status} - ${errorText}`;
             if (response.status === 400 || response.status === 401 || response.status === 403) {
-                 if (token.length !== 40) {
+                if (token.length !== 40) {
                     message += `\nHint: The provided CF_API_TOKEN is ${token.length} characters long, but Cloudflare API Tokens are typically 40 characters. Please check if the token is truncated or invalid.`;
-                 } else {
+                } else {
                     message += "\nHint: Check if CF_API_TOKEN has 'Images: Edit' permission.";
-                 }
+                }
             }
             throw new Error(message);
         }

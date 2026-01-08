@@ -88,7 +88,7 @@
 
             const data = await res.json();
             avatarUrl = data.url;
-            successMessage = 'Image uploaded successfully. Don\'t forget to save changes.';
+            successMessage = "Image uploaded successfully. Don't forget to save changes.";
         } catch (err: any) {
             errorMessage = err.message || 'Image upload failed';
         } finally {
