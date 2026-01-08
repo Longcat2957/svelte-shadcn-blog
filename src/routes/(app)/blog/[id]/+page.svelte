@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import { Badge } from '$lib/components/ui/badge';
+    import { Button } from '$lib/components/ui/button';
     import CommentSection from '$lib/components/blog/comment-section.svelte';
     import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
     import * as Avatar from '$lib/components/ui/avatar';
@@ -27,6 +28,18 @@
     $effect(() => {
         loadComments();
     });
+
+    function formatDate(dateString: string) {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).format(date);
+    }
 </script>
 
 <article class="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-4">
@@ -54,18 +67,28 @@
                     <span class="font-medium text-foreground"
                         >{data.author?.username ?? 'Admin'}</span
                     >
-                    <time class="text-muted-foreground" datetime={data.post.date}
-                        >{data.post.date}</time
-                    >
+                    <span class="text-xs text-muted-foreground">
+                        {formatDate(data.post.date)}
+                    </span>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
                 {#each data.post.tags as tag}
                     <Badge variant="secondary" class="rounded-md px-2 py-0.5 text-xs font-normal"
                         >{tag}</Badge
                     >
                 {/each}
+                {#if data.user}
+                    <Button
+                        href="/admin/write?id={data.post.id}"
+                        variant="ghost"
+                        size="sm"
+                        class="h-6 px-2 text-xs"
+                    >
+                        수정
+                    </Button>
+                {/if}
             </div>
         </div>
     </div>
