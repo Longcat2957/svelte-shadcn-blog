@@ -1,0 +1,73 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+
+# Build output
+build
+dist
+.svelte-kit
+
+# Development
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# GitHub
+.github
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+.nyc_output
+
+# ESLint cache
+.eslintcache
+
+# Prettier
+.prettierignore
+.prettierrc
+
+# Testing
+.vitest
+
+# Documentation
+README.md
+*.md
+
+# Development files
+drizzle
+docs
+
+# Temporary files
+tmp
+temp
