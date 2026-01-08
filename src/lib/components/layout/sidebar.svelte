@@ -11,8 +11,11 @@
     import FolderIcon from '@lucide/svelte/icons/folder';
     import ChevronLeft from '@lucide/svelte/icons/chevron-left';
     import ChevronRight from '@lucide/svelte/icons/chevron-right';
+    import Github from '@lucide/svelte/icons/github';
+    import Twitter from '@lucide/svelte/icons/twitter';
     import { sidebarOpen as openStore } from './sidebar.svelte';
     import { Button } from '$lib/components/ui/button';
+    import { PUBLIC_GITHUB_URL, PUBLIC_TWITTER_URL } from '$env/static/public';
 
     const currentPage = page;
 
@@ -181,8 +184,20 @@
                 </TreeView.Root>
             </div>
 
-            <div class="flex items-center justify-center border-t p-4">
-                <span class="text-xs text-muted-foreground">© 2024 Blog</span>
+            <div class="border-t p-4">
+                <div class="mb-2 flex items-center justify-center gap-2">
+                    <Button variant="ghost" size="icon" href={PUBLIC_GITHUB_URL}>
+                        <Github class="size-4" />
+                        <span class="sr-only">GitHub</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" href={PUBLIC_TWITTER_URL}>
+                        <Twitter class="size-4" />
+                        <span class="sr-only">Twitter</span>
+                    </Button>
+                </div>
+                <div class="flex items-center justify-center">
+                    <span class="text-xs text-muted-foreground">© 2024 Blog</span>
+                </div>
             </div>
         </aside>
     {:else}

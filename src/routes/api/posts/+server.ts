@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post } from '$lib/server/db/schema';
-import { and, desc, eq, ilike, lt, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql, count } from 'drizzle-orm';
 
 function parseOptionalInt(v: string | null): number | null {
     if (v === null) return null;
@@ -15,7 +15,9 @@ export const GET: RequestHandler = async (event) => {
         Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1),
         100
     );
-    const cursor = parseOptionalInt(event.url.searchParams.get('cursor'));
+    const page = Math.max(parseOptionalInt(event.url.searchParams.get('page')) ?? 1, 1);
+    const offset = (page - 1) * limit;
+
     const categoryId = parseOptionalInt(event.url.searchParams.get('categoryId'));
     const tag = (event.url.searchParams.get('tag') ?? '').trim();
     const q = (event.url.searchParams.get('q') ?? '').trim();
@@ -24,7 +26,7 @@ export const GET: RequestHandler = async (event) => {
     filters.push(eq(post.published, true));
 
     if (categoryId !== null) filters.push(eq(post.category_id, categoryId));
-    if (cursor !== null) filters.push(lt(post.id, cursor));
+    
     if (tag) {
         // text[] contains: tag = ANY(tags)
         filters.push(sql`${tag} = any(${post.tags})`);
@@ -34,6 +36,12 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const where = filters.length ? and(...filters) : undefined;
+
+    // Get total count
+    const [total] = await db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(post)
+        .where(where);
 
     const items = await db
         .select({
@@ -49,11 +57,13 @@ export const GET: RequestHandler = async (event) => {
         .from(post)
         .where(where)
         .orderBy(desc(post.id))
-        .limit(limit + 1);
+        .limit(limit)
+        .offset(offset);
 
-    const hasNext = items.length > limit;
-    const sliced = hasNext ? items.slice(0, limit) : items;
-    const nextCursor = hasNext ? sliced[sliced.length - 1]!.id : null;
-
-    return json({ items: sliced, nextCursor });
+    return json({ 
+        items, 
+        totalCount: total?.count ?? 0, 
+        page, 
+        limit 
+    });
 };

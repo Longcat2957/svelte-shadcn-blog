@@ -5,6 +5,9 @@
     import Sidebar from '$lib/components/layout/sidebar.svelte';
     import MobileHeader from '$lib/components/layout/mobile-header.svelte';
     import TopNav from '$lib/components/layout/top-nav.svelte';
+    import Footer from '$lib/components/layout/footer.svelte';
+    import { navigating } from '$app/stores';
+    import { Spinner } from '$lib/components/ui/spinner';
 
     let { children } = $props();
     let mobileMenuOpen = $state(false);
@@ -28,7 +31,16 @@
             <Sidebar />
             <MobileHeader bind:open={mobileMenuOpen} />
             <main class="min-w-0 flex-1 p-4 md:p-8">
-                {@render children()}
+                {#if $navigating}
+                    <div class="flex h-[50vh] w-full items-center justify-center">
+                        <Spinner class="size-10" />
+                    </div>
+                {:else}
+                    {@render children()}
+                {/if}
+                <div class="md:hidden">
+                    <Footer />
+                </div>
             </main>
         </div>
     </div>

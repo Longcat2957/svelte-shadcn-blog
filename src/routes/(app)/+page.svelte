@@ -2,6 +2,7 @@
     import { page } from '$app/stores';
     import { untrack } from 'svelte';
     import { Badge } from '$lib/components/ui/badge';
+    import * as Pagination from '$lib/components/ui/pagination';
 
     type PostSummary = {
         id: number;
@@ -46,7 +47,12 @@
         if (selectedCategoryId === null) return null;
         return findCategoryName(categories, selectedCategoryId);
     });
-    let nextCursor = $state<number | null>(null);
+
+    // Pagination State
+    let currentPage = $state(1);
+    let totalCount = $state(0);
+    const perPage = 20;
+
     let loading = $state(false);
 
     const query = $derived($page.url.searchParams.get('q') ?? '');
@@ -58,15 +64,17 @@
         tags = data.items;
     }
 
-    async function loadPosts(reset: boolean) {
-        if (loading) return;
+    async function loadPosts() {
+        // Allow loading to re-trigger if params changed, but debounce if needed? 
+        // For now, simple lock.
+        if (loading) return; 
         loading = true;
 
         try {
             const url = new URL('/api/posts', window.location.origin);
-            url.searchParams.set('limit', '20');
-            const cursor = reset ? null : nextCursor;
-            if (cursor) url.searchParams.set('cursor', String(cursor));
+            url.searchParams.set('limit', String(perPage));
+            url.searchParams.set('page', String(currentPage));
+            
             if (selectedTag) url.searchParams.set('tag', selectedTag);
             if (selectedCategoryId !== null) {
                 url.searchParams.set('categoryId', String(selectedCategoryId));
@@ -75,10 +83,11 @@
 
             const res = await fetch(url);
             if (!res.ok) return;
-            const data = (await res.json()) as { items: PostSummary[]; nextCursor: number | null };
+            
+            const data = (await res.json()) as { items: PostSummary[]; totalCount: number };
 
-            posts = reset ? data.items : [...posts, ...data.items];
-            nextCursor = data.nextCursor;
+            posts = data.items;
+            totalCount = data.totalCount;
         } finally {
             loading = false;
         }
@@ -88,16 +97,31 @@
         loadTags();
     });
 
+    // Reset pagination when filters change
     $effect(() => {
-        // 태그 또는 카테고리 또는 쿼리 변경 시 재조회
         const _q = query;
         const _t = selectedTag;
         const _c = selectedCategoryId;
 
         untrack(() => {
-            posts = [];
-            nextCursor = null;
-            void loadPosts(true);
+            currentPage = 1;
+        });
+    });
+
+    // Load posts when Page or Filters change
+    $effect(() => {
+        const _q = query;
+        const _t = selectedTag;
+        const _c = selectedCategoryId;
+        const _p = currentPage; // triggering dependency
+
+        untrack(() => {
+            // Need to clear "loading" if it was stuck? No.
+            // Reset loader?
+            // To allow re-fetch if currently loading but params changed? 
+            // Ideally we should abort controller, but for simplicity:
+            loading = false; 
+            void loadPosts();
         });
     });
 
@@ -107,9 +131,12 @@
 <div class="space-y-8">
     <div class="space-y-6">
         <div class="space-y-2">
-            <h1 class="text-3xl font-bold tracking-tight">
-                {selectedCategoryName ?? 'Latest Posts'}
-            </h1>
+            <div class="flex items-baseline justify-between">
+                <h1 class="text-3xl font-bold tracking-tight">
+                    {selectedCategoryName ?? 'Latest Posts'}
+                </h1>
+                <span class="text-sm text-muted-foreground">Total {totalCount} posts</span>
+            </div>
             {#if selectedCategoryId === null}
                 <p class="text-muted-foreground">Thoughts on development, design, and more.</p>
             {/if}
@@ -135,7 +162,7 @@
         </div>
     </div>
 
-    <div class="flex flex-col divide-y divide-border/40">
+    <div class="flex flex-col divide-y divide-border/40 transition-opacity duration-200" class:opacity-50={loading}>
         {#each filteredPosts as post}
             <a
                 href="/blog/{post.id}"
@@ -176,19 +203,40 @@
                 </article>
             </a>
         {/each}
+        
+        {#if filteredPosts.length === 0 && !loading}
+            <div class="py-12 text-center text-muted-foreground">
+                No posts found.
+            </div>
+        {/if}
     </div>
 
     <div class="flex flex-col items-center gap-3 border-t pt-8">
-        {#if nextCursor !== null}
-            <button
-                class="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground disabled:opacity-50"
-                disabled={loading}
-                onclick={() => loadPosts(false)}
-            >
-                {loading ? 'Loading…' : 'Load more'}
-            </button>
-        {:else}
-            <p class="text-xs text-muted-foreground">더 이상 게시글이 없습니다.</p>
-        {/if}
+        <Pagination.Root count={totalCount} {perPage} bind:page={currentPage}>
+            {#snippet children({ pages, currentPage })}
+                <Pagination.Content>
+                    <Pagination.Item>
+                        <Pagination.PrevButton />
+                    </Pagination.Item>
+                    {#each pages as page (page.key)}
+                        {#if page.type === 'ellipsis'}
+                            <Pagination.Item>
+                                <Pagination.Ellipsis />
+                            </Pagination.Item>
+                        {:else}
+                            <Pagination.Item>
+                                <Pagination.Link {page} isActive={currentPage === page.value}>
+                                    {page.value}
+                                </Pagination.Link>
+                            </Pagination.Item>
+                        {/if}
+                    {/each}
+                    
+                    <Pagination.Item>
+                        <Pagination.NextButton />
+                    </Pagination.Item>
+                </Pagination.Content>
+            {/snippet}
+        </Pagination.Root>
     </div>
 </div>
