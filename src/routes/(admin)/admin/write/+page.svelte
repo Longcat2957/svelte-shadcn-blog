@@ -29,6 +29,7 @@
     let published = $state(false);
     let saving = $state(false);
     let errorMessage = $state<string | null>(null);
+    let textareaRef = $state<HTMLTextAreaElement | null>(null);
     let postId = $derived(
         (() => {
             const raw = $page.url.searchParams.get('id');
@@ -164,6 +165,61 @@
             adminLayoutState.fullWidth = false;
         };
     });
+
+    async function handlePaste(e: ClipboardEvent) {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (const item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (!file) continue;
+
+                await uploadImage(file);
+                break;
+            }
+        }
+    }
+
+    async function uploadImage(file: File) {
+        if (!textareaRef) return;
+
+        // Create a unique placeholder to avoid collision
+        const id = Math.random().toString(36).substring(7);
+        const placeholder = `![Uploading ${file.name}...](${id})`;
+        const startPos = textareaRef.selectionStart;
+        const endPos = textareaRef.selectionEnd;
+
+        // Insert placeholder
+        const before = content.substring(0, startPos);
+        const after = content.substring(endPos);
+        content = before + placeholder + after;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const err = await readErrorMessage(res);
+                throw new Error(err || 'Upload failed');
+            }
+
+            const data = await res.json();
+            const markdown = `![${file.name}](${data.url})`;
+
+            content = content.replace(placeholder, markdown);
+        } catch (err: any) {
+            console.error(err);
+            errorMessage = err.message || 'Image upload failed';
+            content = content.replace(placeholder, `[Upload Failed: ${file.name}]`);
+        }
+    }
 </script>
 
 <!-- Snippets -->
@@ -274,6 +330,8 @@
                 placeholder="Write your post content here..."
                 class="{minHeightClass} h-full w-full resize-none border-0 p-4 focus-visible:ring-0"
                 bind:value={content}
+                bind:ref={textareaRef}
+                onpaste={handlePaste}
             />
         </div>
     </div>
