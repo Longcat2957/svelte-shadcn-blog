@@ -33,6 +33,7 @@ Svelte 5(Runes) + TailwindCSS + shadcn-svelte(bits-ui) 기반 UI, Drizzle ORM(Po
 - **이미지 업로드(Cloudflare Images)**
   - 관리자에서 이미지 업로드 API 제공
   - Cloudflare Images로 업로드 후 URL 반환
+  - `/admin/write` 에서 **클립보드 붙여넣기(Ctrl+V)** 뿐 아니라 **파일 선택 업로드**도 지원
 
 ---
 

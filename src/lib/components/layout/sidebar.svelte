@@ -152,7 +152,7 @@
     {/each}
 {/snippet}
 
-<div class="relative flex h-full flex-col bg-background">
+<div class="relative hidden h-full flex-col bg-background md:flex">
     <!-- Overlay Toggle Button on Border -->
     <div class="absolute top-6 -right-3 z-40 hidden md:block">
         <Button

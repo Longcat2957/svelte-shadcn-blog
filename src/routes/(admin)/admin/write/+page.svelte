@@ -4,6 +4,7 @@
     import { Button } from '$lib/components/ui/button';
     import { Switch } from '$lib/components/ui/switch';
     import Folder from '@lucide/svelte/icons/folder';
+    import Image from '@lucide/svelte/icons/image';
     import ChevronDown from '@lucide/svelte/icons/chevron-down';
     import Plus from '@lucide/svelte/icons/plus';
     import Eye from '@lucide/svelte/icons/eye';
@@ -30,6 +31,7 @@
     let saving = $state(false);
     let errorMessage = $state<string | null>(null);
     let textareaRef = $state<HTMLTextAreaElement | null>(null);
+    let fileInputRef = $state<HTMLInputElement | null>(null);
     let postId = $derived(
         (() => {
             const raw = $page.url.searchParams.get('id');
@@ -182,19 +184,46 @@
         }
     }
 
+    function openFilePicker() {
+        fileInputRef?.click();
+    }
+
+    async function handleFileSelect(e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        // 같은 파일 재선택 가능하도록 초기화
+        input.value = '';
+
+        for (const file of Array.from(files)) {
+            await uploadImage(file);
+        }
+    }
+
+    function insertAtSelection(text: string) {
+        if (!textareaRef) return;
+        const startPos = textareaRef.selectionStart;
+        const endPos = textareaRef.selectionEnd;
+
+        const before = content.substring(0, startPos);
+        const after = content.substring(endPos);
+        content = before + text + after;
+
+        const nextPos = startPos + text.length;
+        queueMicrotask(() => {
+            textareaRef?.focus();
+            textareaRef?.setSelectionRange(nextPos, nextPos);
+        });
+    }
+
     async function uploadImage(file: File) {
         if (!textareaRef) return;
 
         // Create a unique placeholder to avoid collision
-        const id = Math.random().toString(36).substring(7);
+        const id = crypto.randomUUID?.() ?? Math.random().toString(36).substring(7);
         const placeholder = `![Uploading ${file.name}...](${id})`;
-        const startPos = textareaRef.selectionStart;
-        const endPos = textareaRef.selectionEnd;
-
-        // Insert placeholder
-        const before = content.substring(0, startPos);
-        const after = content.substring(endPos);
-        content = before + placeholder + after;
+        insertAtSelection(placeholder);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -319,9 +348,27 @@
 
 {#snippet editorArea(minHeightClass = 'min-h-[600px]')}
     <div class="flex h-full flex-col space-y-2">
-        <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
-            >Content (Markdown)</label
-        >
+        <div class="flex items-center justify-between gap-3">
+            <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
+                >Content (Markdown)</label
+            >
+
+            <div class="flex items-center gap-2">
+                <input
+                    class="hidden"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    bind:this={fileInputRef}
+                    onchange={handleFileSelect}
+                />
+
+                <Button variant="outline" size="sm" onclick={openFilePicker}>
+                    <Image class="mr-2 size-4" />
+                    파일 업로드
+                </Button>
+            </div>
+        </div>
         <div
             class="flex-1 overflow-hidden rounded-lg border border-input bg-card/50 backdrop-blur-sm transition-all focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
         >

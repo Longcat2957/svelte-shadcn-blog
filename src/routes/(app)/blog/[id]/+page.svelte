@@ -42,43 +42,38 @@
     }
 </script>
 
-<article class="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-4">
+<article class="animate-in duration-500 fade-in slide-in-from-bottom-4">
     <div class="space-y-6">
         <h1
             class="max-w-full text-4xl leading-tight font-extrabold tracking-tight [overflow-wrap:anywhere] break-words lg:text-5xl"
         >
             {data.post.title}
         </h1>
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-3">
-                <Avatar.Root class="h-10 w-10 border">
-                    {#if data.author?.avatarUrl}
-                        <Avatar.Image
-                            src={data.author.avatarUrl}
-                            alt={data.author.username}
-                            referrerpolicy="no-referrer"
-                        />
-                    {/if}
-                    <Avatar.Fallback class="bg-muted text-xs text-muted-foreground">
-                        {data.author?.username?.slice(0, 1) ?? 'A'}
-                    </Avatar.Fallback>
-                </Avatar.Root>
-                <div class="flex flex-col text-sm">
-                    <span class="font-medium text-foreground"
-                        >{data.author?.username ?? 'Admin'}</span
-                    >
-                    <span class="text-xs text-muted-foreground">
-                        {formatDate(data.post.date)}
-                    </span>
+        <div class="space-y-3 sm:space-y-3">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <Avatar.Root class="h-10 w-10 border">
+                        {#if data.author?.avatarUrl}
+                            <Avatar.Image
+                                src={data.author.avatarUrl}
+                                alt={data.author.username}
+                                referrerpolicy="no-referrer"
+                            />
+                        {/if}
+                        <Avatar.Fallback class="bg-muted text-xs text-muted-foreground">
+                            {data.author?.username?.slice(0, 1) ?? 'A'}
+                        </Avatar.Fallback>
+                    </Avatar.Root>
+                    <div class="flex flex-col text-sm">
+                        <span class="font-medium text-foreground"
+                            >{data.author?.username ?? 'Admin'}</span
+                        >
+                        <span class="text-xs text-muted-foreground">
+                            {formatDate(data.post.date)}
+                        </span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="flex flex-wrap items-center gap-1.5">
-                {#each data.post.tags as tag}
-                    <Badge variant="secondary" class="rounded-md px-2 py-0.5 text-xs font-normal"
-                        >{tag}</Badge
-                    >
-                {/each}
                 {#if data.user}
                     <Button
                         href="/admin/write?id={data.post.id}"
@@ -90,9 +85,19 @@
                     </Button>
                 {/if}
             </div>
+
+            <div
+                class="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+                {#each data.post.tags as tag}
+                    <Badge variant="secondary" class="rounded-md px-2 py-0.5 text-xs font-normal"
+                        >{tag}</Badge
+                    >
+                {/each}
+            </div>
         </div>
     </div>
-    <hr />
+    <hr class="mt-2" />
     <MarkdownRenderer
         class="prose min-h-[400px] max-w-none prose-zinc dark:prose-invert"
         md={data.post.content}
