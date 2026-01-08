@@ -99,7 +99,7 @@
     </div>
     <hr class="mt-2" />
     <MarkdownRenderer
-        class="prose min-h-[400px] max-w-none prose-zinc dark:prose-invert"
+        class="prose min-h-[400px] max-w-none prose-zinc dark:prose-invert pt-4"
         md={data.post.content}
     />
 
