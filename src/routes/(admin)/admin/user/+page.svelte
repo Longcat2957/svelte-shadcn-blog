@@ -70,9 +70,7 @@
 <div class="mx-auto max-w-5xl space-y-8 pb-12">
     <div class="space-y-1">
         <h1 class="text-3xl font-bold tracking-tight">User Profile</h1>
-        <p class="text-sm text-muted-foreground">
-            Manage your admin profile settings.
-        </p>
+        <p class="text-sm text-muted-foreground">Manage your admin profile settings.</p>
     </div>
 
     {#if loading}
@@ -88,7 +86,7 @@
                 </Alert.Root>
             {/if}
             {#if successMessage}
-                 <Alert.Root>
+                <Alert.Root>
                     <Alert.Title>Success</Alert.Title>
                     <Alert.Description>{successMessage}</Alert.Description>
                 </Alert.Root>
@@ -97,12 +95,17 @@
             <div class="grid gap-6">
                 <!-- Avatar Section -->
                 <div class="flex flex-col items-center gap-4 sm:flex-row">
-                     <Avatar.Root class="size-24 border-2 border-border">
+                    <Avatar.Root class="size-24 border-2 border-border">
                         <Avatar.Image src={avatarUrl} alt={username} />
-                        <Avatar.Fallback class="text-2xl">{username.slice(0, 2).toUpperCase()}</Avatar.Fallback>
+                        <Avatar.Fallback class="text-2xl"
+                            >{username.slice(0, 2).toUpperCase()}</Avatar.Fallback
+                        >
                     </Avatar.Root>
-                    <div class="flex-1 space-y-2 w-full">
-                        <label for="avatar_url" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <div class="w-full flex-1 space-y-2">
+                        <label
+                            for="avatar_url"
+                            class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
                             Avatar URL
                         </label>
                         <Input
@@ -118,21 +121,18 @@
 
                 <!-- Username Section -->
                 <div class="space-y-2">
-                     <label for="username" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <label
+                        for="username"
+                        class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
                         Username
                     </label>
-                    <Input
-                        id="username"
-                        placeholder="admin"
-                        bind:value={username}
-                    />
-                     <p class="text-[0.8rem] text-muted-foreground">
-                        This is your login username.
-                    </p>
+                    <Input id="username" placeholder="admin" bind:value={username} />
+                    <p class="text-[0.8rem] text-muted-foreground">This is your login username.</p>
                 </div>
 
                 <div class="flex justify-end pt-4">
-                     <Button onclick={save} disabled={saving} class="min-w-[120px]">
+                    <Button onclick={save} disabled={saving} class="min-w-[120px]">
                         {#if saving}
                             <Loader2 class="mr-2 size-4 animate-spin" />
                             Saving...

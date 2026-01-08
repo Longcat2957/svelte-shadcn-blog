@@ -73,7 +73,6 @@ export const PATCH: RequestHandler = async (event) => {
         }
 
         return json({ user: { username: updated.username, avatar_url: updated.avatar_url } });
-
     } catch (e: any) {
         if (e.code === '23505') {
             return json({ message: 'Username already taken' }, { status: 409 });

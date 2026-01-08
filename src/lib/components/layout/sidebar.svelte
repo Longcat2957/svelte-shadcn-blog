@@ -123,9 +123,7 @@
                         />
                     {/each}
 
-                    {#if (item.postsTotal ?? 0) >
-                        (item.postsPreview?.length ?? 0) +
-                            (loadedPostsByCategoryId[item.id]?.items.length ?? 0)}
+                    {#if (item.postsTotal ?? 0) > (item.postsPreview?.length ?? 0) + (loadedPostsByCategoryId[item.id]?.items.length ?? 0)}
                         <TreeView.File
                             name={loadedPostsByCategoryId[item.id]?.loading
                                 ? '불러오는 중...'

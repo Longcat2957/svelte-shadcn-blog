@@ -51,7 +51,9 @@
                     </Avatar.Fallback>
                 </Avatar.Root>
                 <div class="flex flex-col text-sm">
-                    <span class="font-medium text-foreground">{data.author?.username ?? 'Admin'}</span>
+                    <span class="font-medium text-foreground"
+                        >{data.author?.username ?? 'Admin'}</span
+                    >
                     <time class="text-muted-foreground" datetime={data.post.date}
                         >{data.post.date}</time
                     >
@@ -81,4 +83,3 @@
         }))}
     />
 </article>
-
