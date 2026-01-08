@@ -196,7 +196,7 @@
                     </Button>
                 </div>
                 <div class="flex items-center justify-center">
-                    <span class="text-xs text-muted-foreground">© 2024 Blog</span>
+                    <span class="text-xs text-muted-foreground">© 2026 Blog</span>
                 </div>
             </div>
         </aside>

@@ -3,7 +3,8 @@
     import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
     import PenBox from '@lucide/svelte/icons/pen-box';
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-    import { page } from '$app/stores';
+    import { page, navigating } from '$app/stores';
+    import { Spinner } from '$lib/components/ui/spinner';
     import TopNav from '$lib/components/layout/top-nav.svelte';
     import MobileHeader from '$lib/components/layout/mobile-header.svelte';
     import Settings from '@lucide/svelte/icons/settings';
@@ -107,7 +108,13 @@
                 <MobileHeader bind:open={mobileMenuOpen} />
 
                 <main class="min-w-0 flex-1 bg-background p-4 md:p-8">
-                    {@render children()}
+                    {#if $navigating}
+                        <div class="flex h-[50vh] w-full items-center justify-center">
+                            <Spinner class="size-10" />
+                        </div>
+                    {:else}
+                        {@render children()}
+                    {/if}
                 </main>
             </div>
         </div>

@@ -9,10 +9,10 @@
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
         <p class="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
             Built by <a
-                href="/"
+                href="https://github.com/Longcat2957"
                 class="font-medium underline underline-offset-4"
             >
-                min
+                Longcat2957
             </a>.
             The source code is available on <a
                 href="https://github.com/Longcat2957/svelte-shadcn-blog"
