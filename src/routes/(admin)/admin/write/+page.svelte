@@ -262,7 +262,7 @@
 {/snippet}
 
 {#snippet editorArea(minHeightClass = 'min-h-[600px]')}
-    <div class="space-y-2 h-full flex flex-col">
+    <div class="flex h-full flex-col space-y-2">
         <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
             >Content (Markdown)</label
         >
@@ -272,7 +272,7 @@
             <Textarea
                 id="content"
                 placeholder="Write your post content here..."
-                class="{minHeightClass} w-full resize-none border-0 p-4 focus-visible:ring-0 h-full"
+                class="{minHeightClass} h-full w-full resize-none border-0 p-4 focus-visible:ring-0"
                 bind:value={content}
             />
         </div>
@@ -320,7 +320,7 @@
     {:else}
         <!-- Split View Preview (simplified wrapper) -->
         <div class="space-y-4 pr-4">
-            <h1 class="text-3xl font-bold border-b pb-4">{title || 'Untitled'}</h1>
+            <h1 class="border-b pb-4 text-3xl font-bold">{title || 'Untitled'}</h1>
             {#if content}
                 <MarkdownRenderer class="prose max-w-none dark:prose-invert" md={content} />
             {:else}
@@ -378,18 +378,18 @@
         {/if}
 
         {#if viewMode === 'split'}
-            <div class="grid grid-cols-2 gap-8 h-full min-h-0">
+            <div class="grid h-full min-h-0 grid-cols-2 gap-8">
                 <!-- Left Pane: Editor -->
-                <div class="flex flex-col gap-6 overflow-y-auto pr-4 h-full">
+                <div class="flex h-full flex-col gap-6 overflow-y-auto pr-4">
                     {@render inputFields(true)}
                     {@render tagPicker()}
-                    <div class="flex-1 min-h-[400px]">
+                    <div class="min-h-[400px] flex-1">
                         {@render editorArea('min-h-full')}
                     </div>
                 </div>
 
                 <!-- Right Pane: Preview -->
-                <div class="overflow-y-auto border-l pl-8 h-full">
+                <div class="h-full overflow-y-auto border-l pl-8">
                     {@render previewArea(false)}
                 </div>
             </div>

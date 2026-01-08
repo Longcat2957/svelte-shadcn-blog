@@ -8,11 +8,7 @@
     type Props = { md: string; class?: string };
     let { md, class: className }: Props = $props();
 
-    const plugins = [
-        gfmPlugin(),
-        { rehypePlugin: rehypeExtractCode },
-        { rehypePlugin: rehypeRaw }
-    ];
+    const plugins = [gfmPlugin(), { rehypePlugin: rehypeExtractCode }, { rehypePlugin: rehypeRaw }];
 </script>
 
 {#snippet customPre(props: any)}

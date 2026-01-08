@@ -156,7 +156,7 @@
 
         <div class="grid gap-4 md:grid-cols-[1fr_200px_auto]">
             <div class="relative">
-                <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
                     placeholder="Search posts..."
@@ -181,17 +181,13 @@
                             tagFilter = '';
                             loadPosts(true);
                         }}
-                        class="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                        class="absolute top-2.5 right-2 text-muted-foreground hover:text-foreground"
                     >
                         <X class="h-4 w-4" />
                     </button>
                 {/if}
             </div>
-            <Button
-                variant="secondary"
-                onclick={() => loadPosts(true)}
-                disabled={loading}
-            >
+            <Button variant="secondary" onclick={() => loadPosts(true)} disabled={loading}>
                 Search
             </Button>
         </div>
