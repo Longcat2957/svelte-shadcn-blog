@@ -5,13 +5,16 @@
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
     import Loader2 from '@lucide/svelte/icons/loader-2';
+    import Upload from '@lucide/svelte/icons/upload';
 
     let username = $state('');
     let avatarUrl = $state('');
     let loading = $state(true);
     let saving = $state(false);
+    let uploading = $state(false);
     let errorMessage = $state<string | null>(null);
     let successMessage = $state<string | null>(null);
+    let fileInput = $state<HTMLInputElement | null>(null);
 
     async function loadUser() {
         loading = true;
@@ -62,6 +65,38 @@
         }
     }
 
+    async function handleFileSelect(e: Event) {
+        const target = e.target as HTMLInputElement;
+        const file = target.files?.[0];
+        if (!file) return;
+
+        uploading = true;
+        errorMessage = null;
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const err = await readErrorMessage(res);
+                throw new Error(err || 'Upload failed');
+            }
+
+            const data = await res.json();
+            avatarUrl = data.url;
+            successMessage = 'Image uploaded successfully. Don\'t forget to save changes.';
+        } catch (err: any) {
+            errorMessage = err.message || 'Image upload failed';
+        } finally {
+            uploading = false;
+            if (fileInput) fileInput.value = '';
+        }
+    }
+
     $effect(() => {
         loadUser();
     });
@@ -108,13 +143,35 @@
                         >
                             Avatar URL
                         </label>
-                        <Input
-                            id="avatar_url"
-                            placeholder="https://example.com/avatar.png"
-                            bind:value={avatarUrl}
-                        />
+                        <div class="flex gap-2">
+                            <Input
+                                id="avatar_url"
+                                placeholder="https://example.com/avatar.png"
+                                bind:value={avatarUrl}
+                            />
+                            <input
+                                type="file"
+                                accept="image/*"
+                                class="hidden"
+                                bind:this={fileInput}
+                                onchange={handleFileSelect}
+                            />
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                disabled={uploading}
+                                onclick={() => fileInput?.click()}
+                                aria-label="Upload image"
+                            >
+                                {#if uploading}
+                                    <Loader2 class="size-4 animate-spin" />
+                                {:else}
+                                    <Upload class="size-4" />
+                                {/if}
+                            </Button>
+                        </div>
                         <p class="text-[0.8rem] text-muted-foreground">
-                            Enter a URL for your profile picture.
+                            Enter a URL or upload an image for your profile picture.
                         </p>
                     </div>
                 </div>
