@@ -1,7 +1,10 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
     import { Badge } from '$lib/components/ui/badge';
+    import { Input } from '$lib/components/ui/input';
     import Plus from '@lucide/svelte/icons/plus';
+    import Search from '@lucide/svelte/icons/search';
+    import X from '@lucide/svelte/icons/x';
     import { untrack } from 'svelte';
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
@@ -28,6 +31,8 @@
     let stats = $state<DashboardStats | null>(null);
     let posts = $state<PostItem[]>([]);
     let filter = $state<'all' | 'published' | 'draft'>('all');
+    let searchQuery = $state('');
+    let tagFilter = $state('');
     let nextCursor = $state<number | null>(null);
     let loading = $state(false);
     let errorMessage = $state<string | null>(null);
@@ -65,6 +70,13 @@
 
             if (filter === 'published') url.searchParams.set('published', 'true');
             if (filter === 'draft') url.searchParams.set('published', 'false');
+
+            // 검색어 및 태그 필터 적용
+            const q = searchQuery.trim();
+            if (q) url.searchParams.set('q', q);
+
+            const t = tagFilter.trim();
+            if (t) url.searchParams.set('tag', t);
 
             const res = await fetch(url);
             if (!res.ok) {
@@ -142,6 +154,48 @@
             />
         </div>
 
+        <div class="grid gap-4 md:grid-cols-[1fr_200px_auto]">
+            <div class="relative">
+                <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search posts..."
+                    class="pl-9"
+                    bind:value={searchQuery}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') loadPosts(true);
+                    }}
+                />
+            </div>
+            <div class="relative">
+                <Input
+                    placeholder="Filter by tag..."
+                    bind:value={tagFilter}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') loadPosts(true);
+                    }}
+                />
+                {#if tagFilter}
+                    <button
+                        onclick={() => {
+                            tagFilter = '';
+                            loadPosts(true);
+                        }}
+                        class="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
+                {/if}
+            </div>
+            <Button
+                variant="secondary"
+                onclick={() => loadPosts(true)}
+                disabled={loading}
+            >
+                Search
+            </Button>
+        </div>
+
         <!-- Post List -->
         <div
             class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm"
@@ -176,7 +230,15 @@
                                 <span class="h-3 w-[1px] bg-border"></span>
                                 <div class="flex gap-2">
                                     {#each post.tags as tag}
-                                        <span>#{tag}</span>
+                                        <button
+                                            class="hover:text-primary hover:underline"
+                                            onclick={() => {
+                                                tagFilter = tag;
+                                                loadPosts(true);
+                                            }}
+                                        >
+                                            #{tag}
+                                        </button>
                                     {/each}
                                 </div>
                             {/if}

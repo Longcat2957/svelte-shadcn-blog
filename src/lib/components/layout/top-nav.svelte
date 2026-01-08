@@ -61,7 +61,9 @@
     </div>
 
     <div class="flex flex-1 items-center justify-end px-4">
-        <SearchBar class="hidden md:flex" expandable={true} />
+        {#if !$page.url.pathname.startsWith('/admin')}
+            <SearchBar class="hidden md:flex" expandable={true} />
+        {/if}
     </div>
 
     <div class="flex items-center gap-2">

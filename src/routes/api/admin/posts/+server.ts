@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
-import { and, desc, eq, ilike, lt, or } from 'drizzle-orm';
+import { and, arrayContains, desc, eq, ilike, lt, or } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../_utils';
 
 function parseOptionalInt(v: string | null): number | null {
@@ -23,6 +23,7 @@ export const GET: RequestHandler = async (event) => {
     const publishedParam = event.url.searchParams.get('published');
     const categoryId = parseOptionalInt(event.url.searchParams.get('categoryId'));
     const q = (event.url.searchParams.get('q') ?? '').trim();
+    const tag = (event.url.searchParams.get('tag') ?? '').trim();
 
     const filters = [] as any[];
     if (publishedParam === 'true') filters.push(eq(post.published, true));
@@ -32,6 +33,9 @@ export const GET: RequestHandler = async (event) => {
     if (q) {
         // title/description에 대한 간단 검색
         filters.push(or(ilike(post.title, `%${q}%`), ilike(post.description, `%${q}%`)));
+    }
+    if (tag) {
+        filters.push(arrayContains(post.tags, [tag]));
     }
 
     const where = filters.length ? and(...filters) : undefined;
