@@ -267,7 +267,7 @@
             >Content (Markdown)</label
         >
         <div
-            class="flex-1 overflow-hidden rounded-lg border bg-card/50 backdrop-blur-sm transition-all focus-within:ring-1 focus-within:ring-ring"
+            class="flex-1 overflow-hidden rounded-lg border border-input bg-card/50 backdrop-blur-sm transition-all focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
         >
             <Textarea
                 id="content"
