@@ -1,236 +1,29 @@
-export const md = `# About (Markdown Test)
-
-Lorem ipsum dolor sit amet, **consectetur adipiscing elit**.
-
-## 리스트
-
-- Item 1
-- Item 2
-- Item 3
-
-## 코드 블록 테스트
-
-### Bash
-\`\`\`bash
-#!/bin/bash
-echo "Hello, World!"
-name="User"
-echo "Welcome, $name"
-\`\`\`
-
-### C
-\`\`\`c
-#include <stdio.h>
-
-int main() {
-    printf("Hello, World!\\n");
-    return 0;
-}
-\`\`\`
-
-### C++
-\`\`\`cpp
-#include <iostream>
-
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
-}
-\`\`\`
-
-### C#
-\`\`\`csharp
-using System;
-
-class Program {
-    static void Main() {
-        Console.WriteLine("Hello, World!");
-    }
-}
-\`\`\`
-
-### CSS
-\`\`\`css
-body {
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
-}
-
-.container {
-    padding: 20px;
-}
-\`\`\`
-
-### Go
-\`\`\`go
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Println("Hello, World!")
-}
-\`\`\`
-
-### Java
-\`\`\`java
-public class HelloWorld {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
-}
-\`\`\`
-
-### JavaScript
-\`\`\`javascript
-const greeting = "Hello, World!";
-console.log(greeting);
-
-function add(a, b) {
-    return a + b;
-}
-\`\`\`
-
-### JSON
-\`\`\`json
-{
-    "name": "Svelte",
-    "version": 5,
-    "features": ["Runes", "Signal-based reactivity"]
-}
-\`\`\`
-
-### Kotlin
-\`\`\`kotlin
-fun main() {
-    println("Hello, World!")
-    val items = listOf("apple", "banana", "kiwifruit")
-    for (item in items) {
-        println(item)
-    }
-}
-\`\`\`
-
-### Markdown
-\`\`\`markdown
-# Title
-
-**Bold text** and *italic text*.
-
-- List item 1
-- List item 2
-\`\`\`
-
-### PHP
-\`\`\`php
-<?php
-echo "Hello, World!";
-$name = "User";
-echo "Welcome, $name";
-?>
-\`\`\`
-
-### Python
-\`\`\`python
-def fib(n):
-    a, b = 0, 1
-    while a < n:
-        print(a, end=' ')
-        a, b = b, a+b
-    print()
-
-fib(1000)
-\`\`\`
-
-### Ruby
-\`\`\`ruby
-class Greeter
-  def initialize(name = "World")
-    @name = name
-  end
+export const md = `# About
   
-  def say_hi
-    puts "Hi #{@name}!"
-  end
-end
-
-g = Greeter.new("Svelte")
-g.say_hi
-\`\`\`
-
-### Rust
-\`\`\`rust
-fn main() {
-    println!("Hello, World!");
-    let x = 5;
-    let y = 10;
-    println!("x + y = {}", x + y);
-}
-\`\`\`
-
-### SQL
-\`\`\`sql
-SELECT id, username, email
-FROM users
-WHERE active = 1
-ORDER BY created_at DESC;
-\`\`\`
-
-### Swift
-\`\`\`swift
-import Swift
-
-print("Hello, World!")
-
-let interestingNumbers = [
-    "Prime": [2, 3, 5, 7, 11, 13],
-    "Fibonacci": [1, 1, 2, 3, 5, 8],
-    "Square": [1, 4, 9, 16, 25],
-]
-\`\`\`
-
-### TypeScript
-\`\`\`typescript
-interface User {
-    id: number;
-    name: string;
-}
-
-const user: User = {
-    id: 1,
-    name: "Svelte User"
-};
-
-console.log(\`User: \${user.name}\`);
-\`\`\`
-
-### XML / HTML
-\`\`\`xml
-<note>
-  <to>User</to>
-  <from>Admin</from>
-  <heading>Reminder</heading>
-  <body>Don't forget me this weekend!</body>
-</note>
-\`\`\`
-
-### YAML
-\`\`\`yaml
-name: svelte-project
-version: 1.0.0
-dependencies:
-  svelte: ^5.0.0
-  vite: ^5.0.0
-\`\`\`
-
-## 인용문
-
-> This is a blockquote.
-
-## 테이블 (GFM)
-
-| Col A | Col B |
-| ----: | :---- |
-| 1     | left  |
-| 2     | right |
-`;
+안녕하세요. 유행을 따르기보다 **본질적인 효율**을 추구하며, 남들이 안 하는 방식을 한 발 앞서 시도하는 힙스터 개발자입니다. AI로 시작해 현재는 온프레미스 기반의 웹 생태계를 구축하고 있습니다.
+  
+## 힙스터 풀스택 개발자
+### 현재 사용중인 환경
+1.  **서버**: 클라우드 비용에 고통받기 싫어 **온프레미스(On-Premise)** 로 직접 서버랙을 구축하여 운영 중
+2.  **프론트엔드**: React의 복잡함에 지쳐 **Svelte 5 (with Runes)** 의 직관적인 반응성을 사랑하는 중
+3.  **백엔드**: Python의 생산성과 고성능 비동기 처리를 위한 **FastAPI (PostgreSQL)** 조합 선호
+  
+## 미천한 경력사항
+- **조기 교육의 수혜자**: 대학교 2학년 때부터 실무 투입, 돈 받으며 코딩하는 맛을 알아버린 주니어 시절
+- **PyTorch 고인물**: TensorFlow가 시장을 점유하던 시절부터 꿋꿋하게 **PyTorch**만 판 결과, 현재의 메인스트림 승차에 성공
+- **Deep Learning Architect**: PyTorch를 이용해 Custom Layer 설계부터 Distributed Data Parallel(DDP) 멀티 GPU 학습 최적화까지 굴러먹음
+- **AI Specialist**: Computer Vision 기반 AI 프로젝트 다수 수행 (얼굴 인식, 객체 탐지, 이미지 세그먼테이션 등)
+- **강단에 선 개발자**: 모교 전공 수업 강사로 초빙되어 후배들에게 "실무 코딩의 매운맛"과 "PyTorch의 우아함"을 전파
+- **현재**: 어쩌다 보니 AI 모델 서빙을 위해 웹 개발에 발을 들였다가, 현재는 풀스택의 세계에서 허우적거리는 중
+- **정부 공인(?) 창업가**: 중기부 주관 _생애최초 청년창업 지원사업_ 선정 (현재는 사라진 전설의 사업)
+  
+## 전설적인 업적 (Tech Investments)
+단순한 코딩 실력을 넘어, 하드웨어 수급과 인프라 확보에서 타의 추종을 불허하는 운과 안목을 보유하고 있습니다.
+1.  **NVIDIA RTX 4090 FE**: 2,630,000원 정가로 저점 매수 성공 (현재가 비교 불가)
+2.  **NVIDIA RTX 4090 Blower**: 딥러닝 워크스테이션 구성을 위해 장당 2,400,000원에 2장 확보
+3.  **인프라 해킹(?)**: 창업지원센터와의 치열한 협상 끝에 금보다 귀하다는 **고정 IP 2개** 무료 할당 완료
+4.  **메모리 풀매수**: DDR5 32GB 램을 개당 9만원대라는 역사적 저점에서 확보
+5.  **RTX PRO 6000(예정)**: 더 거대한 모델 학습을 위해 눈물을 머금고 NVIDIA(악덕기업) 제품 구매 예정
+  
+---
+`
