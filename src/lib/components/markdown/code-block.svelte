@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createHighlighter, type Highlighter } from 'shiki';
+    import { getHighlighter } from './shiki-highlighter.svelte';
     import { Check, Copy } from '@lucide/svelte';
     import { fade } from 'svelte/transition';
     import type { HTMLAttributes } from 'svelte/elements';
@@ -10,44 +10,16 @@
         ...rest
     }: { code?: string; lang?: string } & HTMLAttributes<HTMLPreElement> = $props();
 
-    let highlighter: Highlighter | null = $state(null);
+    let highlighter = $state<Awaited<ReturnType<typeof getHighlighter>> | null>(null);
     let copied = $state(false);
     let cleanCode = $derived(code.endsWith('\n') ? code.slice(0, -1) : code);
     let lines = $derived(cleanCode.split('\n'));
 
-    // Shiki 초기화
+    // Shiki 싱글톤 초기화
     $effect(() => {
-        if (!highlighter) {
-            createHighlighter({
-                themes: ['github-dark'],
-                langs: [
-                    'bash',
-                    'c',
-                    'cpp',
-                    'csharp',
-                    'css',
-                    'go',
-                    'java',
-                    'javascript',
-                    'json',
-                    'kotlin',
-                    'markdown',
-                    'php',
-                    'python',
-                    'ruby',
-                    'rust',
-                    'sql',
-                    'swift',
-                    'typescript',
-                    'xml',
-                    'yaml',
-                    'svelte',
-                    'dockerfile'
-                ]
-            }).then((h) => {
-                highlighter = h;
-            });
-        }
+        getHighlighter().then((h) => {
+            highlighter = h;
+        });
     });
 
     // 언어 매핑 (shiki는 문자열로 언어 지정)
@@ -74,19 +46,41 @@
     // 하이라이팅된 코드
     let highlightedCode = $state('');
 
+    // 배경색 제거하고 텍스트 색상만 유지
+    function removeBackgroundStyles(html: string): string {
+        // pre, code 태그의 style 속성에서 background 관련 스타일 제거
+        return html
+            .replace(/style="([^"]*)"/g, (match, styles) => {
+                const filteredStyles = styles
+                    .split(';')
+                    .filter((s: string) => {
+                        const prop = s.trim().toLowerCase();
+                        // color 관련만 유지, background는 제거
+                        return prop.startsWith('color:') && !prop.includes('background');
+                    })
+                    .join(';');
+                return filteredStyles ? `style="${filteredStyles}"` : '';
+            })
+            .replace(/style=""/g, '')
+            .replace(/<pre([^>]*)style=""/g, '<pre$1')
+            .replace(/<code([^>]*)style=""/g, '<code$1');
+    }
+
     $effect(() => {
         if (highlighter && cleanCode && normalizedLang) {
             try {
-                highlightedCode = highlighter.codeToHtml(cleanCode, {
+                const rawHtml = highlighter.codeToHtml(cleanCode, {
                     lang: normalizedLang,
                     theme: 'github-dark'
                 });
+                highlightedCode = removeBackgroundStyles(rawHtml);
             } catch {
                 // 지원하지 않는 언어인 경우 plaintext로 폴백
-                highlightedCode = highlighter.codeToHtml(cleanCode, {
+                const rawHtml = highlighter.codeToHtml(cleanCode, {
                     lang: 'text',
                     theme: 'github-dark'
                 });
+                highlightedCode = removeBackgroundStyles(rawHtml);
             }
         }
     });
@@ -100,6 +94,19 @@
         }, 2000);
     }
 </script>
+
+<style>
+    .code-content :global(pre) {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        line-height: 1.5rem;
+    }
+    .code-content :global(code) {
+        background: transparent;
+        line-height: 1.5rem;
+    }
+</style>
 
 {#if code}
     <div
@@ -122,6 +129,14 @@
             {/if}
         </button>
 
+        {#if normalizedLang}
+            <div
+                class="absolute right-2 bottom-2 select-none text-xs text-muted-foreground/40 font-mono"
+            >
+                {normalizedLang}
+            </div>
+        {/if}
+
         <div class="flex overflow-x-auto py-3">
             <!-- Line Numbers -->
             <div
@@ -133,7 +148,7 @@
             </div>
 
             <!-- Code -->
-            <div class="min-w-0 flex-1 pr-10 pl-2">
+            <div class="code-content min-w-0 flex-1 pr-10 pl-2">
                 {#if highlightedCode}
                     {@html highlightedCode}
                 {:else}
