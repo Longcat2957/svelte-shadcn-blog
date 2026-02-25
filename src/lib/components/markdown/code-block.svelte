@@ -25,6 +25,7 @@
     import type { HTMLAttributes } from 'svelte/elements';
     import { Check, Copy } from '@lucide/svelte';
     import { fade } from 'svelte/transition';
+    import svelte from './languages/svelte';
 
     let {
         code = '',
@@ -65,7 +66,7 @@
         ts: typescript,
         xml,
         html: xml,
-        svelte: xml,
+        svelte,
         yaml,
         yml: yaml,
         dockerfile: dockerfile
