@@ -1,31 +1,8 @@
 <script lang="ts">
-    import { Highlight } from 'svelte-highlight';
-    import bash from 'svelte-highlight/languages/bash';
-    import c from 'svelte-highlight/languages/c';
-    import cpp from 'svelte-highlight/languages/cpp';
-    import csharp from 'svelte-highlight/languages/csharp';
-    import css from 'svelte-highlight/languages/css';
-    import go from 'svelte-highlight/languages/go';
-    import java from 'svelte-highlight/languages/java';
-    import javascript from 'svelte-highlight/languages/javascript';
-    import json from 'svelte-highlight/languages/json';
-    import kotlin from 'svelte-highlight/languages/kotlin';
-    import markdown from 'svelte-highlight/languages/markdown';
-    import php from 'svelte-highlight/languages/php';
-    import python from 'svelte-highlight/languages/python';
-    import ruby from 'svelte-highlight/languages/ruby';
-    import rust from 'svelte-highlight/languages/rust';
-    import sql from 'svelte-highlight/languages/sql';
-    import swift from 'svelte-highlight/languages/swift';
-    import typescript from 'svelte-highlight/languages/typescript';
-    import xml from 'svelte-highlight/languages/xml';
-    import yaml from 'svelte-highlight/languages/yaml';
-    import { dockerfile } from 'svelte-highlight/languages';
-    import githubDark from 'svelte-highlight/styles/github-dark';
-    import type { HTMLAttributes } from 'svelte/elements';
+    import { createHighlighter, type Highlighter } from 'shiki';
     import { Check, Copy } from '@lucide/svelte';
     import { fade } from 'svelte/transition';
-    import svelte from './languages/svelte';
+    import type { HTMLAttributes } from 'svelte/elements';
 
     let {
         code = '',
@@ -33,52 +10,86 @@
         ...rest
     }: { code?: string; lang?: string } & HTMLAttributes<HTMLPreElement> = $props();
 
-    const languages: Record<string, any> = {
-        bash,
-        sh: bash,
-        shell: bash,
-        c,
-        cpp,
-        'c++': cpp,
-        cs: csharp,
-        csharp,
-        css,
-        go,
-        golang: go,
-        java,
-        javascript,
-        js: javascript,
-        json,
-        kotlin,
-        kt: kotlin,
-        markdown,
-        md: markdown,
-        php,
-        python,
-        py: python,
-        ruby,
-        rb: ruby,
-        rust,
-        rs: rust,
-        sql,
-        swift,
-        typescript,
-        ts: typescript,
-        xml,
-        html: xml,
-        svelte,
-        yaml,
-        yml: yaml,
-        dockerfile: dockerfile
-    };
-
-    // `lang`는 $props()에서 온 reactive 값이므로 파생값으로 계산해야
-    // 변경 시점에 하이라이트 언어도 함께 갱신됩니다.
-    const language = $derived(languages[lang] || xml);
-
+    let highlighter: Highlighter | null = $state(null);
     let copied = $state(false);
     let cleanCode = $derived(code.endsWith('\n') ? code.slice(0, -1) : code);
     let lines = $derived(cleanCode.split('\n'));
+
+    // Shiki 초기화
+    $effect(() => {
+        if (!highlighter) {
+            createHighlighter({
+                themes: ['github-dark'],
+                langs: [
+                    'bash',
+                    'c',
+                    'cpp',
+                    'csharp',
+                    'css',
+                    'go',
+                    'java',
+                    'javascript',
+                    'json',
+                    'kotlin',
+                    'markdown',
+                    'php',
+                    'python',
+                    'ruby',
+                    'rust',
+                    'sql',
+                    'swift',
+                    'typescript',
+                    'xml',
+                    'yaml',
+                    'svelte',
+                    'dockerfile'
+                ]
+            }).then((h) => {
+                highlighter = h;
+            });
+        }
+    });
+
+    // 언어 매핑 (shiki는 문자열로 언어 지정)
+    const langMap: Record<string, string> = {
+        sh: 'bash',
+        shell: 'bash',
+        'c++': 'cpp',
+        cs: 'csharp',
+        golang: 'go',
+        js: 'javascript',
+        kt: 'kotlin',
+        md: 'markdown',
+        py: 'python',
+        rb: 'ruby',
+        rs: 'rust',
+        ts: 'typescript',
+        html: 'html',
+        yml: 'yaml'
+    };
+
+    // 언어 이름 정규화
+    const normalizedLang = $derived(langMap[lang] || lang);
+
+    // 하이라이팅된 코드
+    let highlightedCode = $state('');
+
+    $effect(() => {
+        if (highlighter && cleanCode && normalizedLang) {
+            try {
+                highlightedCode = highlighter.codeToHtml(cleanCode, {
+                    lang: normalizedLang,
+                    theme: 'github-dark'
+                });
+            } catch {
+                // 지원하지 않는 언어인 경우 plaintext로 폴백
+                highlightedCode = highlighter.codeToHtml(cleanCode, {
+                    lang: 'text',
+                    theme: 'github-dark'
+                });
+            }
+        }
+    });
 
     function copyToClipboard() {
         if (!code) return;
@@ -89,10 +100,6 @@
         }, 2000);
     }
 </script>
-
-<svelte:head>
-    {@html githubDark}
-</svelte:head>
 
 {#if code}
     <div
@@ -127,11 +134,11 @@
 
             <!-- Code -->
             <div class="min-w-0 flex-1 pr-10 pl-2">
-                <Highlight
-                    {language}
-                    code={cleanCode}
-                    class="not-prose font-inherit! m-0! bg-transparent! p-0! leading-6! whitespace-pre [&_code]:m-0! [&_code]:bg-transparent! [&_code]:px-0.5! [&_code]:py-0!"
-                />
+                {#if highlightedCode}
+                    {@html highlightedCode}
+                {:else}
+                    <pre class="not-prose m-0! bg-transparent! p-0! leading-6 whitespace-pre"><code>{cleanCode}</code></pre>
+                {/if}
             </div>
         </div>
     </div>
