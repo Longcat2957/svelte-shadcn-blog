@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PageData } from './$types';
+    import { page } from '$app/stores';
     import { Badge } from '$lib/components/ui/badge';
     import { Button } from '$lib/components/ui/button';
     import CommentSection from '$lib/components/blog/comment-section.svelte';
@@ -41,6 +42,32 @@
         }).format(date);
     }
 </script>
+
+<svelte:head>
+    <title>{data.post.title} | 블로그</title>
+    {#if data.post.description}
+        <meta name="description" content={data.post.description} />
+        <meta property="og:description" content={data.post.description} />
+        <meta name="twitter:description" content={data.post.description} />
+    {/if}
+    <meta property="og:title" content={data.post.title} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={$page.url.href} />
+    <meta name="twitter:title" content={data.post.title} />
+    <link rel="canonical" href={$page.url.href} />
+    {@html `<script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: data.post.title,
+        description: data.post.description ?? undefined,
+        datePublished: data.post.date,
+        keywords: data.post.tags.join(', '),
+        author: data.author
+            ? { '@type': 'Person', name: data.author.username }
+            : undefined,
+        url: $page.url.href
+    })}</script>`}
+</svelte:head>
 
 <article class="animate-in duration-500 fade-in slide-in-from-bottom-4">
     <div class="space-y-6">

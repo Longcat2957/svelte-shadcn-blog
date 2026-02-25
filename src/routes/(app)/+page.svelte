@@ -128,6 +128,14 @@
     const filteredPosts = $derived(posts);
 </script>
 
+<svelte:head>
+    <title>블로그</title>
+    <meta name="description" content="개발, 설계, 그리고 일상에 대한 이야기를 담은 블로그입니다." />
+    <meta property="og:title" content="블로그" />
+    <meta property="og:description" content="개발, 설계, 그리고 일상에 대한 이야기를 담은 블로그입니다." />
+    <meta property="og:type" content="website" />
+</svelte:head>
+
 <div class="space-y-8">
     <div class="space-y-6">
         <div class="space-y-2">
