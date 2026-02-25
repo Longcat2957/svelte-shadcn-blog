@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post } from '$lib/server/db/schema';
-import { and, desc, eq, ilike, or, sql, count } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql, count, type SQL } from 'drizzle-orm';
 
 function parseOptionalInt(v: string | null): number | null {
     if (v === null) return null;
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async (event) => {
     const tag = (event.url.searchParams.get('tag') ?? '').trim();
     const q = (event.url.searchParams.get('q') ?? '').trim();
 
-    const filters = [] as any[];
+    const filters: SQL[] = [];
     filters.push(eq(post.published, true));
 
     if (categoryId !== null) filters.push(eq(post.category_id, categoryId));
@@ -32,7 +32,8 @@ export const GET: RequestHandler = async (event) => {
         filters.push(sql`${tag} = any(${post.tags})`);
     }
     if (q) {
-        filters.push(or(ilike(post.title, `%${q}%`), ilike(post.description, `%${q}%`)));
+        const searchCondition = or(ilike(post.title, `%${q}%`), ilike(post.description, `%${q}%`));
+        if (searchCondition) filters.push(searchCondition);
     }
 
     const where = filters.length ? and(...filters) : undefined;

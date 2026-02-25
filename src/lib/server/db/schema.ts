@@ -5,11 +5,9 @@ import {
     boolean,
     integer,
     timestamp,
-    index,
-    uniqueIndex,
-    foreignKey
+    index
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 
 // Users Table - 관리자 및 사용자 인증
 export const user = pgTable('user', {

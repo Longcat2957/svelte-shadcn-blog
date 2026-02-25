@@ -16,6 +16,17 @@ type PostPreview = {
     title: string;
 };
 
+type CategoryTreeNodeInternal = {
+    type: 'category';
+    id: number;
+    name: string;
+    parentId: number | null;
+    children: CategoryTreeNodeInternal[];
+    postsPreview: PostPreview[];
+    postsTotal: number;
+    sortOrder: number;
+};
+
 export type CategoryTreeNode = {
     type: 'category';
     id: number;
@@ -38,8 +49,8 @@ function parseOptionalInt(v: string | null): number | null {
 }
 
 function buildTree(rows: CategoryRow[]): CategoryTreeNode[] {
-    const map = new Map<number, CategoryTreeNode & { sortOrder: number }>();
-    const roots: (CategoryTreeNode & { sortOrder: number })[] = [];
+    const map = new Map<number, CategoryTreeNodeInternal>();
+    const roots: CategoryTreeNodeInternal[] = [];
 
     for (const r of rows) {
         map.set(r.id, {
@@ -62,19 +73,19 @@ function buildTree(rows: CategoryRow[]): CategoryTreeNode[] {
         }
     }
 
-    const sortNodes = (nodes: (CategoryTreeNode & { sortOrder: number })[]) => {
+    const sortNodes = (nodes: CategoryTreeNodeInternal[]) => {
         nodes.sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
         for (const n of nodes) {
-            sortNodes(n.children as any);
+            sortNodes(n.children);
         }
     };
     sortNodes(roots);
 
     // 응답에서 내부 정렬키 제거
-    const strip = (nodes: (CategoryTreeNode & { sortOrder: number })[]): CategoryTreeNode[] =>
+    const strip = (nodes: CategoryTreeNodeInternal[]): CategoryTreeNode[] =>
         nodes.map(({ sortOrder: _sortOrder, ...rest }) => ({
             ...rest,
-            children: strip(rest.children as any)
+            children: strip(rest.children)
         }));
 
     return strip(roots);

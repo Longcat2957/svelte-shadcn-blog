@@ -29,12 +29,10 @@
 
     let categories = $state<Category[]>([]);
     let errorMessage = $state<string | null>(null);
-    let errorVariant = $state<'default' | 'destructive'>('destructive');
 
     async function loadCategories() {
         const res = await fetch('/api/admin/categories');
         if (!res.ok) {
-            errorVariant = 'destructive';
             errorMessage = await readErrorMessage(res);
             return;
         }
@@ -84,7 +82,6 @@
             body: JSON.stringify({ name: 'New Category', parentId: parent.id })
         });
         if (!res.ok) {
-            errorVariant = 'destructive';
             errorMessage = await readErrorMessage(res);
             return;
         }
@@ -98,7 +95,6 @@
             body: JSON.stringify({ name: 'New Root Category', parentId: null })
         });
         if (!res.ok) {
-            errorVariant = 'destructive';
             errorMessage = await readErrorMessage(res);
             return;
         }
@@ -110,11 +106,9 @@
         if (!res.ok) {
             const payload = await readErrorPayload<{ code?: string; message?: string }>(res);
             if (payload?.code === 'CATEGORY_IN_USE') {
-                errorVariant = 'destructive';
                 errorMessage = payload.message ?? '포스트가 연결된 카테고리는 삭제할 수 없습니다.';
                 return;
             }
-            errorVariant = 'destructive';
             errorMessage =
                 payload?.message ??
                 (payload ? `${res.status} ${res.statusText}`.trim() : await readErrorMessage(res));
@@ -136,7 +130,6 @@
             body: JSON.stringify({ name })
         });
         if (!res.ok) {
-            errorVariant = 'destructive';
             errorMessage = await readErrorMessage(res);
             return;
         }
@@ -150,7 +143,6 @@
             body: JSON.stringify({ parentId, orderedIds })
         });
         if (!res.ok) {
-            errorVariant = 'destructive';
             errorMessage = await readErrorMessage(res);
         }
     }
@@ -207,7 +199,7 @@
     </div>
 
     {#if errorMessage}
-        <Alert.Root variant={errorVariant} class="flex items-start justify-between gap-4">
+        <Alert.Root variant="destructive" class="flex items-start justify-between gap-4">
             <div>
                 <Alert.Title>요청이 처리되지 않았습니다</Alert.Title>
                 <Alert.Description>{errorMessage}</Alert.Description>
