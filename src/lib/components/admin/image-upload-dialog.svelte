@@ -111,9 +111,7 @@
                 <Image class="size-5" />
                 이미지 업로드
             </Dialog.Title>
-            <Dialog.Description>
-                이미지를 업로드하고 크기와 정렬을 선택하세요.
-            </Dialog.Description>
+            <Dialog.Description>이미지를 업로드하고 크기와 정렬을 선택하세요.</Dialog.Description>
         </Dialog.Header>
 
         <div class="space-y-6 py-4">
@@ -199,10 +197,7 @@
 
         <Dialog.Footer>
             <Button variant="outline" onclick={handleCancel}>취소</Button>
-            <Button
-                onclick={handleInsert}
-                disabled={!uploadedUrl || uploading}
-            >
+            <Button onclick={handleInsert} disabled={!uploadedUrl || uploading}>
                 {#if uploading}
                     <Loader2 class="mr-2 size-4 animate-spin" />
                     업로드 중...

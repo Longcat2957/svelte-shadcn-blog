@@ -69,7 +69,9 @@
                                     <RangeCalendar.GridHead>
                                         <RangeCalendar.GridRow class="flex">
                                             {#each WEEKDAYS as day}
-                                                <RangeCalendar.HeadCell class="w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground">
+                                                <RangeCalendar.HeadCell
+                                                    class="w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground"
+                                                >
                                                     {day}
                                                 </RangeCalendar.HeadCell>
                                             {/each}
@@ -83,20 +85,22 @@
                                                         {date}
                                                         month={month.value}
                                                         class="relative p-0 text-center text-sm focus-within:relative focus-within:z-20
-                                                            [&[data-range-start]]:bg-primary [&[data-range-start]]:rounded-l-md
-                                                            [&[data-range-end]]:bg-primary [&[data-range-end]]:rounded-r-md
-                                                            [&[data-range-middle]]:bg-accent"
+                                                            [&[data-range-end]]:rounded-r-md [&[data-range-end]]:bg-primary
+                                                            [&[data-range-middle]]:bg-accent [&[data-range-start]]:rounded-l-md
+                                                            [&[data-range-start]]:bg-primary"
                                                     >
                                                         <RangeCalendar.Day
                                                             class={cn(
-                                                                buttonVariants({ variant: 'ghost' }),
+                                                                buttonVariants({
+                                                                    variant: 'ghost'
+                                                                }),
                                                                 'h-9 w-9 p-0 font-normal',
                                                                 // Range start/end text color
-                                                                'data-[range-start]:text-primary-foreground data-[range-end]:text-primary-foreground',
+                                                                'data-[range-end]:text-primary-foreground data-[range-start]:text-primary-foreground',
                                                                 // Outside months
                                                                 'data-[outside-month]:text-muted-foreground data-[outside-month]:opacity-50',
                                                                 // Disabled
-                                                                'data-[disabled]:text-muted-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+                                                                'data-[disabled]:pointer-events-none data-[disabled]:text-muted-foreground data-[disabled]:opacity-50'
                                                             )}
                                                         />
                                                     </RangeCalendar.Cell>

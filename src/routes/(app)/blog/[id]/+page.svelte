@@ -62,9 +62,7 @@
         description: data.post.description ?? undefined,
         datePublished: data.post.date,
         keywords: data.post.tags.join(', '),
-        author: data.author
-            ? { '@type': 'Person', name: data.author.username }
-            : undefined,
+        author: data.author ? { '@type': 'Person', name: data.author.username } : undefined,
         url: $page.url.href
     })}</script>`}
 </svelte:head>

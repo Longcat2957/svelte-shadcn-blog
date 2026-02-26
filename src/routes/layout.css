@@ -173,8 +173,9 @@
     }
     /* 인라인 코드 - Notion 스타일 뱃지 */
     inline-code {
-        @apply bg-muted text-primary rounded-md px-1.5 py-0.5 text-sm font-medium;
-        font-family: 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-            'Liberation Mono', 'Courier New', monospace;
+        @apply rounded-md bg-muted px-1.5 py-0.5 text-sm font-medium text-primary;
+        font-family:
+            'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+            'Courier New', monospace;
     }
 }

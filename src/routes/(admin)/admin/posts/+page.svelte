@@ -85,7 +85,12 @@
                 <Alert.Title>요청이 처리되지 않았습니다</Alert.Title>
                 <Alert.Description>{errorMessage}</Alert.Description>
             </div>
-            <Button variant="ghost" size="sm" class="shrink-0" onclick={() => (errorMessage = null)}>
+            <Button
+                variant="ghost"
+                size="sm"
+                class="shrink-0"
+                onclick={() => (errorMessage = null)}
+            >
                 닫기
             </Button>
         </Alert.Root>
@@ -141,7 +146,9 @@
     </div>
 
     <!-- Post List -->
-    <div class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm">
+    <div
+        class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm"
+    >
         {#each posts as post}
             <div
                 class="group flex items-center justify-between px-6 py-5 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30"
@@ -154,7 +161,9 @@
                             {post.title}
                         </span>
                         {#if !post.published}
-                            <Badge variant="secondary" class="h-5 shrink-0 px-1.5 text-[10px]">Draft</Badge>
+                            <Badge variant="secondary" class="h-5 shrink-0 px-1.5 text-[10px]"
+                                >Draft</Badge
+                            >
                         {/if}
                     </div>
 

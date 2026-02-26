@@ -95,7 +95,9 @@
     } satisfies Chart.ChartConfig;
 
     const totalViews = $derived(viewsChart.reduce((sum, d) => sum + d.views, 0));
-    const avgViews = $derived(viewsChart.length > 0 ? Math.round(totalViews / viewsChart.length) : 0);
+    const avgViews = $derived(
+        viewsChart.length > 0 ? Math.round(totalViews / viewsChart.length) : 0
+    );
 
     const peakData = $derived(
         viewsChart.length > 0
@@ -157,7 +159,12 @@
                 <Alert.Title>요청이 처리되지 않았습니다</Alert.Title>
                 <Alert.Description>{errorMessage}</Alert.Description>
             </div>
-            <Button variant="ghost" size="sm" class="shrink-0" onclick={() => (errorMessage = null)}>
+            <Button
+                variant="ghost"
+                size="sm"
+                class="shrink-0"
+                onclick={() => (errorMessage = null)}
+            >
                 닫기
             </Button>
         </Alert.Root>
@@ -184,7 +191,8 @@
             <div class="space-y-1">
                 <h2 class="text-lg font-bold">Views</h2>
                 <p class="text-sm text-muted-foreground">
-                    총 {totalViews.toLocaleString()}회 조회 · 일평균 {avgViews.toLocaleString()}회{#if peakData} · 최고 {peakData.views.toLocaleString()}회 ({peakData.date}){/if}
+                    총 {totalViews.toLocaleString()}회 조회 · 일평균 {avgViews.toLocaleString()}회{#if peakData}
+                        · 최고 {peakData.views.toLocaleString()}회 ({peakData.date}){/if}
                 </p>
             </div>
             <div class="flex items-center gap-2">
@@ -272,5 +280,4 @@
             {/each}
         </div>
     </div>
-
 </div>

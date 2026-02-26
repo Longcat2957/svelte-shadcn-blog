@@ -96,19 +96,6 @@
     }
 </script>
 
-<style>
-    .code-content :global(pre) {
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        line-height: 1.5rem;
-    }
-    .code-content :global(code) {
-        background: transparent;
-        line-height: 1.5rem;
-    }
-</style>
-
 {#if code}
     <div
         class="dark group relative my-4 overflow-hidden rounded-lg border border-border bg-muted font-mono text-base leading-6"
@@ -132,7 +119,7 @@
 
         {#if normalizedLang}
             <div
-                class="absolute right-2 bottom-2 select-none text-xs text-muted-foreground/40 font-mono"
+                class="absolute right-2 bottom-2 font-mono text-xs text-muted-foreground/40 select-none"
             >
                 {normalizedLang}
             </div>
@@ -170,3 +157,16 @@
 {:else}
     <pre {...rest}>{@render rest.children?.()}</pre>
 {/if}
+
+<style>
+    .code-content :global(pre) {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        line-height: 1.5rem;
+    }
+    .code-content :global(code) {
+        background: transparent;
+        line-height: 1.5rem;
+    }
+</style>

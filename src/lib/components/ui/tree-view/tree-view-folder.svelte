@@ -33,11 +33,9 @@
                 <FolderIcon class="size-4 shrink-0" />
             {/if}
         </Collapsible.Trigger>
-        <span
-            class="min-w-0 flex-1 truncate cursor-pointer hover:underline"
-            title={name}
-            onclick={onclick}
-        >{name}</span>
+        <span class="min-w-0 flex-1 cursor-pointer truncate hover:underline" title={name} {onclick}
+            >{name}</span
+        >
     </div>
     <Collapsible.Content class="ml-1 min-w-0 border-l">
         <div class="relative flex place-items-start">

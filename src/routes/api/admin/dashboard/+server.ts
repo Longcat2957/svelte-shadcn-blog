@@ -84,12 +84,7 @@ export const GET: RequestHandler = async (event) => {
             views: sql<number>`sum(${postReferrerDaily.views})`
         })
         .from(postReferrerDaily)
-        .where(
-            and(
-                gte(postReferrerDaily.date, startDate),
-                lte(postReferrerDaily.date, endDate)
-            )
-        )
+        .where(and(gte(postReferrerDaily.date, startDate), lte(postReferrerDaily.date, endDate)))
         .groupBy(postReferrerDaily.source)
         .orderBy(desc(sql`sum(${postReferrerDaily.views})`));
 

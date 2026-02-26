@@ -85,7 +85,11 @@ export const load: PageServerLoad = async ({ params, cookies, request, url }) =>
             .insert(postReferrerDaily)
             .values({ post_id: id, date: today, source, views: 1 })
             .onConflictDoUpdate({
-                target: [postReferrerDaily.post_id, postReferrerDaily.date, postReferrerDaily.source],
+                target: [
+                    postReferrerDaily.post_id,
+                    postReferrerDaily.date,
+                    postReferrerDaily.source
+                ],
                 set: { views: sql`${postReferrerDaily.views} + 1` }
             });
 

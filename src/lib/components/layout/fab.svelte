@@ -28,13 +28,15 @@
 </script>
 
 {#if showScrollTop || isBlogPost}
-    <div class="fixed right-6 bottom-6 z-40 flex flex-col gap-1.5 rounded-2xl border-2 border-border/60 bg-background/70 p-2 backdrop-blur-md shadow-lg">
+    <div
+        class="fixed right-6 bottom-6 z-40 flex flex-col gap-1.5 rounded-2xl border-2 border-border/60 bg-background/70 p-2 shadow-lg backdrop-blur-md"
+    >
         {#if isBlogPost}
             <Button
                 variant="ghost"
                 size="icon"
                 onclick={scrollToComments}
-                class="size-10 rounded-full hover:bg-accent/80 transition-all"
+                class="size-10 rounded-full transition-all hover:bg-accent/80"
                 title="댓글로 이동"
             >
                 <MessageCircle class="size-5" />
@@ -48,7 +50,7 @@
                 variant="ghost"
                 size="icon"
                 onclick={scrollToTop}
-                class="size-10 rounded-full hover:bg-accent/80 transition-all"
+                class="size-10 rounded-full transition-all hover:bg-accent/80"
                 title="맨 위로"
             >
                 <ArrowUp class="size-5" />

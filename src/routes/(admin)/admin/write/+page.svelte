@@ -31,19 +31,21 @@
     let tags = $state<string[]>([]);
     let tagInput = $state('');
     let published = $state(false);
-    
+
     // 태그 즐겨찾기 관련 상태
     type TagItem = { name: string; count: number };
     let allTags = $state<TagItem[]>([]);
     let tagExpanded = $state(false);
     const TAG_FAVORITE_COUNT = 5;
-    
+
     let favoriteTags = $derived(allTags.slice(0, TAG_FAVORITE_COUNT));
     let remainingTags = $derived(allTags.slice(TAG_FAVORITE_COUNT));
     let saving = $state(false);
     let errorMessage = $state<string | null>(null);
     let textareaRef = $state<HTMLTextAreaElement | null>(null);
-    let imageUploadDialogRef = $state<{ openDialog: () => Promise<InsertEvent | null> } | null>(null);
+    let imageUploadDialogRef = $state<{ openDialog: () => Promise<InsertEvent | null> } | null>(
+        null
+    );
     let postId = $derived(
         (() => {
             const raw = $page.url.searchParams.get('id');
@@ -166,7 +168,7 @@
     function removeTag(tag: string) {
         tags = tags.filter((t) => t !== tag);
     }
-    
+
     function toggleTag(tagName: string) {
         if (tags.includes(tagName)) {
             tags = tags.filter((t) => t !== tagName);
@@ -174,7 +176,7 @@
             tags = [...tags, tagName];
         }
     }
-    
+
     async function loadTags() {
         const res = await fetch('/api/admin/tags');
         if (!res.ok) return;
@@ -226,7 +228,8 @@
 
         // 인라인 스타일 사용 (마크다운 렌더러에서 안정적으로 작동)
         const widthPercent = size;
-        const justifyContent = align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start';
+        const justifyContent =
+            align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start';
 
         const html = `<div style="display: flex; justify-content: ${justifyContent};"><img src="${url}" alt="${alt}" style="width: ${widthPercent}%;" /></div>`;
         insertAtSelection(html);
@@ -358,7 +361,7 @@
 {#snippet tagPicker()}
     <div class="space-y-2">
         <label for="tags" class="ml-1 text-sm font-semibold text-foreground/80">Tags</label>
-        
+
         {#if tags.length > 0}
             <div class="flex flex-wrap gap-2">
                 {#each tags as tag}
@@ -374,7 +377,7 @@
                 {/each}
             </div>
         {/if}
-        
+
         <div class="flex gap-2">
             <Input
                 id="tags"
@@ -385,7 +388,7 @@
             />
             <Button variant="outline" onclick={addTag}>Add</Button>
         </div>
-        
+
         {#if allTags.length > 0}
             <div class="flex flex-wrap gap-1">
                 {#each favoriteTags as tagItem}
@@ -398,7 +401,7 @@
                         {tagItem.name}
                     </Button>
                 {/each}
-                
+
                 {#if remainingTags.length > 0}
                     <Button
                         size="sm"
@@ -416,7 +419,7 @@
                     </Button>
                 {/if}
             </div>
-            
+
             {#if tagExpanded && remainingTags.length > 0}
                 <div class="flex flex-wrap gap-1">
                     {#each remainingTags as tagItem}
