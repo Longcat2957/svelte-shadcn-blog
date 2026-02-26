@@ -18,6 +18,8 @@
     import { readErrorMessage } from '$lib/utils/http';
     import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
     import { adminLayoutState } from '$lib/state/admin.svelte';
+    import ImageUploadDialog from '$lib/components/admin/image-upload-dialog.svelte';
+    import type { InsertEvent } from '$lib/components/admin/image-upload-types';
 
     let title = $state('');
     let description = $state('');
@@ -31,7 +33,7 @@
     let saving = $state(false);
     let errorMessage = $state<string | null>(null);
     let textareaRef = $state<HTMLTextAreaElement | null>(null);
-    let fileInputRef = $state<HTMLInputElement | null>(null);
+    let imageUploadDialogRef = $state<{ openDialog: () => Promise<InsertEvent | null> } | null>(null);
     let postId = $derived(
         (() => {
             const raw = $page.url.searchParams.get('id');
@@ -178,27 +180,30 @@
                 const file = item.getAsFile();
                 if (!file) continue;
 
-                await uploadImage(file);
+                await uploadImageSimple(file);
                 break;
             }
         }
     }
 
-    function openFilePicker() {
-        fileInputRef?.click();
+    async function openImageUploadDialog() {
+        if (!imageUploadDialogRef) return;
+
+        const result = await imageUploadDialogRef.openDialog();
+        if (!result) return;
+
+        insertImageMarkdown(result);
     }
 
-    async function handleFileSelect(e: Event) {
-        const input = e.currentTarget as HTMLInputElement;
-        const files = input.files;
-        if (!files || files.length === 0) return;
+    function insertImageMarkdown(event: InsertEvent) {
+        const { url, alt, size, align } = event;
 
-        // 같은 파일 재선택 가능하도록 초기화
-        input.value = '';
+        // 인라인 스타일 사용 (마크다운 렌더러에서 안정적으로 작동)
+        const widthPercent = size;
+        const justifyContent = align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start';
 
-        for (const file of Array.from(files)) {
-            await uploadImage(file);
-        }
+        const html = `<div style="display: flex; justify-content: ${justifyContent};"><img src="${url}" alt="${alt}" style="width: ${widthPercent}%;" /></div>`;
+        insertAtSelection(html);
     }
 
     function insertAtSelection(text: string) {
@@ -217,10 +222,10 @@
         });
     }
 
-    async function uploadImage(file: File) {
+    // 붙여넣기용 간단 업로드 (기본값: 100%, 중앙 정렬)
+    async function uploadImageSimple(file: File) {
         if (!textareaRef) return;
 
-        // Create a unique placeholder to avoid collision
         const id = crypto.randomUUID?.() ?? Math.random().toString(36).substring(7);
         const placeholder = `![Uploading ${file.name}...](${id})`;
         insertAtSelection(placeholder);
@@ -240,9 +245,16 @@
             }
 
             const data = await res.json();
-            const markdown = `![${file.name}](${data.url})`;
 
-            content = content.replace(placeholder, markdown);
+            // 붙여넣기는 기본값으로 삽입
+            insertImageMarkdown({
+                url: data.url,
+                alt: file.name,
+                size: '100',
+                align: 'center'
+            });
+
+            content = content.replace(placeholder, '');
         } catch (err: any) {
             console.error(err);
             errorMessage = err.message || 'Image upload failed';
@@ -354,18 +366,9 @@
             >
 
             <div class="flex items-center gap-2">
-                <input
-                    class="hidden"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    bind:this={fileInputRef}
-                    onchange={handleFileSelect}
-                />
-
-                <Button variant="outline" size="sm" onclick={openFilePicker}>
+                <Button variant="outline" size="sm" onclick={openImageUploadDialog}>
                     <Image class="mr-2 size-4" />
-                    파일 업로드
+                    이미지 업로드
                 </Button>
             </div>
         </div>
@@ -524,3 +527,5 @@
         </div>
     </div>
 </div>
+
+<ImageUploadDialog bind:this={imageUploadDialogRef} />
