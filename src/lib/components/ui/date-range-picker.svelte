@@ -85,9 +85,9 @@
                                                         {date}
                                                         month={month.value}
                                                         class="relative p-0 text-center text-sm focus-within:relative focus-within:z-20
-                                                            [&[data-range-end]]:rounded-r-md [&[data-range-end]]:bg-primary
-                                                            [&[data-range-middle]]:bg-accent [&[data-range-start]]:rounded-l-md
-                                                            [&[data-range-start]]:bg-primary"
+                                                            data-range-end:rounded-r-md data-range-end:bg-primary
+                                                            data-range-middle:bg-accent data-range-start:rounded-l-md
+                                                            data-range-start:bg-primary"
                                                     >
                                                         <RangeCalendar.Day
                                                             class={cn(
@@ -96,11 +96,11 @@
                                                                 }),
                                                                 'h-9 w-9 p-0 font-normal',
                                                                 // Range start/end text color
-                                                                'data-[range-end]:text-primary-foreground data-[range-start]:text-primary-foreground',
+                                                                'data-range-end:text-primary-foreground data-range-start:text-primary-foreground',
                                                                 // Outside months
-                                                                'data-[outside-month]:text-muted-foreground data-[outside-month]:opacity-50',
+                                                                'data-outside-month:text-muted-foreground data-outside-month:opacity-50',
                                                                 // Disabled
-                                                                'data-[disabled]:pointer-events-none data-[disabled]:text-muted-foreground data-[disabled]:opacity-50'
+                                                                'data-disabled:pointer-events-none data-disabled:text-muted-foreground data-disabled:opacity-50'
                                                             )}
                                                         />
                                                     </RangeCalendar.Cell>
