@@ -40,6 +40,7 @@
         "eslint-plugin-svelte": "^3.13.1",
         "globals": "^16.5.0",
         "jsrepo": "^3.0.9",
+        "layerchart": "2.0.0-next.43",
         "mode-watcher": "^1.1.0",
         "prettier": "^3.7.4",
         "prettier-plugin-svelte": "^3.4.0",
