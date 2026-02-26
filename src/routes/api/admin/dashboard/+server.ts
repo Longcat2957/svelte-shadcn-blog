@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { post, postViewsDaily } from '$lib/server/db/schema';
+import { post, postViewsDaily, postReferrerDaily } from '$lib/server/db/schema';
 import { desc, sql, gte, lte, and } from 'drizzle-orm';
 import { requireAdmin } from '../_utils';
 
@@ -77,6 +77,27 @@ export const GET: RequestHandler = async (event) => {
         });
     }
 
+    // 유입경로별 집계 (날짜 범위 기준)
+    const referrerRows = await db
+        .select({
+            source: postReferrerDaily.source,
+            views: sql<number>`sum(${postReferrerDaily.views})`
+        })
+        .from(postReferrerDaily)
+        .where(
+            and(
+                gte(postReferrerDaily.date, startDate),
+                lte(postReferrerDaily.date, endDate)
+            )
+        )
+        .groupBy(postReferrerDaily.source)
+        .orderBy(desc(sql`sum(${postReferrerDaily.views})`));
+
+    const referrerChart = referrerRows.map((r) => ({
+        source: r.source,
+        views: Number(r.views)
+    }));
+
     return json({
         stats: {
             postsTotal: Number(statsRow?.postsTotal ?? 0),
@@ -85,6 +106,7 @@ export const GET: RequestHandler = async (event) => {
             viewsTotal: Number(statsRow?.viewsTotal ?? 0)
         },
         recentPosts,
-        viewsChart
+        viewsChart,
+        referrerChart
     });
 };

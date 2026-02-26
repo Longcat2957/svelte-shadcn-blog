@@ -1,10 +1,40 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { post, postViewsDaily } from '$lib/server/db/schema';
+import { post, postViewsDaily, postReferrerDaily } from '$lib/server/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ params }) => {
+type ReferrerSource =
+    | 'Direct'
+    | 'Google'
+    | 'Naver'
+    | 'Daum'
+    | 'Bing'
+    | 'GitHub'
+    | 'Twitter'
+    | 'Internal'
+    | 'Other';
+
+function classifyReferrer(referer: string, origin: string): ReferrerSource {
+    if (!referer) return 'Direct';
+    try {
+        const url = new URL(referer);
+        if (url.origin === origin) return 'Internal';
+        const host = url.hostname.replace(/^www\./, '');
+        if (host.includes('google.')) return 'Google';
+        if (host.includes('naver.com')) return 'Naver';
+        if (host.includes('daum.net') || host.includes('kakao.com')) return 'Daum';
+        if (host.includes('bing.com')) return 'Bing';
+        if (host.includes('github.com')) return 'GitHub';
+        if (host.includes('twitter.com') || host.includes('t.co') || host.includes('x.com'))
+            return 'Twitter';
+        return 'Other';
+    } catch {
+        return 'Direct';
+    }
+}
+
+export const load: PageServerLoad = async ({ params, cookies, request, url }) => {
     const id = Number(params.id);
     if (!Number.isFinite(id)) throw error(400, 'Invalid id');
 
@@ -27,21 +57,47 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(404, 'Post not found');
     }
 
-    // 조회수 증가
-    await db
-        .update(post)
-        .set({ views: sql`${post.views} + 1` })
-        .where(eq(post.id, id));
+    // 쿠키에서 이미 조회한 post id 목록을 읽어 중복 카운트 방지 (24시간 기준)
+    const viewedRaw = cookies.get('viewed_posts') ?? '';
+    const viewed = viewedRaw ? viewedRaw.split(',').map(Number) : [];
 
-    // 일별 조회수 기록
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    await db
-        .insert(postViewsDaily)
-        .values({ post_id: id, date: today, views: 1 })
-        .onConflictDoUpdate({
-            target: [postViewsDaily.post_id, postViewsDaily.date],
-            set: { views: sql`${postViewsDaily.views} + 1` }
+    if (!viewed.includes(id)) {
+        // 조회수 증가
+        await db
+            .update(post)
+            .set({ views: sql`${post.views} + 1` })
+            .where(eq(post.id, id));
+
+        // 일별 조회수 기록
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        await db
+            .insert(postViewsDaily)
+            .values({ post_id: id, date: today, views: 1 })
+            .onConflictDoUpdate({
+                target: [postViewsDaily.post_id, postViewsDaily.date],
+                set: { views: sql`${postViewsDaily.views} + 1` }
+            });
+
+        // 유입경로 기록
+        const referer = request.headers.get('referer') ?? '';
+        const source = classifyReferrer(referer, url.origin);
+        await db
+            .insert(postReferrerDaily)
+            .values({ post_id: id, date: today, source, views: 1 })
+            .onConflictDoUpdate({
+                target: [postReferrerDaily.post_id, postReferrerDaily.date, postReferrerDaily.source],
+                set: { views: sql`${postReferrerDaily.views} + 1` }
+            });
+
+        // 24시간 동안 유지되는 쿠키로 중복 방문 기록
+        viewed.push(id);
+        cookies.set('viewed_posts', viewed.join(','), {
+            path: '/',
+            maxAge: 60 * 60 * 24,
+            httpOnly: true,
+            sameSite: 'lax'
         });
+    }
 
     return {
         post: {

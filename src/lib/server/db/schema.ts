@@ -81,6 +81,33 @@ export const post = pgTable(
     }
 );
 
+// Post Referrer Daily - 일별 유입경로 집계
+export const postReferrerDaily = pgTable(
+    'post_referrer_daily',
+    {
+        id: serial('id').primaryKey(),
+        post_id: integer('post_id')
+            .references(() => post.id, { onDelete: 'cascade' })
+            .notNull(),
+        date: text('date').notNull(), // YYYY-MM-DD
+        source: text('source').notNull(), // 'Direct', 'Google', 'Naver', 'GitHub', 'Twitter', 'Internal', 'Other'
+        views: integer('views').default(0).notNull()
+    },
+    (table) => ({
+        postDateSourceIdx: index('post_referrer_daily_post_date_source_idx').on(
+            table.post_id,
+            table.date,
+            table.source
+        ),
+        dateIdx: index('post_referrer_daily_date_idx').on(table.date),
+        postDateSourceUnique: unique('post_referrer_daily_post_date_source_unique').on(
+            table.post_id,
+            table.date,
+            table.source
+        )
+    })
+);
+
 // Post Views Daily - 일별 조회수 집계
 export const postViewsDaily = pgTable(
     'post_views_daily',

@@ -2,6 +2,7 @@ import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 import PenBox from '@lucide/svelte/icons/pen-box';
 import UserRoundPen from '@lucide/svelte/icons/user-round-pen';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
+import List from '@lucide/svelte/icons/list';
 
 export type SitemapItem = {
     name: string;
@@ -14,6 +15,7 @@ export type SitemapItem = {
 
 export const adminSitemap = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
+    { name: 'Posts', icon: List, href: '/admin/posts' },
     { name: 'Write Post', icon: PenBox, href: '/admin/write' },
     { name: 'Categories', icon: FolderTree, href: '/admin/categories' },
     { name: 'User', icon: UserRoundPen, href: '/admin/user' }
