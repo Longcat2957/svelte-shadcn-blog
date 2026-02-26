@@ -3,6 +3,7 @@
     import { Check, Copy } from '@lucide/svelte';
     import { fade } from 'svelte/transition';
     import type { HTMLAttributes } from 'svelte/elements';
+    import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 
     let {
         code = '',
@@ -152,7 +153,16 @@
                 {#if highlightedCode}
                     {@html highlightedCode}
                 {:else}
-                    <pre class="not-prose m-0! bg-transparent! p-0! leading-6 whitespace-pre"><code>{cleanCode}</code></pre>
+                    <div class="space-y-1">
+                        {#each lines as line, i}
+                            <div class="flex items-center gap-2">
+                                <Skeleton
+                                    class="h-4"
+                                    style="width: {Math.max(20, Math.min(line.length * 0.6, 80))}%"
+                                />
+                            </div>
+                        {/each}
+                    </div>
                 {/if}
             </div>
         </div>

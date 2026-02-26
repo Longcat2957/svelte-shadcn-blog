@@ -2,9 +2,17 @@
     import { Button } from '$lib/components/ui/button';
     import { Badge } from '$lib/components/ui/badge';
     import { Input } from '$lib/components/ui/input';
+    import * as Chart from '$lib/components/ui/chart';
+    import { Area, AreaChart, ChartClipPath } from 'layerchart';
+    import { scaleBand } from 'd3-scale';
+    import { curveMonotoneX } from 'd3-shape';
+    import { cubicInOut } from 'svelte/easing';
     import Plus from '@lucide/svelte/icons/plus';
     import Search from '@lucide/svelte/icons/search';
     import X from '@lucide/svelte/icons/x';
+    import FileText from '@lucide/svelte/icons/file-text';
+    import CheckCircle from '@lucide/svelte/icons/check-circle';
+    import Edit from '@lucide/svelte/icons/edit';
     import { untrack } from 'svelte';
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
@@ -29,6 +37,7 @@
     };
 
     let stats = $state<DashboardStats | null>(null);
+    let viewsChart = $state<{ date: string; views: number }[]>([]);
     let posts = $state<PostItem[]>([]);
     let filter = $state<'all' | 'published' | 'draft'>('all');
     let searchQuery = $state('');
@@ -40,12 +49,16 @@
     const statCards = $derived(
         stats
             ? [
-                  { label: 'Total Posts', value: stats.postsTotal },
-                  { label: 'Published', value: stats.publishedTotal },
-                  { label: 'Drafts', value: stats.draftTotal }
+                  { label: 'Total Posts', value: stats.postsTotal, icon: FileText },
+                  { label: 'Published', value: stats.publishedTotal, icon: CheckCircle },
+                  { label: 'Drafts', value: stats.draftTotal, icon: Edit }
               ]
             : []
     );
+
+    const chartConfig = {
+        views: { label: '조회수', color: 'var(--chart-1)' }
+    } satisfies Chart.ChartConfig;
 
     async function loadDashboard() {
         const res = await fetch('/api/admin/dashboard');
@@ -53,8 +66,12 @@
             errorMessage = await readErrorMessage(res);
             return;
         }
-        const data = (await res.json()) as { stats: DashboardStats };
+        const data = (await res.json()) as {
+            stats: DashboardStats;
+            viewsChart: { date: string; views: number }[];
+        };
         stats = data.stats;
+        viewsChart = data.viewsChart;
     }
 
     async function loadPosts(reset: boolean) {
@@ -71,7 +88,6 @@
             if (filter === 'published') url.searchParams.set('published', 'true');
             if (filter === 'draft') url.searchParams.set('published', 'false');
 
-            // 검색어 및 태그 필터 적용
             const q = searchQuery.trim();
             if (q) url.searchParams.set('q', q);
 
@@ -124,21 +140,76 @@
         </Alert.Root>
     {/if}
 
-    <!-- Stats Cards -->
-    <div class="grid gap-4 md:grid-cols-3">
-        {#each statCards as stat}
-            <div
-                class="rounded-xl border bg-card/50 p-6 text-card-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card"
-            >
-                <div class="flex flex-col space-y-1.5">
-                    <h3 class="text-sm font-medium text-muted-foreground">{stat.label}</h3>
-                </div>
-                <div class="p-0 pt-2">
-                    <div class="text-2xl font-bold tracking-tight">{stat.value}</div>
-                </div>
+    <!-- Stats -->
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        {#each statCards as stat, i}
+            {@const Icon = stat.icon}
+            {#if i > 0}<span class="text-border">•</span>{/if}
+            <div class="flex items-center gap-1.5">
+                <Icon class="h-4 w-4 text-muted-foreground" />
+                <span class="text-muted-foreground">{stat.label}</span>
+                <span class="font-bold">{stat.value}</span>
             </div>
         {/each}
     </div>
+
+    <hr class="border-border" />
+
+    <!-- Views Chart -->
+    <div class="space-y-2">
+        <h2 class="text-lg font-bold">Views</h2>
+        <Chart.Container config={chartConfig} class="aspect-auto h-50 w-full">
+            <AreaChart
+                data={viewsChart}
+                x="date"
+                xScale={scaleBand().padding(0.2)}
+                series={[
+                    {
+                        key: 'views',
+                        label: '조회수',
+                        color: chartConfig.views.color
+                    }
+                ]}
+                props={{
+                    area: {
+                        curve: curveMonotoneX,
+                        'fill-opacity': 0.4,
+                        line: { class: 'stroke-2' }
+                    },
+                    xAxis: {
+                        format: (v: string) => v
+                    },
+                    yAxis: {
+                        format: (v: number) => v.toString()
+                    }
+                }}
+            >
+                {#snippet marks({ series, getAreaProps })}
+                    <defs>
+                        <linearGradient id="fillViews" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stop-color="var(--color-views)" stop-opacity="0.8" />
+                            <stop offset="95%" stop-color="var(--color-views)" stop-opacity="0.1" />
+                        </linearGradient>
+                    </defs>
+                    <ChartClipPath
+                        initialWidth={0}
+                        motion={{
+                            width: { type: 'tween', duration: 1000, easing: cubicInOut }
+                        }}
+                    >
+                        {#each series as s, i (s.key)}
+                            <Area {...getAreaProps(s, i)} fill="url(#fillViews)" />
+                        {/each}
+                    </ChartClipPath>
+                {/snippet}
+                {#snippet tooltip()}
+                    <Chart.Tooltip indicator="line" />
+                {/snippet}
+            </AreaChart>
+        </Chart.Container>
+    </div>
+
+    <hr class="border-border" />
 
     <!-- Post Filter -->
     <div class="space-y-6 pt-4">

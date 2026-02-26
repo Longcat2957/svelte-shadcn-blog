@@ -5,7 +5,8 @@ import {
     boolean,
     integer,
     timestamp,
-    index
+    index,
+    unique
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -80,6 +81,24 @@ export const post = pgTable(
     }
 );
 
+// Post Views Daily - 일별 조회수 집계
+export const postViewsDaily = pgTable(
+    'post_views_daily',
+    {
+        id: serial('id').primaryKey(),
+        post_id: integer('post_id')
+            .references(() => post.id, { onDelete: 'cascade' })
+            .notNull(),
+        date: text('date').notNull(), // YYYY-MM-DD format
+        views: integer('views').default(0).notNull()
+    },
+    (table) => ({
+        postDateIdx: index('post_views_daily_post_date_idx').on(table.post_id, table.date),
+        dateIdx: index('post_views_daily_date_idx').on(table.date),
+        postDateUnique: unique('post_views_daily_post_date_unique').on(table.post_id, table.date)
+    })
+);
+
 // Comments Table - (Optional) 댓글 기능
 export const comment = pgTable('comment', {
     id: serial('id').primaryKey(),
@@ -127,5 +146,12 @@ export const commentRelations = relations(comment, ({ one, many }) => ({
     }),
     replies: many(comment, {
         relationName: 'comment_replies'
+    })
+}));
+
+export const postViewsDailyRelations = relations(postViewsDaily, ({ one }) => ({
+    post: one(post, {
+        fields: [postViewsDaily.post_id],
+        references: [post.id]
     })
 }));

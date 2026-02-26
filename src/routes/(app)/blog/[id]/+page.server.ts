@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { post } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { post, postViewsDaily } from '$lib/server/db/schema';
+import { and, eq, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ params }) => {
     const id = Number(params.id);
@@ -26,6 +26,22 @@ export const load: PageServerLoad = async ({ params }) => {
     if (!found) {
         throw error(404, 'Post not found');
     }
+
+    // 조회수 증가
+    await db
+        .update(post)
+        .set({ views: sql`${post.views} + 1` })
+        .where(eq(post.id, id));
+
+    // 일별 조회수 기록
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    await db
+        .insert(postViewsDaily)
+        .values({ post_id: id, date: today, views: 1 })
+        .onConflictDoUpdate({
+            target: [postViewsDaily.post_id, postViewsDaily.date],
+            set: { views: sql`${postViewsDaily.views} + 1` }
+        });
 
     return {
         post: {

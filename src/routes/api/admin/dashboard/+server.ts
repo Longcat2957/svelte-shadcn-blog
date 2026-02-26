@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { post } from '$lib/server/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { post, postViewsDaily } from '$lib/server/db/schema';
+import { desc, sql, gte } from 'drizzle-orm';
 import { requireAdmin } from '../_utils';
 
 export const GET: RequestHandler = async (event) => {
@@ -31,6 +31,34 @@ export const GET: RequestHandler = async (event) => {
         .orderBy(desc(post.updated_at))
         .limit(10);
 
+    // 최근 15일간 조회수 추이
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 14);
+    const startDate = fifteenDaysAgo.toISOString().split('T')[0];
+
+    const viewsByDate = await db
+        .select({
+            date: postViewsDaily.date,
+            views: sql<number>`sum(${postViewsDaily.views})`
+        })
+        .from(postViewsDaily)
+        .where(gte(postViewsDaily.date, startDate))
+        .groupBy(postViewsDaily.date)
+        .orderBy(postViewsDaily.date);
+
+    // 날짜별 데이터 생성 (데이터 없는 날은 0으로 채움)
+    const viewsChart: { date: string; views: number }[] = [];
+    for (let i = 0; i < 15; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - (14 - i));
+        const dateStr = d.toISOString().split('T')[0];
+        const found = viewsByDate.find((v) => v.date === dateStr);
+        viewsChart.push({
+            date: `${d.getMonth() + 1}/${d.getDate()}`,
+            views: Number(found?.views ?? 0)
+        });
+    }
+
     return json({
         stats: {
             postsTotal: Number(statsRow?.postsTotal ?? 0),
@@ -38,6 +66,7 @@ export const GET: RequestHandler = async (event) => {
             draftTotal: Number(statsRow?.draftTotal ?? 0),
             viewsTotal: Number(statsRow?.viewsTotal ?? 0)
         },
-        recentPosts
+        recentPosts,
+        viewsChart
     });
 };
