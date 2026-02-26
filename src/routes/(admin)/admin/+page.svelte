@@ -3,6 +3,7 @@
     import { Badge } from '$lib/components/ui/badge';
     import { Input } from '$lib/components/ui/input';
     import * as Chart from '$lib/components/ui/chart';
+    import DateRangePicker from '$lib/components/ui/date-range-picker.svelte';
     import { Area, AreaChart, ChartClipPath } from 'layerchart';
     import { scaleBand } from 'd3-scale';
     import { curveMonotoneX } from 'd3-shape';
@@ -17,6 +18,7 @@
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
     import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
+    import { CalendarDate, type DateValue } from '@internationalized/date';
 
     type DashboardStats = {
         postsTotal: number;
@@ -46,6 +48,20 @@
     let loading = $state(false);
     let errorMessage = $state<string | null>(null);
 
+    // Date range picker state
+    const today = new Date();
+    const fifteenDaysAgo = new Date();
+    fifteenDaysAgo.setDate(today.getDate() - 14);
+
+    let dateRange = $state<{ start: DateValue | undefined; end: DateValue | undefined }>({
+        start: new CalendarDate(
+            fifteenDaysAgo.getFullYear(),
+            fifteenDaysAgo.getMonth() + 1,
+            fifteenDaysAgo.getDate()
+        ),
+        end: new CalendarDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
+    });
+
     const statCards = $derived(
         stats
             ? [
@@ -60,8 +76,18 @@
         views: { label: '조회수', color: 'var(--chart-1)' }
     } satisfies Chart.ChartConfig;
 
+    function formatDateValue(date: DateValue): string {
+        return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+    }
+
     async function loadDashboard() {
-        const res = await fetch('/api/admin/dashboard');
+        const url = new URL('/api/admin/dashboard', window.location.origin);
+        if (dateRange.start && dateRange.end) {
+            url.searchParams.set('startDate', formatDateValue(dateRange.start));
+            url.searchParams.set('endDate', formatDateValue(dateRange.end));
+        }
+
+        const res = await fetch(url);
         if (!res.ok) {
             errorMessage = await readErrorMessage(res);
             return;
@@ -73,6 +99,12 @@
         stats = data.stats;
         viewsChart = data.viewsChart;
     }
+
+    $effect(() => {
+        if (dateRange.start && dateRange.end) {
+            loadDashboard();
+        }
+    });
 
     async function loadPosts(reset: boolean) {
         if (loading) return;
@@ -107,10 +139,6 @@
             loading = false;
         }
     }
-
-    $effect(() => {
-        loadDashboard();
-    });
 
     $effect(() => {
         const _f = filter;
@@ -157,7 +185,10 @@
 
     <!-- Views Chart -->
     <div class="space-y-2">
-        <h2 class="text-lg font-bold">Views</h2>
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold">Views</h2>
+            <DateRangePicker bind:value={dateRange} />
+        </div>
         <Chart.Container config={chartConfig} class="aspect-auto h-50 w-full">
             <AreaChart
                 data={viewsChart}
@@ -177,7 +208,8 @@
                         line: { class: 'stroke-2' }
                     },
                     xAxis: {
-                        format: (v: string) => v
+                        format: (v: string) => v,
+                        ticks: Math.min(viewsChart.length, 10)
                     },
                     yAxis: {
                         format: (v: number) => v.toString()

@@ -2,12 +2,16 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post, postViewsDaily } from '$lib/server/db/schema';
-import { desc, sql, gte } from 'drizzle-orm';
+import { desc, sql, gte, lte, and } from 'drizzle-orm';
 import { requireAdmin } from '../_utils';
 
 export const GET: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
     if (auth) return auth;
+
+    const url = new URL(event.request.url);
+    const startDateParam = url.searchParams.get('startDate');
+    const endDateParam = url.searchParams.get('endDate');
 
     const [statsRow] = await db
         .select({
@@ -31,10 +35,24 @@ export const GET: RequestHandler = async (event) => {
         .orderBy(desc(post.updated_at))
         .limit(10);
 
-    // 최근 15일간 조회수 추이
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 14);
-    const startDate = fifteenDaysAgo.toISOString().split('T')[0];
+    // 날짜 범위 계산
+    let startDate: string;
+    let endDate: string;
+    let days: number;
+
+    if (startDateParam && endDateParam) {
+        startDate = startDateParam;
+        endDate = endDateParam;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    } else {
+        const fifteenDaysAgo = new Date();
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 14);
+        startDate = fifteenDaysAgo.toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+        days = 15;
+    }
 
     const viewsByDate = await db
         .select({
@@ -42,15 +60,15 @@ export const GET: RequestHandler = async (event) => {
             views: sql<number>`sum(${postViewsDaily.views})`
         })
         .from(postViewsDaily)
-        .where(gte(postViewsDaily.date, startDate))
+        .where(and(gte(postViewsDaily.date, startDate), lte(postViewsDaily.date, endDate)))
         .groupBy(postViewsDaily.date)
         .orderBy(postViewsDaily.date);
 
     // 날짜별 데이터 생성 (데이터 없는 날은 0으로 채움)
     const viewsChart: { date: string; views: number }[] = [];
-    for (let i = 0; i < 15; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - (14 - i));
+    for (let i = 0; i < days; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
         const found = viewsByDate.find((v) => v.date === dateStr);
         viewsChart.push({
