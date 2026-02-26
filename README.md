@@ -37,7 +37,3 @@ ADMIN_USERNAME=admin ADMIN_PASSWORD=pass pnpm register:admin
 
 - [ ] AI 기반 문서 작성 / 편집 기능
 - [ ] AI 생성 이미지 삽입 기능
-
-## License
-
-[MIT](LICENSE)
