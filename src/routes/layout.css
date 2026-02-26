@@ -170,4 +170,8 @@
             'D2Coding', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
             'Courier New', monospace !important;
     }
+    /* 인라인 코드 - Notion 스타일 뱃지 */
+    code:not(pre code) {
+        @apply bg-muted text-primary rounded-md px-1.5 py-0.5 text-sm font-medium;
+    }
 }
