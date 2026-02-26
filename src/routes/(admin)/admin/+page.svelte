@@ -11,6 +11,7 @@
     import Plus from '@lucide/svelte/icons/plus';
     import Search from '@lucide/svelte/icons/search';
     import X from '@lucide/svelte/icons/x';
+    import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
     import FileText from '@lucide/svelte/icons/file-text';
     import CheckCircle from '@lucide/svelte/icons/check-circle';
     import Edit from '@lucide/svelte/icons/edit';
@@ -48,19 +49,27 @@
     let loading = $state(false);
     let errorMessage = $state<string | null>(null);
 
-    // Date range picker state
+    // Date range picker state - 초기값 상수로 저장
     const today = new Date();
     const fifteenDaysAgo = new Date();
     fifteenDaysAgo.setDate(today.getDate() - 14);
 
-    let dateRange = $state<{ start: DateValue | undefined; end: DateValue | undefined }>({
+    const initialDateRange = {
         start: new CalendarDate(
             fifteenDaysAgo.getFullYear(),
             fifteenDaysAgo.getMonth() + 1,
             fifteenDaysAgo.getDate()
         ),
         end: new CalendarDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
+    };
+
+    let dateRange = $state<{ start: DateValue | undefined; end: DateValue | undefined }>({
+        ...initialDateRange
     });
+
+    function resetDateRange() {
+        dateRange = { ...initialDateRange };
+    }
 
     const statCards = $derived(
         stats
@@ -75,6 +84,34 @@
     const chartConfig = {
         views: { label: '조회수', color: 'var(--chart-1)' }
     } satisfies Chart.ChartConfig;
+
+    // 차트 요약 정보 계산
+    const totalViews = $derived(viewsChart.reduce((sum, d) => sum + d.views, 0));
+    const avgViews = $derived(viewsChart.length > 0 ? Math.round(totalViews / viewsChart.length) : 0);
+
+    // 피크 데이터 계산
+    const peakData = $derived(
+        viewsChart.length > 0
+            ? viewsChart.reduce((max, d) => (d.views > max.views ? d : max), viewsChart[0])
+            : null
+    );
+
+    // X축 tick 계산: 시작일, 마지막일 필수 포함 + 중간 날짜 적절히 분배
+    function calculateTickValues(dates: string[], maxTicks: number): string[] {
+        if (dates.length <= maxTicks) return dates;
+
+        const result: string[] = [dates[0]];
+        const lastIndex = dates.length - 1;
+
+        // 중간 날짜들을 적절한 간격으로 선택
+        const interval = Math.ceil(lastIndex / (maxTicks - 2));
+        for (let i = interval; i < lastIndex; i += interval) {
+            result.push(dates[i]);
+        }
+
+        result.push(dates[lastIndex]);
+        return result;
+    }
 
     function formatDateValue(date: DateValue): string {
         return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
@@ -186,8 +223,18 @@
     <!-- Views Chart -->
     <div class="space-y-2">
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold">Views</h2>
-            <DateRangePicker bind:value={dateRange} />
+            <div class="space-y-1">
+                <h2 class="text-lg font-bold">Views</h2>
+                <p class="text-sm text-muted-foreground">
+                    총 {totalViews.toLocaleString()}회 조회 · 일평균 {avgViews.toLocaleString()}회{#if peakData} · 최고 {peakData.views.toLocaleString()}회 ({peakData.date}){/if}
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <DateRangePicker bind:value={dateRange} />
+                <Button variant="outline" size="icon" class="h-8 w-8" onclick={resetDateRange} title="초기 상태로 되돌리기">
+                    <RotateCcw class="h-4 w-4" />
+                </Button>
+            </div>
         </div>
         <Chart.Container config={chartConfig} class="aspect-auto h-50 w-full">
             <AreaChart
@@ -209,7 +256,10 @@
                     },
                     xAxis: {
                         format: (v: string) => v,
-                        ticks: Math.min(viewsChart.length, 10)
+                        ticks: calculateTickValues(
+                            viewsChart.map((d) => d.date),
+                            8
+                        )
                     },
                     yAxis: {
                         format: (v: number) => v.toString()
