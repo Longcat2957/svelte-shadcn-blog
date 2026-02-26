@@ -20,6 +20,7 @@
     import { adminLayoutState } from '$lib/state/admin.svelte';
     import ImageUploadDialog from '$lib/components/admin/image-upload-dialog.svelte';
     import type { InsertEvent } from '$lib/components/admin/image-upload-types';
+    import ChevronUp from '@lucide/svelte/icons/chevron-up';
 
     let title = $state('');
     let description = $state('');
@@ -30,6 +31,15 @@
     let tags = $state<string[]>([]);
     let tagInput = $state('');
     let published = $state(false);
+    
+    // 태그 즐겨찾기 관련 상태
+    type TagItem = { name: string; count: number };
+    let allTags = $state<TagItem[]>([]);
+    let tagExpanded = $state(false);
+    const TAG_FAVORITE_COUNT = 5;
+    
+    let favoriteTags = $derived(allTags.slice(0, TAG_FAVORITE_COUNT));
+    let remainingTags = $derived(allTags.slice(TAG_FAVORITE_COUNT));
     let saving = $state(false);
     let errorMessage = $state<string | null>(null);
     let textareaRef = $state<HTMLTextAreaElement | null>(null);
@@ -156,9 +166,25 @@
     function removeTag(tag: string) {
         tags = tags.filter((t) => t !== tag);
     }
+    
+    function toggleTag(tagName: string) {
+        if (tags.includes(tagName)) {
+            tags = tags.filter((t) => t !== tagName);
+        } else {
+            tags = [...tags, tagName];
+        }
+    }
+    
+    async function loadTags() {
+        const res = await fetch('/api/admin/tags');
+        if (!res.ok) return;
+        const data = (await res.json()) as { items: TagItem[] };
+        allTags = data.items;
+    }
 
     $effect(() => {
         loadCategories();
+        loadTags();
         if (postId) loadPost(postId);
     });
 
@@ -332,19 +358,23 @@
 {#snippet tagPicker()}
     <div class="space-y-2">
         <label for="tags" class="ml-1 text-sm font-semibold text-foreground/80">Tags</label>
-        <div class="mb-2 flex flex-wrap gap-2">
-            {#each tags as tag}
-                <Badge variant="secondary" class="gap-1 pr-1">
-                    {tag}
-                    <button
-                        onclick={() => removeTag(tag)}
-                        class="transition-colors outline-none hover:text-destructive"
-                    >
-                        <X class="size-3" />
-                    </button>
-                </Badge>
-            {/each}
-        </div>
+        
+        {#if tags.length > 0}
+            <div class="flex flex-wrap gap-2">
+                {#each tags as tag}
+                    <Badge variant="secondary" class="gap-1 pr-1">
+                        {tag}
+                        <button
+                            onclick={() => removeTag(tag)}
+                            class="transition-colors outline-none hover:text-destructive"
+                        >
+                            <X class="size-3" />
+                        </button>
+                    </Badge>
+                {/each}
+            </div>
+        {/if}
+        
         <div class="flex gap-2">
             <Input
                 id="tags"
@@ -355,6 +385,53 @@
             />
             <Button variant="outline" onclick={addTag}>Add</Button>
         </div>
+        
+        {#if allTags.length > 0}
+            <div class="flex flex-wrap gap-1">
+                {#each favoriteTags as tagItem}
+                    <Button
+                        size="sm"
+                        variant={tags.includes(tagItem.name) ? 'default' : 'outline'}
+                        class="h-6 px-2 text-xs"
+                        onclick={() => toggleTag(tagItem.name)}
+                    >
+                        {tagItem.name}
+                    </Button>
+                {/each}
+                
+                {#if remainingTags.length > 0}
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        class="h-6 px-2 text-xs"
+                        onclick={() => (tagExpanded = !tagExpanded)}
+                    >
+                        {#if tagExpanded}
+                            <ChevronUp class="size-3" />
+                            접기
+                        {:else}
+                            <Plus class="size-3" />
+                            더보기 ({remainingTags.length})
+                        {/if}
+                    </Button>
+                {/if}
+            </div>
+            
+            {#if tagExpanded && remainingTags.length > 0}
+                <div class="flex flex-wrap gap-1">
+                    {#each remainingTags as tagItem}
+                        <Button
+                            size="sm"
+                            variant={tags.includes(tagItem.name) ? 'default' : 'outline'}
+                            class="h-6 px-2 text-xs"
+                            onclick={() => toggleTag(tagItem.name)}
+                        >
+                            {tagItem.name}
+                        </Button>
+                    {/each}
+                </div>
+            {/if}
+        {/if}
     </div>
 {/snippet}
 

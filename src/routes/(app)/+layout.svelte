@@ -6,6 +6,7 @@
     import MobileHeader from '$lib/components/layout/mobile-header.svelte';
     import TopNav from '$lib/components/layout/top-nav.svelte';
     import Footer from '$lib/components/layout/footer.svelte';
+    import Fab from '$lib/components/layout/fab.svelte';
     import { navigating } from '$app/stores';
     import { Spinner } from '$lib/components/ui/spinner';
 
@@ -44,4 +45,5 @@
             </main>
         </div>
     </div>
+    <Fab />
 </div>

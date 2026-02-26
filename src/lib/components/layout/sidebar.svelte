@@ -155,26 +155,35 @@
     {/each}
 {/snippet}
 
-<div class="relative hidden h-full flex-col bg-background md:flex">
-    <!-- Overlay Toggle Button on Border -->
-    <div class="absolute top-6 -right-3 z-40 hidden md:block">
-        <Button
-            variant="outline"
-            size="icon"
-            class="h-6 w-6 rounded-full border-border/50 bg-background shadow-md transition-all hover:bg-accent"
-            onclick={() => openStore.update((v) => !v)}
-        >
-            {#if $openStore}
+<div class="sticky top-14 z-40 hidden h-[calc(100vh-3.5rem)] flex-col md:flex">
+    <!-- Toggle Button - always visible on the separator line -->
+    {#if $openStore}
+        <div class="absolute top-6 -right-3 z-50">
+            <Button
+                variant="outline"
+                size="icon"
+                class="h-6 w-6 rounded-full border-border/50 bg-background shadow-md transition-all hover:bg-accent"
+                onclick={() => openStore.update((v) => !v)}
+            >
                 <ChevronLeft class="size-3.5" />
-            {:else}
+            </Button>
+        </div>
+    {:else}
+        <div class="absolute top-6 left-0 z-50 -translate-x-1/2">
+            <Button
+                variant="outline"
+                size="icon"
+                class="h-6 w-6 rounded-full border-border/50 bg-background shadow-md transition-all hover:bg-accent"
+                onclick={() => openStore.update((v) => !v)}
+            >
                 <ChevronRight class="size-3.5" />
-            {/if}
-        </Button>
-    </div>
+            </Button>
+        </div>
+    {/if}
 
     {#if $openStore}
         <aside
-            class="sticky top-14 flex h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
+            class="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm"
         >
             <div class="flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-6">
                 <TreeView.Root class="w-full min-w-0">
@@ -202,6 +211,6 @@
         </aside>
     {:else}
         <!-- Minimized State Border -->
-        <div class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-px bg-border/50 md:block"></div>
+        <div class="h-full w-px bg-border/50"></div>
     {/if}
 </div>

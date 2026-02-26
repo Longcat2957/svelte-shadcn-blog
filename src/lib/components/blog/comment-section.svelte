@@ -78,7 +78,7 @@
     }
 </script>
 
-<Collapsible.Root class="group mt-12 border-t pt-2">
+<Collapsible.Root id="comments" class="group mt-12 border-t pt-2">
     <Collapsible.Trigger class="flex w-full items-center justify-between py-4 hover:bg-muted/30">
         <div class="flex items-center gap-2">
             <span class="text-muted-foreground">💬</span>

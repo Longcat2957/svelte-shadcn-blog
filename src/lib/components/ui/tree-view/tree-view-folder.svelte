@@ -2,6 +2,8 @@
     import * as Collapsible from '$lib/components/ui/collapsible/index.js';
     import FolderIcon from '@lucide/svelte/icons/folder';
     import FolderOpenIcon from '@lucide/svelte/icons/folder-open';
+    import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+    import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
     import { cn } from '$lib/utils.js';
     import type { TreeViewFolderProps } from './types';
 
@@ -16,19 +18,27 @@
 </script>
 
 <Collapsible.Root bind:open>
-    <Collapsible.Trigger
-        class={cn('flex w-full min-w-0 place-items-center gap-1 py-1 text-left', className)}
-        {onclick}
-    >
-        {#if icon}
-            {@render icon({ name, open })}
-        {:else if open}
-            <FolderOpenIcon class="size-4" />
-        {:else}
-            <FolderIcon class="size-4" />
-        {/if}
-        <span class="min-w-0 flex-1 truncate" title={name}>{name}</span>
-    </Collapsible.Trigger>
+    <div class={cn('flex w-full min-w-0 place-items-center gap-1 py-1', className)}>
+        <Collapsible.Trigger class="flex items-center gap-1 text-left">
+            {#if open}
+                <ChevronDownIcon class="size-4 shrink-0 text-muted-foreground" />
+            {:else}
+                <ChevronRightIcon class="size-4 shrink-0 text-muted-foreground" />
+            {/if}
+            {#if icon}
+                {@render icon({ name, open })}
+            {:else if open}
+                <FolderOpenIcon class="size-4 shrink-0" />
+            {:else}
+                <FolderIcon class="size-4 shrink-0" />
+            {/if}
+        </Collapsible.Trigger>
+        <span
+            class="min-w-0 flex-1 truncate cursor-pointer hover:underline"
+            title={name}
+            onclick={onclick}
+        >{name}</span>
+    </div>
     <Collapsible.Content class="ml-1 min-w-0 border-l">
         <div class="relative flex place-items-start">
             <div class="mx-1 h-full w-px bg-border"></div>
