@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post } from '$lib/server/db/schema';
-import { and, desc, eq, ilike, or, sql, count, type SQL } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 
 function parseOptionalInt(v: string | null): number | null {
     if (v === null) return null;

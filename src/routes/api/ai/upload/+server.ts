@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { assertSameOrigin } from '../../_utils';
-import { falWrapper } from '$lib/server/fal-wrapper';
+import { getFalWrapper } from '$lib/server/fal-wrapper';
 
 // ============================================
 // 타입 정의
@@ -65,6 +65,7 @@ export const POST = async (event: RequestEvent) => {
 
 	// 5. 파일 업로드
 	try {
+		const falWrapper = getFalWrapper();
 		const result = await falWrapper.upload(file);
 
 		const response: UploadSuccessResponse = {

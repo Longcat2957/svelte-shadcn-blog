@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { assertSameOrigin, readJson } from '../../_utils';
-import { falWrapper, type FalImageResult, type FalQueueStatus } from '$lib/server/fal-wrapper';
+import { getFalWrapper, type FalImageResult, type FalQueueStatus } from '$lib/server/fal-wrapper';
 
 // ============================================
 // 상수
@@ -104,6 +104,7 @@ export const POST = async (event: RequestEvent) => {
 
 	// 4. 큐에 요청 제출
 	try {
+		const falWrapper = getFalWrapper();
 		const result = await falWrapper.queueSubmit(FAL_ENDPOINT, {
 			input: body
 		});
@@ -140,6 +141,7 @@ export const GET = async (event: RequestEvent) => {
 	}
 
 	try {
+		const falWrapper = getFalWrapper();
 		// 3. 상태 확인
 		const status = await falWrapper.queueStatus(FAL_ENDPOINT, {
 			requestId

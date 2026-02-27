@@ -276,6 +276,7 @@ export class LLMRouter {
     /**
      * 싱글톤 인스턴스를 반환합니다.
      * 서버 사이드에서 단일 인스턴스를 재사용하여 효율성을 높입니다.
+     * 환경 변수는 실제 호출 시점에 확인합니다 (빌드 시점 에러 방지).
      */
     static getInstance(): LLMRouter {
         if (!LLMRouter.instance) {
@@ -285,5 +286,10 @@ export class LLMRouter {
     }
 }
 
-// 싱글톤 인스턴스 export
-export const llmRouter = LLMRouter.getInstance();
+/**
+ * LLMRouter 인스턴스를 반환하는 헬퍼 함수
+ * 빌드 시점이 아닌 런타임에 환경 변수를 확인합니다.
+ */
+export function getLLMRouter(): LLMRouter {
+    return LLMRouter.getInstance();
+}

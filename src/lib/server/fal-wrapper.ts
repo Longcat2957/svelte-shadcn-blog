@@ -338,5 +338,10 @@ export class FalWrapper {
     }
 }
 
-// 기본 인스턴스 내보내기
-export const falWrapper = new FalWrapper();
+/**
+ * FalWrapper 인스턴스를 반환하는 헬퍼 함수
+ * 빌드 시점이 아닌 런타임에 인스턴스를 생성합니다.
+ */
+export function getFalWrapper(): FalWrapper {
+    return new FalWrapper();
+}

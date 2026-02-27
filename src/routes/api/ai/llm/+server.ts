@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { assertSameOrigin, readJson } from '../../_utils';
-import { llmRouter, type CompletionOptions, type StreamCompletionOptions } from '$lib/server/openai-wrapper';
+import { getLLMRouter, type CompletionOptions, type StreamCompletionOptions } from '$lib/server/openai-wrapper';
 
 // ============================================
 // 타입 정의
@@ -62,6 +62,7 @@ export const GET = async (event: RequestEvent) => {
 
 	try {
 		// 2. 모델 목록 조회
+		const llmRouter = getLLMRouter();
 		const models = await llmRouter.listModels();
 
 		const response: ModelsResponse = {
@@ -143,6 +144,7 @@ async function handleCompletionRequest(
 	body: LLMInput
 ) {
 	try {
+		const llmRouter = getLLMRouter();
 		const options: CompletionOptions = {
 			messages,
 			model: body.model,
@@ -172,6 +174,7 @@ async function handleStreamingRequest(
 	body: LLMInput
 ) {
 	try {
+		const llmRouter = getLLMRouter();
 		const options: StreamCompletionOptions = {
 			messages,
 			model: body.model,
