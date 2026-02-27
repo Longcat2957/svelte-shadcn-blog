@@ -115,6 +115,7 @@ export class LLMRouter {
     private static modelsCache: Map<string, OpenRouterModel> | null = null;
     private static cacheTimestamp: number = 0;
     private static readonly CACHE_TTL = 1000 * 60 * 60; // 1시간
+    private static instance: LLMRouter | null = null;
 
     constructor(defaultModel: string = 'openai/gpt-4o-mini') {
         const apiKey = env.OPENAI_API_KEY ?? env.OPENAI_API;
@@ -271,4 +272,18 @@ export class LLMRouter {
             throw new Error('Failed to initiate stream from LLM service.');
         }
     }
+
+    /**
+     * 싱글톤 인스턴스를 반환합니다.
+     * 서버 사이드에서 단일 인스턴스를 재사용하여 효율성을 높입니다.
+     */
+    static getInstance(): LLMRouter {
+        if (!LLMRouter.instance) {
+            LLMRouter.instance = new LLMRouter();
+        }
+        return LLMRouter.instance;
+    }
 }
+
+// 싱글톤 인스턴스 export
+export const llmRouter = LLMRouter.getInstance();
