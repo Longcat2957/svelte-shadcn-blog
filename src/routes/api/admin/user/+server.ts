@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { requireAdmin, assertSameOrigin, readJson } from '../_utils';
 import { AUTH_COOKIE_NAME, signAuthToken } from '$lib/server/auth/jwt';
+import { verifyPassword, hashPassword } from '$lib/server/auth/password';
 
 export const GET: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
@@ -39,7 +40,9 @@ export const PATCH: RequestHandler = async (event) => {
 
     const schema = z.object({
         username: z.string().min(1, 'Username is required'),
-        avatar_url: z.string().nullable().optional()
+        avatar_url: z.string().nullable().optional(),
+        currentPassword: z.string().optional(),
+        newPassword: z.string().min(8, 'Password must be at least 8 characters').optional()
     });
 
     const parsed = schema.safeParse(body);
@@ -47,16 +50,38 @@ export const PATCH: RequestHandler = async (event) => {
         return json({ message: parsed.error.issues[0].message }, { status: 400 });
     }
 
-    const { username, avatar_url } = parsed.data;
+    const { username, avatar_url, currentPassword, newPassword } = parsed.data;
     const userId = event.locals.user!.id;
 
+    // 비밀번호 변경 요청 시 현재 비밀번호 검증
+    if (newPassword) {
+        if (!currentPassword) {
+            return json({ message: 'Current password is required to change password' }, { status: 400 });
+        }
+
+        const userData = await db.query.user.findFirst({
+            where: eq(user.id, userId),
+            columns: { password: true }
+        });
+
+        if (!userData || !(await verifyPassword(currentPassword, userData.password))) {
+            return json({ message: 'Current password is incorrect' }, { status: 400 });
+        }
+    }
+
     try {
+        const updateData: { username: string; avatar_url: string | null; password?: string } = {
+            username,
+            avatar_url: avatar_url || null
+        };
+
+        if (newPassword) {
+            updateData.password = await hashPassword(newPassword);
+        }
+
         const [updated] = await db
             .update(user)
-            .set({
-                username,
-                avatar_url: avatar_url || null
-            })
+            .set(updateData)
             .where(eq(user.id, userId))
             .returning();
 

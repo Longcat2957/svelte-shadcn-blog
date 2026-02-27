@@ -3,9 +3,12 @@
     import { Button } from '$lib/components/ui/button';
     import * as Avatar from '$lib/components/ui/avatar';
     import * as Alert from '$lib/components/ui/alert';
+    import * as Separator from '$lib/components/ui/separator';
     import { readErrorMessage } from '$lib/utils/http';
     import Loader2 from '@lucide/svelte/icons/loader-2';
     import Upload from '@lucide/svelte/icons/upload';
+    import Eye from '@lucide/svelte/icons/eye';
+    import EyeOff from '@lucide/svelte/icons/eye-off';
 
     let username = $state('');
     let avatarUrl = $state('');
@@ -15,6 +18,14 @@
     let errorMessage = $state<string | null>(null);
     let successMessage = $state<string | null>(null);
     let fileInput = $state<HTMLInputElement | null>(null);
+
+    // 비밀번호 변경 관련 상태
+    let currentPassword = $state('');
+    let newPassword = $state('');
+    let confirmPassword = $state('');
+    let showCurrentPassword = $state(false);
+    let showNewPassword = $state(false);
+    let showConfirmPassword = $state(false);
 
     async function loadUser() {
         loading = true;
@@ -36,18 +47,33 @@
 
     async function save() {
         if (saving) return;
+
+        // 비밀번호 확인 검증
+        if (newPassword && newPassword !== confirmPassword) {
+            errorMessage = 'New passwords do not match';
+            return;
+        }
+
         saving = true;
         errorMessage = null;
         successMessage = null;
 
         try {
+            const body: Record<string, unknown> = {
+                username,
+                avatar_url: avatarUrl || null
+            };
+
+            // 비밀번호 변경이 요청된 경우에만 포함
+            if (newPassword) {
+                body.currentPassword = currentPassword;
+                body.newPassword = newPassword;
+            }
+
             const res = await fetch('/api/admin/user', {
                 method: 'PATCH',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
-                    username,
-                    avatar_url: avatarUrl || null
-                })
+                body: JSON.stringify(body)
             });
 
             if (res.ok) {
@@ -55,6 +81,10 @@
                 username = data.user.username;
                 avatarUrl = data.user.avatar_url || '';
                 successMessage = 'Profile updated successfully.';
+                // 비밀번호 필드 초기화
+                currentPassword = '';
+                newPassword = '';
+                confirmPassword = '';
             } else {
                 errorMessage = await readErrorMessage(res);
             }
@@ -186,6 +216,117 @@
                     </label>
                     <Input id="username" placeholder="admin" bind:value={username} />
                     <p class="text-[0.8rem] text-muted-foreground">This is your login username.</p>
+                </div>
+
+                <Separator.Root />
+
+                <!-- Password Section -->
+                <div class="space-y-4">
+                    <div>
+                        <h2 class="text-lg font-semibold">Change Password</h2>
+                        <p class="text-[0.8rem] text-muted-foreground">
+                            Leave blank to keep your current password.
+                        </p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label
+                            for="current-password"
+                            class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Current Password
+                        </label>
+                        <div class="relative">
+                            <Input
+                                id="current-password"
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                placeholder="Enter current password"
+                                bind:value={currentPassword}
+                                autocomplete="current-password"
+                                class="pr-10"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+                                onclick={() => (showCurrentPassword = !showCurrentPassword)}
+                                aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {#if showCurrentPassword}
+                                    <EyeOff class="size-4 text-muted-foreground" />
+                                {:else}
+                                    <Eye class="size-4 text-muted-foreground" />
+                                {/if}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label
+                            for="new-password"
+                            class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            New Password
+                        </label>
+                        <div class="relative">
+                            <Input
+                                id="new-password"
+                                type={showNewPassword ? 'text' : 'password'}
+                                placeholder="Enter new password (min 8 characters)"
+                                bind:value={newPassword}
+                                autocomplete="new-password"
+                                class="pr-10"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+                                onclick={() => (showNewPassword = !showNewPassword)}
+                                aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {#if showNewPassword}
+                                    <EyeOff class="size-4 text-muted-foreground" />
+                                {:else}
+                                    <Eye class="size-4 text-muted-foreground" />
+                                {/if}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label
+                            for="confirm-password"
+                            class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Confirm New Password
+                        </label>
+                        <div class="relative">
+                            <Input
+                                id="confirm-password"
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder="Confirm new password"
+                                bind:value={confirmPassword}
+                                autocomplete="new-password"
+                                class="pr-10"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+                                onclick={() => (showConfirmPassword = !showConfirmPassword)}
+                                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {#if showConfirmPassword}
+                                    <EyeOff class="size-4 text-muted-foreground" />
+                                {:else}
+                                    <Eye class="size-4 text-muted-foreground" />
+                                {/if}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex justify-end pt-4">
