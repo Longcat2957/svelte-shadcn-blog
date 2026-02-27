@@ -12,9 +12,12 @@
 
     import { adminSitemap } from '$lib/config/sitemap';
     import { adminLayoutState } from '$lib/state/admin.svelte';
+    import { Toaster } from '$lib/components/ui/sonner';
 
     const adminNavItems = adminSitemap;
 </script>
+
+<Toaster />
 
 {#if $page.url.pathname.startsWith('/admin/login')}
     {@render children()}
