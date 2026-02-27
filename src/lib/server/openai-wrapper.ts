@@ -117,7 +117,7 @@ export class LLMRouter {
     private static readonly CACHE_TTL = 1000 * 60 * 60; // 1시간
     private static instance: LLMRouter | null = null;
 
-    constructor(defaultModel: string = 'openai/gpt-4o-mini') {
+    constructor(defaultModel: string = 'openai/gpt-5-mini') {
         const apiKey = env.OPENAI_API_KEY ?? env.OPENAI_API;
         
         if (!apiKey) {

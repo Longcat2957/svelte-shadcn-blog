@@ -25,6 +25,7 @@
     import AITextAssistant from '$lib/components/admin/ai-text-assistant.svelte';
     import Sparkles from '@lucide/svelte/icons/sparkles';
     import Undo from '@lucide/svelte/icons/undo';
+    import { Spinner } from '$lib/components/ui/spinner';
 
     let title = $state('');
     let description = $state('');
@@ -56,6 +57,9 @@
     let aiSelectionStart = $state(0);
     let aiSelectionEnd = $state(0);
     let isPopoverOpen = $state(false);
+
+    // Description 자동 요약 관련 상태
+    let isGeneratingDescription = $state(false);
 
     // 롤백 기능을 위한 히스토리
     interface HistoryEntry {
@@ -358,6 +362,40 @@
         isPopoverOpen = false;
     }
 
+    // Description 자동 요약 함수
+    async function generateDescription() {
+        if (!content.trim() || isGeneratingDescription) return;
+
+        isGeneratingDescription = true;
+
+        try {
+            const res = await fetch('/api/ai/llm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemPrompt: '주어진 마크다운 콘텐츠를 한글로 요약하세요. SEO에 적합한 간결한 설명으로 1-2문장으로 작성하세요. 불필요한 마크다운 문법은 제거하고 자연스러운 문장으로 작성하세요.',
+                    userPrompt: content
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || '요약 생성 실패');
+            }
+
+            const data = await res.json();
+            description = data.content ?? '';
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                errorMessage = e.message;
+            } else {
+                errorMessage = '요약 생성 중 오류가 발생했습니다.';
+            }
+        } finally {
+            isGeneratingDescription = false;
+        }
+    }
+
     // 붙여넣기용 간단 업로드 (기본값: 100%, 중앙 정렬)
     async function uploadImageSimple(file: File) {
         if (!textareaRef) return;
@@ -413,9 +451,23 @@
         </div>
 
         <div class="space-y-2">
-            <label for="description" class="ml-1 text-sm font-semibold text-foreground/80"
-                >Description</label
-            >
+            <div class="ml-1 flex items-center gap-2">
+                <label for="description" class="text-sm font-semibold text-foreground/80">Description</label>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-5 px-2 text-xs"
+                    onclick={generateDescription}
+                    disabled={!content.trim() || isGeneratingDescription}
+                >
+                    {#if isGeneratingDescription}
+                        <Spinner class="mr-1 size-3" />
+                    {:else}
+                        <Sparkles class="mr-1 size-3" />
+                    {/if}
+                    자동 요약
+                </Button>
+            </div>
             <Input
                 id="description"
                 placeholder="Short summary of the post..."
@@ -563,8 +615,8 @@
                     <Popover.Trigger>
                         {#snippet child({ props })}
                             <Button {...props} variant="outline" size="sm" onclick={openAIAssistant}>
-                                <Sparkles class="mr-2 size-4" />
-                                AI 어시스턴트
+                                <Sparkles class="mr-1 size-4" />
+                                텍스트 어시스턴트
                             </Button>
                         {/snippet}
                     </Popover.Trigger>
@@ -579,7 +631,7 @@
                     </Popover.Content>
                 </Popover.Root>
                 <Button variant="outline" size="sm" onclick={openImageUploadDialog}>
-                    <Image class="mr-2 size-4" />
+                    <Image class="mr-1 size-4" />
                     이미지 업로드
                 </Button>
             </div>

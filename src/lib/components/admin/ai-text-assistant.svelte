@@ -32,7 +32,7 @@
 
     // 상태
     let models = $state<ModelInfo[]>([]);
-    let selectedModel = $state<string>('');
+    let selectedModel = $state<string>('default');
     let insertMode = $state<'replace' | 'append'>('append');
     let systemPrompt = $state('');
     let userPrompt = $state('');
@@ -62,9 +62,7 @@
             const data = await res.json();
             const allModels = data.models ?? [];
             models = filterMajorModels(allModels);
-            if (models.length > 0) {
-                selectedModel = models[0]!.id;
-            }
+            // 기본값 유지 ('default')
         } catch (e: unknown) {
             if (e instanceof Error) {
                 error = e.message;
@@ -104,7 +102,7 @@
                 body: JSON.stringify({
                     userPrompt: finalUserPrompt,
                     systemPrompt: systemPrompt.trim() || undefined,
-                    model: selectedModel || undefined
+                    model: selectedModel === 'default' ? undefined : selectedModel
                 })
             });
 
@@ -164,12 +162,20 @@
                             variant="outline"
                             class="w-full justify-between"
                         >
-                            <span>{models.find(m => m.id === selectedModel)?.name ?? '모델 선택'}</span>
+                            <span>{selectedModel === 'default' ? '기본값' : models.find(m => m.id === selectedModel)?.name ?? '모델 선택'}</span>
                             <ChevronDown class="size-4 opacity-50" />
                         </Button>
                     {/snippet}
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content class="w-[--bits-dropdown-menu-anchor-width]">
+                    <DropdownMenu.Item
+                        onclick={() => (selectedModel = 'default')}
+                        class="flex flex-col items-start"
+                    >
+                        <span class="font-medium">기본값</span>
+                        <span class="text-xs text-muted-foreground">서버 기본 모델 사용</span>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator />
                     {#each models as model}
                         <DropdownMenu.Item
                             onclick={() => (selectedModel = model.id)}
