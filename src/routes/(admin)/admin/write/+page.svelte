@@ -21,6 +21,10 @@
     import ImageUploadDialog from '$lib/components/admin/image-upload-dialog.svelte';
     import type { InsertEvent } from '$lib/components/admin/image-upload-types';
     import ChevronUp from '@lucide/svelte/icons/chevron-up';
+    import * as Popover from '$lib/components/ui/popover';
+    import AITextAssistant from '$lib/components/admin/ai-text-assistant.svelte';
+    import Sparkles from '@lucide/svelte/icons/sparkles';
+    import Undo from '@lucide/svelte/icons/undo';
 
     let title = $state('');
     let description = $state('');
@@ -46,6 +50,59 @@
     let imageUploadDialogRef = $state<{ openDialog: () => Promise<InsertEvent | null> } | null>(
         null
     );
+
+    // AI 어시스턴트 관련 상태
+    let aiSelectedText = $state('');
+    let aiSelectionStart = $state(0);
+    let aiSelectionEnd = $state(0);
+    let isPopoverOpen = $state(false);
+
+    // 롤백 기능을 위한 히스토리
+    interface HistoryEntry {
+        content: string;
+        selectionStart: number;
+        selectionEnd: number;
+    }
+    let contentHistory = $state<HistoryEntry[]>([]);
+    let historyIndex = $state(-1);
+    const MAX_HISTORY = 50;
+
+    function saveToHistory() {
+        if (!textareaRef) return;
+        
+        // 현재 인덱스 이후의 히스토리는 삭제
+        contentHistory = contentHistory.slice(0, historyIndex + 1);
+        
+        // 새 항목 추가
+        contentHistory.push({
+            content,
+            selectionStart: textareaRef.selectionStart,
+            selectionEnd: textareaRef.selectionEnd
+        });
+        
+        // 최대 개수 제한
+        if (contentHistory.length > MAX_HISTORY) {
+            contentHistory = contentHistory.slice(-MAX_HISTORY);
+        }
+        
+        historyIndex = contentHistory.length - 1;
+    }
+
+    function undoHistory() {
+        if (historyIndex <= 0) return;
+        
+        historyIndex--;
+        const entry = contentHistory[historyIndex];
+        if (entry) {
+            content = entry.content;
+            queueMicrotask(() => {
+                textareaRef?.focus();
+                textareaRef?.setSelectionRange(entry.selectionStart, entry.selectionEnd);
+            });
+        }
+    }
+
+    let canUndo = $derived(historyIndex > 0);
     let postId = $derived(
         (() => {
             const raw = $page.url.searchParams.get('id');
@@ -251,6 +308,56 @@
         });
     }
 
+    // AI 어시스턴트 관련 함수
+    function openAIAssistant() {
+        if (!textareaRef) return;
+        
+        const start = textareaRef.selectionStart;
+        const end = textareaRef.selectionEnd;
+        const selected = content.substring(start, end);
+        
+        aiSelectionStart = start;
+        aiSelectionEnd = end;
+        aiSelectedText = selected;
+        isPopoverOpen = true;
+    }
+
+    function handleAIInsert(text: string, mode: 'replace' | 'append', selStart: number, selEnd: number) {
+        // 롤백을 위해 현재 상태 저장
+        saveToHistory();
+        
+        if (mode === 'replace' && selStart !== selEnd) {
+            // 대체 모드: 드래그된 영역을 교체
+            const before = content.substring(0, selStart);
+            const after = content.substring(selEnd);
+            content = before + text + after;
+            
+            const nextPos = selStart + text.length;
+            queueMicrotask(() => {
+                textareaRef?.focus();
+                textareaRef?.setSelectionRange(nextPos, nextPos);
+            });
+        } else {
+            // 추가 모드: 커서 위치에 추가
+            const cursorPos = textareaRef?.selectionEnd ?? selStart;
+            const before = content.substring(0, cursorPos);
+            const after = content.substring(cursorPos);
+            content = before + text + after;
+            
+            const nextPos = cursorPos + text.length;
+            queueMicrotask(() => {
+                textareaRef?.focus();
+                textareaRef?.setSelectionRange(nextPos, nextPos);
+            });
+        }
+        
+        isPopoverOpen = false;
+    }
+
+    function closeAIPopover() {
+        isPopoverOpen = false;
+    }
+
     // 붙여넣기용 간단 업로드 (기본값: 100%, 중앙 정렬)
     async function uploadImageSimple(file: File) {
         if (!textareaRef) return;
@@ -446,6 +553,31 @@
             >
 
             <div class="flex items-center gap-2">
+                {#if canUndo}
+                    <Button variant="outline" size="sm" onclick={undoHistory}>
+                        <Undo class="mr-2 size-4" />
+                        실행 취소
+                    </Button>
+                {/if}
+                <Popover.Root bind:open={isPopoverOpen}>
+                    <Popover.Trigger>
+                        {#snippet child({ props })}
+                            <Button {...props} variant="outline" size="sm" onclick={openAIAssistant}>
+                                <Sparkles class="mr-2 size-4" />
+                                AI 어시스턴트
+                            </Button>
+                        {/snippet}
+                    </Popover.Trigger>
+                    <Popover.Content class="w-auto p-0" align="end">
+                        <AITextAssistant
+                            selectedText={aiSelectedText}
+                            selectionStart={aiSelectionStart}
+                            selectionEnd={aiSelectionEnd}
+                            onInsert={handleAIInsert}
+                            onClose={closeAIPopover}
+                        />
+                    </Popover.Content>
+                </Popover.Root>
                 <Button variant="outline" size="sm" onclick={openImageUploadDialog}>
                     <Image class="mr-2 size-4" />
                     이미지 업로드
