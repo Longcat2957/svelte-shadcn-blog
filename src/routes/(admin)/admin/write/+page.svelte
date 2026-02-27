@@ -19,12 +19,14 @@
     import SegmentedToggle from '$lib/components/admin/segmented-toggle.svelte';
     import { adminLayoutState } from '$lib/state/admin.svelte';
     import ImageUploadDialog from '$lib/components/admin/image-upload-dialog.svelte';
+    import AIImageGenerator from '$lib/components/admin/ai-image-generator.svelte';
     import type { InsertEvent } from '$lib/components/admin/image-upload-types';
     import ChevronUp from '@lucide/svelte/icons/chevron-up';
     import * as Popover from '$lib/components/ui/popover';
     import AITextAssistant from '$lib/components/admin/ai-text-assistant.svelte';
     import Sparkles from '@lucide/svelte/icons/sparkles';
     import Undo from '@lucide/svelte/icons/undo';
+    import WandSparkles from '@lucide/svelte/icons/wand-sparkles';
     import { Spinner } from '$lib/components/ui/spinner';
 
     let title = $state('');
@@ -52,11 +54,14 @@
         null
     );
 
-    // AI 어시스턴트 관련 상태
+    // AI 텍스트 어시스턴트 관련 상태
     let aiSelectedText = $state('');
     let aiSelectionStart = $state(0);
     let aiSelectionEnd = $state(0);
-    let isPopoverOpen = $state(false);
+    let isTextPopoverOpen = $state(false);
+
+    // AI 이미지 어시스턴트 관련 상태
+    let isImagePopoverOpen = $state(false);
 
     // Description 자동 요약 관련 상태
     let isGeneratingDescription = $state(false);
@@ -284,6 +289,15 @@
         insertImageMarkdown(result);
     }
 
+    function handleAIImageInsert(event: InsertEvent) {
+        insertImageMarkdown(event);
+        isImagePopoverOpen = false;
+    }
+
+    function closeImagePopover() {
+        isImagePopoverOpen = false;
+    }
+
     function insertImageMarkdown(event: InsertEvent) {
         const { url, alt, size, align } = event;
 
@@ -312,8 +326,8 @@
         });
     }
 
-    // AI 어시스턴트 관련 함수
-    function openAIAssistant() {
+    // AI 텍스트 어시스턴트 관련 함수
+    function openAITextAssistant() {
         if (!textareaRef) return;
         
         const start = textareaRef.selectionStart;
@@ -323,10 +337,10 @@
         aiSelectionStart = start;
         aiSelectionEnd = end;
         aiSelectedText = selected;
-        isPopoverOpen = true;
+        isTextPopoverOpen = true;
     }
 
-    function handleAIInsert(text: string, mode: 'replace' | 'append', selStart: number, selEnd: number) {
+    function handleAITextInsert(text: string, mode: 'replace' | 'append', selStart: number, selEnd: number) {
         // 롤백을 위해 현재 상태 저장
         saveToHistory();
         
@@ -355,11 +369,11 @@
             });
         }
         
-        isPopoverOpen = false;
+        isTextPopoverOpen = false;
     }
 
-    function closeAIPopover() {
-        isPopoverOpen = false;
+    function closeTextPopover() {
+        isTextPopoverOpen = false;
     }
 
     // Description 자동 요약 함수
@@ -611,10 +625,11 @@
                         실행 취소
                     </Button>
                 {/if}
-                <Popover.Root bind:open={isPopoverOpen}>
+                <!-- 텍스트 어시스턴트 -->
+                <Popover.Root bind:open={isTextPopoverOpen}>
                     <Popover.Trigger>
                         {#snippet child({ props })}
-                            <Button {...props} variant="outline" size="sm" onclick={openAIAssistant}>
+                            <Button {...props} variant="outline" size="sm" onclick={openAITextAssistant}>
                                 <Sparkles class="mr-1 size-4" />
                                 텍스트 어시스턴트
                             </Button>
@@ -625,11 +640,29 @@
                             selectedText={aiSelectedText}
                             selectionStart={aiSelectionStart}
                             selectionEnd={aiSelectionEnd}
-                            onInsert={handleAIInsert}
-                            onClose={closeAIPopover}
+                            onInsert={handleAITextInsert}
+                            onClose={closeTextPopover}
                         />
                     </Popover.Content>
                 </Popover.Root>
+                <!-- 이미지 어시스턴트 -->
+                <Popover.Root bind:open={isImagePopoverOpen}>
+                    <Popover.Trigger>
+                        {#snippet child({ props })}
+                            <Button {...props} variant="outline" size="sm">
+                                <WandSparkles class="mr-1 size-4" />
+                                이미지 어시스턴트
+                            </Button>
+                        {/snippet}
+                    </Popover.Trigger>
+                    <Popover.Content class="w-auto p-0" align="end">
+                        <AIImageGenerator
+                            onInsert={handleAIImageInsert}
+                            onClose={closeImagePopover}
+                        />
+                    </Popover.Content>
+                </Popover.Root>
+                <!-- 이미지 업로드 -->
                 <Button variant="outline" size="sm" onclick={openImageUploadDialog}>
                     <Image class="mr-1 size-4" />
                     이미지 업로드

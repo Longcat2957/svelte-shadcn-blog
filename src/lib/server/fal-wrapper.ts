@@ -137,29 +137,20 @@ export interface FalUploadResult {
  * }
  */
 export class FalWrapper {
-    private isConfigured = false;
-
-    constructor() {
-        this.configure();
-    }
-
     /**
-     * fal.ai 클라이언트 설정
+     * fal.ai 클라이언트 설정 (요청 시점에 lazily 실행)
      * 환경 변수 FAL_KEY에서 API 키를 로드합니다.
      */
-    private configure(): void {
-        const apiKey = env.FAL_KEY;
-        
+    private ensureConfigured(): void {
+        const apiKey = env.FAL_API;
+
         if (!apiKey) {
-            console.warn('FAL_KEY environment variable is not set. fal.ai API calls will fail.');
-            return;
+            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
         }
 
         fal.config({
             credentials: apiKey
         });
-        
-        this.isConfigured = true;
     }
 
     /**
@@ -187,9 +178,7 @@ export class FalWrapper {
         endpoint: string,
         options: FalSubscribeOptions
     ): Promise<FalQueueResultResponse<TResult>> {
-        if (!this.isConfigured) {
-            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
-        }
+        this.ensureConfigured();
 
         try {
             const result = await fal.subscribe(endpoint, {
@@ -229,9 +218,7 @@ export class FalWrapper {
         endpoint: string,
         options: FalQueueSubmitOptions<TInput>
     ): Promise<FalSubmitResponse> {
-        if (!this.isConfigured) {
-            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
-        }
+        this.ensureConfigured();
 
         try {
             const result = await fal.queue.submit(endpoint, {
@@ -273,9 +260,7 @@ export class FalWrapper {
         endpoint: string,
         options: FalQueueStatusOptions
     ): Promise<FalQueueStatusResponse> {
-        if (!this.isConfigured) {
-            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
-        }
+        this.ensureConfigured();
 
         try {
             const status = await fal.queue.status(endpoint, {
@@ -309,9 +294,7 @@ export class FalWrapper {
         endpoint: string,
         options: FalQueueResultOptions
     ): Promise<FalQueueResultResponse<TResult>> {
-        if (!this.isConfigured) {
-            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
-        }
+        this.ensureConfigured();
 
         try {
             const result = await fal.queue.result(endpoint, {
@@ -343,9 +326,7 @@ export class FalWrapper {
      * console.log('Uploaded file URL:', url);
      */
     async upload(file: File): Promise<FalUploadResult> {
-        if (!this.isConfigured) {
-            throw new Error('fal.ai client is not configured. Set FAL_KEY environment variable.');
-        }
+        this.ensureConfigured();
 
         try {
             const url = await fal.storage.upload(file);

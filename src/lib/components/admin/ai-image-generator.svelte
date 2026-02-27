@@ -1,0 +1,369 @@
+<script lang="ts">
+    import * as Tabs from '$lib/components/ui/tabs';
+    import * as RadioGroup from '$lib/components/ui/radio-group';
+    import { Button } from '$lib/components/ui/button';
+    import { Textarea } from '$lib/components/ui/textarea';
+    import { Spinner } from '$lib/components/ui/spinner';
+    import Upload from '@lucide/svelte/icons/upload';
+    import X from '@lucide/svelte/icons/x';
+    import WandSparkles from '@lucide/svelte/icons/wand-sparkles';
+    import Sparkles from '@lucide/svelte/icons/sparkles';
+    import type { Size, Align, InsertEvent } from './image-upload-types';
+
+    type Mode = 't2i' | 'i2i';
+    type Stage = 'config' | 'generating' | 'uploading' | 'done';
+
+    // Props
+    interface Props {
+        onInsert?: (event: InsertEvent) => void;
+        onClose?: () => void;
+    }
+
+    let { onInsert, onClose }: Props = $props();
+
+    // 상태
+    let mode = $state<Mode>('t2i');
+    let stage = $state<Stage>('config');
+    let prompt = $state('');
+    let errorMessage = $state<string | null>(null);
+    let statusMessage = $state('');
+
+    // i2i 전용: 업로드된 fal.ai URL 목록
+    let i2iImages = $state<{ file: File; url: string }[]>([]);
+    let i2iUploading = $state(false);
+
+    // done 단계
+    let generatedCfUrl = $state<string | null>(null);
+    let size = $state<Size>('100');
+    let align = $state<Align>('center');
+
+    // i2i: 이미지 파일 선택 → /api/ai/upload 로 업로드
+    async function handleI2IFileSelect(e: Event) {
+        const input = e.currentTarget as HTMLInputElement;
+        const files = Array.from(input.files ?? []);
+        input.value = '';
+        if (files.length === 0) return;
+
+        i2iUploading = true;
+        errorMessage = null;
+
+        try {
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const res = await fetch('/api/ai/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({})) as { message?: string };
+                    throw new Error(data.message ?? 'Image upload failed');
+                }
+
+                const data = await res.json() as { url: string };
+                i2iImages = [...i2iImages, { file, url: data.url }];
+            }
+        } catch (err: unknown) {
+            errorMessage = err instanceof Error ? err.message : 'Image upload failed';
+        } finally {
+            i2iUploading = false;
+        }
+    }
+
+    function removeI2IImage(index: number) {
+        i2iImages = i2iImages.filter((_, i) => i !== index);
+    }
+
+    // 생성 요청 → 폴링 → CF 업로드
+    async function generate() {
+        errorMessage = null;
+
+        if (!prompt.trim()) {
+            errorMessage = '프롬프트를 입력하세요.';
+            return;
+        }
+
+        if (mode === 'i2i' && i2iImages.length === 0) {
+            errorMessage = '이미지를 최소 1장 업로드하세요.';
+            return;
+        }
+
+        stage = 'generating';
+        statusMessage = '이미지 생성 요청 중...';
+
+        try {
+            // 1. 생성 요청 제출
+            const endpoint = mode === 't2i' ? '/api/ai/t2i' : '/api/ai/i2i';
+            const body =
+                mode === 't2i'
+                    ? { prompt: prompt.trim() }
+                    : { prompt: prompt.trim(), image_urls: i2iImages.map((img) => img.url) };
+
+            const submitRes = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!submitRes.ok) {
+                const data = await submitRes.json().catch(() => ({})) as { message?: string };
+                throw new Error(data.message ?? '생성 요청 실패');
+            }
+
+            const submitData = await submitRes.json() as { requestId: string };
+            const { requestId } = submitData;
+
+            // 2. 폴링
+            statusMessage = '이미지 생성 중... (잠시 기다려 주세요)';
+            const falImageUrl = await pollUntilDone(endpoint, requestId);
+
+            // 3. fal.ai 이미지 → CF Images 업로드
+            stage = 'uploading';
+            statusMessage = '이미지 저장 중...';
+
+            const imageBlob = await fetch(falImageUrl).then((r) => r.blob());
+            const imageFile = new File([imageBlob], 'ai-generated.webp', { type: imageBlob.type });
+
+            const cfFormData = new FormData();
+            cfFormData.append('file', imageFile);
+
+            const cfRes = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                body: cfFormData
+            });
+
+            if (!cfRes.ok) {
+                const data = await cfRes.json().catch(() => ({})) as { message?: string };
+                throw new Error(data.message ?? 'CF 업로드 실패');
+            }
+
+            const cfData = await cfRes.json() as { url: string };
+            generatedCfUrl = cfData.url;
+            stage = 'done';
+        } catch (err: unknown) {
+            errorMessage = err instanceof Error ? err.message : '생성 중 오류가 발생했습니다.';
+            stage = 'config';
+        }
+    }
+
+    async function pollUntilDone(endpoint: string, requestId: string): Promise<string> {
+        while (true) {
+            await new Promise((r) => setTimeout(r, 1500));
+
+            const res = await fetch(`${endpoint}?requestId=${encodeURIComponent(requestId)}`);
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({})) as { message?: string };
+                throw new Error(data.message ?? '상태 확인 실패');
+            }
+
+            const data = await res.json() as {
+                status: string;
+                images?: { url: string }[];
+            };
+
+            if (data.status === 'COMPLETED') {
+                if (!data.images || data.images.length === 0) {
+                    throw new Error('생성된 이미지가 없습니다.');
+                }
+                return data.images[0]!.url;
+            }
+
+            if (data.status === 'FAILED') {
+                throw new Error('이미지 생성에 실패했습니다.');
+            }
+        }
+    }
+
+    function handleInsert() {
+        if (!generatedCfUrl) return;
+        onInsert?.({
+            url: generatedCfUrl,
+            alt: 'AI Generated Image',
+            size,
+            align
+        });
+        resetAndClose();
+    }
+
+    function handleCancel() {
+        resetAndClose();
+    }
+
+    function resetAndClose() {
+        // 상태 초기화
+        mode = 't2i';
+        stage = 'config';
+        prompt = '';
+        errorMessage = null;
+        statusMessage = '';
+        i2iImages = [];
+        i2iUploading = false;
+        generatedCfUrl = null;
+        size = '100';
+        align = 'center';
+        onClose?.();
+    }
+</script>
+
+<div class="w-96 space-y-4 p-4">
+    <!-- 헤더 -->
+    <div class="flex items-center gap-2 border-b pb-3">
+        <WandSparkles class="size-5 text-primary" />
+        <h3 class="font-semibold">AI 이미지 어시스턴트</h3>
+    </div>
+
+    {#if stage === 'config'}
+        <div class="space-y-3">
+            <Tabs.Root bind:value={mode}>
+                <Tabs.List class="w-full">
+                    <Tabs.Trigger value="t2i" class="flex-1">텍스트 → 이미지</Tabs.Trigger>
+                    <Tabs.Trigger value="i2i" class="flex-1">이미지 → 이미지</Tabs.Trigger>
+                </Tabs.List>
+
+                <Tabs.Content value="t2i" class="space-y-3 pt-3">
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium">프롬프트</label>
+                        <Textarea
+                            placeholder="생성할 이미지를 설명하세요..."
+                            class="min-h-[80px] resize-none"
+                            bind:value={prompt}
+                        />
+                    </div>
+                </Tabs.Content>
+
+                <Tabs.Content value="i2i" class="space-y-3 pt-3">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">참조 이미지</label>
+                        <label
+                            class="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+                        >
+                            <Upload class="size-4" />
+                            {i2iUploading ? '업로드 중...' : '이미지 선택 (여러 장 가능)'}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                class="hidden"
+                                disabled={i2iUploading}
+                                onchange={handleI2IFileSelect}
+                            />
+                        </label>
+                        {#if i2iImages.length > 0}
+                            <div class="flex flex-wrap gap-2">
+                                {#each i2iImages as img, i}
+                                    <div class="relative">
+                                        <img
+                                            src={img.url}
+                                            alt={img.file.name}
+                                            class="size-14 rounded object-cover"
+                                        />
+                                        <button
+                                            onclick={() => removeI2IImage(i)}
+                                            class="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                                        >
+                                            <X class="size-3" />
+                                        </button>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium">프롬프트</label>
+                        <Textarea
+                            placeholder="이미지를 어떻게 변환할지 설명하세요..."
+                            class="min-h-[60px] resize-none"
+                            bind:value={prompt}
+                        />
+                    </div>
+                </Tabs.Content>
+            </Tabs.Root>
+
+            {#if errorMessage}
+                <p class="text-sm text-destructive">{errorMessage}</p>
+            {/if}
+        </div>
+
+        <div class="flex justify-end gap-2 border-t pt-3">
+            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
+            <Button size="sm" onclick={generate} disabled={i2iUploading}>
+                <Sparkles class="mr-1 size-4" />
+                생성
+            </Button>
+        </div>
+
+    {:else if stage === 'generating' || stage === 'uploading'}
+        <div class="flex flex-col items-center gap-3 py-6">
+            <Spinner class="size-6" />
+            <p class="text-sm text-muted-foreground">{statusMessage}</p>
+        </div>
+
+        <div class="flex justify-end gap-2 border-t pt-3">
+            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
+        </div>
+
+    {:else if stage === 'done'}
+        <div class="space-y-3">
+            {#if generatedCfUrl}
+                <img
+                    src={generatedCfUrl}
+                    alt="AI Generated"
+                    class="w-full rounded-md object-contain"
+                    style="max-height: 180px;"
+                />
+            {/if}
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">크기</label>
+                <RadioGroup.Root bind:value={size}>
+                    <div class="flex gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="100" id="gen-size-100" />
+                            <label for="gen-size-100" class="text-sm">100%</label>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="75" id="gen-size-75" />
+                            <label for="gen-size-75" class="text-sm">75%</label>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="50" id="gen-size-50" />
+                            <label for="gen-size-50" class="text-sm">50%</label>
+                        </div>
+                    </div>
+                </RadioGroup.Root>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">정렬</label>
+                <RadioGroup.Root bind:value={align}>
+                    <div class="flex gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="left" id="gen-align-left" />
+                            <label for="gen-align-left" class="text-sm">좌측</label>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="center" id="gen-align-center" />
+                            <label for="gen-align-center" class="text-sm">중앙</label>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <RadioGroup.Item value="right" id="gen-align-right" />
+                            <label for="gen-align-right" class="text-sm">우측</label>
+                        </div>
+                    </div>
+                </RadioGroup.Root>
+            </div>
+
+            {#if errorMessage}
+                <p class="text-sm text-destructive">{errorMessage}</p>
+            {/if}
+        </div>
+
+        <div class="flex justify-end gap-2 border-t pt-3">
+            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
+            <Button size="sm" onclick={handleInsert}>삽입</Button>
+        </div>
+    {/if}
+</div>
