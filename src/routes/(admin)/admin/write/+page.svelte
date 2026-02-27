@@ -59,9 +59,31 @@
     let aiSelectionStart = $state(0);
     let aiSelectionEnd = $state(0);
     let isTextPopoverOpen = $state(false);
+    let textAssistantStage = $state<'config' | 'generating' | 'done'>('config');
+    // 텍스트 어시스턴트 입력 상태 유지
+    let textAssistantModel = $state<string>('default');
+    let textAssistantSystemPrompt = $state('');
+    let textAssistantUserPrompt = $state('');
+    let textAssistantInsertMode = $state<'replace' | 'append'>('append');
+    let textAssistantResult = $state<string | null>(null);
+    // 텍스트 어시스턴트 히스토리 유지
+    interface TextAssistantHistory {
+        id: string;
+        timestamp: Date;
+        model: string;
+        systemPrompt: string;
+        userPrompt: string;
+        selectedText: string;
+        result: string;
+    }
+    let textAssistantHistory = $state<TextAssistantHistory[]>([]);
 
     // AI 이미지 어시스턴트 관련 상태
     let isImagePopoverOpen = $state(false);
+    let imageAssistantStage = $state<'config' | 'generating' | 'uploading' | 'done'>('config');
+    // 이미지 어시스턴트 입력 상태 유지
+    let imageAssistantPrompt = $state('');
+    let imageAssistantMode = $state<'t2i' | 'i2i'>('t2i');
 
     // Description 자동 요약 관련 상태
     let isGeneratingDescription = $state(false);
@@ -635,13 +657,32 @@
                             </Button>
                         {/snippet}
                     </Popover.Trigger>
-                    <Popover.Content class="w-auto p-0" align="end">
+                    <Popover.Content class="w-auto p-0" align="end" onInteractOutside={(e) => {
+                        // generating 중에는 외부 클릭으로 닫기 방지
+                        if (textAssistantStage === 'generating') {
+                            e.preventDefault();
+                        }
+                    }}>
                         <AITextAssistant
                             selectedText={aiSelectedText}
                             selectionStart={aiSelectionStart}
                             selectionEnd={aiSelectionEnd}
+                            stage={textAssistantStage}
+                            model={textAssistantModel}
+                            systemPrompt={textAssistantSystemPrompt}
+                            userPrompt={textAssistantUserPrompt}
+                            insertMode={textAssistantInsertMode}
+                            result={textAssistantResult}
+                            history={textAssistantHistory}
                             onInsert={handleAITextInsert}
                             onClose={closeTextPopover}
+                            onStageChange={(stage) => (textAssistantStage = stage)}
+                            onModelChange={(model) => (textAssistantModel = model)}
+                            onSystemPromptChange={(prompt) => (textAssistantSystemPrompt = prompt)}
+                            onUserPromptChange={(prompt) => (textAssistantUserPrompt = prompt)}
+                            onInsertModeChange={(mode) => (textAssistantInsertMode = mode)}
+                            onResultChange={(result) => (textAssistantResult = result)}
+                            onHistoryChange={(history) => (textAssistantHistory = history)}
                         />
                     </Popover.Content>
                 </Popover.Root>
@@ -655,10 +696,20 @@
                             </Button>
                         {/snippet}
                     </Popover.Trigger>
-                    <Popover.Content class="w-auto p-0" align="end">
+                    <Popover.Content class="w-auto p-0" align="end" onInteractOutside={(e) => {
+                        // generating/uploading 중에는 외부 클릭으로 닫기 방지
+                        if (imageAssistantStage === 'generating' || imageAssistantStage === 'uploading') {
+                            e.preventDefault();
+                        }
+                    }}>
                         <AIImageGenerator
+                            prompt={imageAssistantPrompt}
+                            mode={imageAssistantMode}
                             onInsert={handleAIImageInsert}
                             onClose={closeImagePopover}
+                            onStageChange={(stage) => (imageAssistantStage = stage)}
+                            onPromptChange={(prompt) => (imageAssistantPrompt = prompt)}
+                            onModeChange={(mode) => (imageAssistantMode = mode)}
                         />
                     </Popover.Content>
                 </Popover.Root>

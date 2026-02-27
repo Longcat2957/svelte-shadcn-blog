@@ -7,8 +7,6 @@
     import { Spinner } from '$lib/components/ui/spinner';
     import TopNav from '$lib/components/layout/top-nav.svelte';
     import MobileHeader from '$lib/components/layout/mobile-header.svelte';
-    import Settings from '@lucide/svelte/icons/settings';
-
     let { children } = $props();
     let mobileMenuOpen = $state(false);
 
@@ -80,27 +78,6 @@
                         </div>
                     </div>
 
-                    <div class="border-t bg-muted/20 p-4">
-                        <div class="flex items-center gap-3 px-2">
-                            <div
-                                class="flex size-8 items-center justify-center rounded-full border border-primary/20 bg-primary/10"
-                            >
-                                <Settings class="size-4 text-primary" />
-                            </div>
-                            <div class="flex min-w-0 flex-col">
-                                <p
-                                    class="truncate text-[12px] leading-none font-bold text-foreground"
-                                >
-                                    Admin User
-                                </p>
-                                <p
-                                    class="mt-1 truncate text-[10px] leading-tight text-muted-foreground opacity-80"
-                                >
-                                    admin@example.com
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </aside>
 
                 <!-- User side uses MobileHeader, but we might want admin-specific mobile layout? 

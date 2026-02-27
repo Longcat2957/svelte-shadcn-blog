@@ -117,7 +117,7 @@
         <div class="space-y-6 py-4">
             <!-- File Selection -->
             <div class="space-y-2">
-                <label class="text-sm font-medium">파일</label>
+                <span class="text-sm font-medium">파일</span>
                 <input
                     type="file"
                     accept="image/*"
@@ -154,7 +154,7 @@
 
             <!-- Size Selection -->
             <div class="space-y-2">
-                <label class="text-sm font-medium">크기</label>
+                <span class="text-sm font-medium">크기</span>
                 <RadioGroup.Root bind:value={size}>
                     <div class="flex gap-4">
                         <div class="flex items-center gap-2">
@@ -175,7 +175,7 @@
 
             <!-- Align Selection -->
             <div class="space-y-2">
-                <label class="text-sm font-medium">정렬</label>
+                <span class="text-sm font-medium">정렬</span>
                 <RadioGroup.Root bind:value={align}>
                     <div class="flex gap-4">
                         <div class="flex items-center gap-2">

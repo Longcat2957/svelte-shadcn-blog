@@ -8,25 +8,60 @@
     import X from '@lucide/svelte/icons/x';
     import WandSparkles from '@lucide/svelte/icons/wand-sparkles';
     import Sparkles from '@lucide/svelte/icons/sparkles';
+    import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+    import Check from '@lucide/svelte/icons/check';
+    import Clock from '@lucide/svelte/icons/clock';
     import type { Size, Align, InsertEvent } from './image-upload-types';
 
     type Mode = 't2i' | 'i2i';
     type Stage = 'config' | 'generating' | 'uploading' | 'done';
 
-    // Props
-    interface Props {
-        onInsert?: (event: InsertEvent) => void;
-        onClose?: () => void;
+    // 프롬프트 히스토리 타입
+    interface PromptHistory {
+        id: string;
+        timestamp: Date;
+        prompt: string;
+        mode: Mode;
     }
 
-    let { onInsert, onClose }: Props = $props();
+    // Props - 부모에서 상태 관리
+    interface Props {
+        prompt?: string;
+        mode?: Mode;
+        onInsert?: (event: InsertEvent) => void;
+        onClose?: () => void;
+        onStageChange?: (stage: Stage) => void;
+        onPromptChange?: (prompt: string) => void;
+        onModeChange?: (mode: Mode) => void;
+    }
 
-    // 상태
-    let mode = $state<Mode>('t2i');
+    let { 
+        prompt: propPrompt = '',
+        mode: propMode = 't2i',
+        onInsert, 
+        onClose, 
+        onStageChange,
+        onPromptChange,
+        onModeChange
+    }: Props = $props();
+
+    // 내부 상태
     let stage = $state<Stage>('config');
-    let prompt = $state('');
     let errorMessage = $state<string | null>(null);
     let statusMessage = $state('');
+
+    // 부모 상태와 동기화할 로컬 상태 (props 직접 사용)
+    let prompt = $derived(propPrompt);
+    let mode = $derived(propMode);
+
+    // 로컬 상태 변경 시 부모에게 알림
+    function updatePrompt(value: string) {
+        onPromptChange?.(value);
+    }
+
+    function updateMode(value: Mode) {
+        onModeChange?.(value);
+    }
 
     // i2i 전용: 업로드된 fal.ai URL 목록
     let i2iImages = $state<{ file: File; url: string }[]>([]);
@@ -36,6 +71,51 @@
     let generatedCfUrl = $state<string | null>(null);
     let size = $state<Size>('100');
     let align = $state<Align>('center');
+
+    // 프롬프트 히스토리 (최대 5개)
+    let promptHistory = $state<PromptHistory[]>([]);
+    const MAX_HISTORY = 5;
+
+    // 폴링 취소용
+    let isPollingCancelled = $state(false);
+
+    // Stage 변경 시 부모에게 알림
+    $effect(() => {
+        onStageChange?.(stage);
+    });
+
+    // 히스토리 시간 포맷팅
+    function formatTime(date: Date): string {
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        
+        if (minutes < 1) return '방금 전';
+        if (minutes < 60) return `${minutes}분 전`;
+        
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}시간 전`;
+        
+        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    }
+
+    // 히스토리에 추가
+    function addToHistory(promptText: string, promptMode: Mode) {
+        const entry: PromptHistory = {
+            id: crypto.randomUUID(),
+            timestamp: new Date(),
+            prompt: promptText,
+            mode: promptMode
+        };
+        
+        promptHistory = [entry, ...promptHistory].slice(0, MAX_HISTORY);
+    }
+
+    // 히스토리에서 불러오기
+    function loadFromHistory(entry: PromptHistory) {
+        updatePrompt(entry.prompt);
+        updateMode(entry.mode);
+    }
 
     // i2i: 이미지 파일 선택 → /api/ai/upload 로 업로드
     async function handleI2IFileSelect(e: Event) {
@@ -90,6 +170,11 @@
             return;
         }
 
+        isPollingCancelled = false;
+        
+        // 히스토리에 추가
+        addToHistory(prompt.trim(), mode);
+
         stage = 'generating';
         statusMessage = '이미지 생성 요청 중...';
 
@@ -118,6 +203,12 @@
             // 2. 폴링
             statusMessage = '이미지 생성 중... (잠시 기다려 주세요)';
             const falImageUrl = await pollUntilDone(endpoint, requestId);
+            
+            // 취소된 경우
+            if (isPollingCancelled) {
+                stage = 'config';
+                return;
+            }
 
             // 3. fal.ai 이미지 → CF Images 업로드
             stage = 'uploading';
@@ -150,6 +241,10 @@
 
     async function pollUntilDone(endpoint: string, requestId: string): Promise<string> {
         while (true) {
+            if (isPollingCancelled) {
+                throw new Error('CANCELLED');
+            }
+            
             await new Promise((r) => setTimeout(r, 1500));
 
             const res = await fetch(`${endpoint}?requestId=${encodeURIComponent(requestId)}`);
@@ -176,6 +271,11 @@
         }
     }
 
+    // 생성 취소
+    function handleCancelGeneration() {
+        isPollingCancelled = true;
+    }
+
     function handleInsert() {
         if (!generatedCfUrl) return;
         onInsert?.({
@@ -184,18 +284,30 @@
             size,
             align
         });
-        resetAndClose();
+        handleClose();
+    }
+
+    // 새로 생성 (done에서 config로, 프롬프트 유지)
+    function handleNewGeneration() {
+        generatedCfUrl = null;
+        size = '100';
+        align = 'center';
+        stage = 'config';
+    }
+
+    // 다시 시도 (에러 상태에서)
+    function handleRetry() {
+        errorMessage = null;
+        generate();
     }
 
     function handleCancel() {
-        resetAndClose();
+        handleClose();
     }
 
-    function resetAndClose() {
-        // 상태 초기화
-        mode = 't2i';
+    function handleClose() {
+        // 프롬프트는 유지하고 내부 상태만 초기화
         stage = 'config';
-        prompt = '';
         errorMessage = null;
         statusMessage = '';
         i2iImages = [];
@@ -203,6 +315,7 @@
         generatedCfUrl = null;
         size = '100';
         align = 'center';
+        isPollingCancelled = false;
         onClose?.();
     }
 </script>
@@ -214,9 +327,20 @@
         <h3 class="font-semibold">AI 이미지 어시스턴트</h3>
     </div>
 
-    {#if stage === 'config'}
+    {#if stage === 'config' || stage === 'done'}
+        <!-- 에러 메시지 -->
+        {#if errorMessage}
+            <div class="rounded-md bg-destructive/10 p-3">
+                <p class="text-sm text-destructive">{errorMessage}</p>
+                <Button variant="outline" size="sm" class="mt-2" onclick={handleRetry}>
+                    <RefreshCw class="mr-1 size-3" />
+                    다시 시도
+                </Button>
+            </div>
+        {/if}
+
         <div class="space-y-3">
-            <Tabs.Root bind:value={mode}>
+            <Tabs.Root value={mode} onValueChange={(v) => updateMode(v as Mode)}>
                 <Tabs.List class="w-full">
                     <Tabs.Trigger value="t2i" class="flex-1">텍스트 → 이미지</Tabs.Trigger>
                     <Tabs.Trigger value="i2i" class="flex-1">이미지 → 이미지</Tabs.Trigger>
@@ -224,18 +348,20 @@
 
                 <Tabs.Content value="t2i" class="space-y-3 pt-3">
                     <div class="space-y-1">
-                        <label class="text-sm font-medium">프롬프트</label>
+                        <label for="t2i-prompt" class="text-sm font-medium">프롬프트</label>
                         <Textarea
+                            id="t2i-prompt"
                             placeholder="생성할 이미지를 설명하세요..."
                             class="min-h-[80px] resize-none"
-                            bind:value={prompt}
+                            value={prompt}
+                            onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
                 </Tabs.Content>
 
                 <Tabs.Content value="i2i" class="space-y-3 pt-3">
                     <div class="space-y-2">
-                        <label class="text-sm font-medium">참조 이미지</label>
+                        <span class="text-sm font-medium">참조 이미지</span>
                         <label
                             class="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
                         >
@@ -272,98 +398,134 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-sm font-medium">프롬프트</label>
+                        <label for="i2i-prompt" class="text-sm font-medium">프롬프트</label>
                         <Textarea
+                            id="i2i-prompt"
                             placeholder="이미지를 어떻게 변환할지 설명하세요..."
                             class="min-h-[60px] resize-none"
-                            bind:value={prompt}
+                            value={prompt}
+                            onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
                 </Tabs.Content>
             </Tabs.Root>
-
-            {#if errorMessage}
-                <p class="text-sm text-destructive">{errorMessage}</p>
-            {/if}
         </div>
 
-        <div class="flex justify-end gap-2 border-t pt-3">
-            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
-            <Button size="sm" onclick={generate} disabled={i2iUploading}>
-                <Sparkles class="mr-1 size-4" />
-                생성
-            </Button>
-        </div>
+        <!-- 프롬프트 히스토리 -->
+        {#if promptHistory.length > 0}
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                    <Clock class="size-4" />
+                    최근 프롬프트
+                </div>
+                <div class="max-h-24 space-y-1 overflow-y-auto">
+                    {#each promptHistory as entry}
+                        <button
+                            type="button"
+                            class="w-full rounded-md border bg-muted/30 p-2 text-left text-xs transition-colors hover:bg-muted/50"
+                            onclick={() => loadFromHistory(entry)}
+                        >
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-muted-foreground">
+                                    {entry.mode === 't2i' ? '텍스트→이미지' : '이미지→이미지'}
+                                </span>
+                                <span class="text-muted-foreground">{formatTime(entry.timestamp)}</span>
+                            </div>
+                            <p class="mt-1 truncate">
+                                {entry.prompt}
+                            </p>
+                        </button>
+                    {/each}
+                </div>
+            </div>
+        {/if}
 
-    {:else if stage === 'generating' || stage === 'uploading'}
-        <div class="flex flex-col items-center gap-3 py-6">
-            <Spinner class="size-6" />
-            <p class="text-sm text-muted-foreground">{statusMessage}</p>
-        </div>
-
-        <div class="flex justify-end gap-2 border-t pt-3">
-            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
-        </div>
-
-    {:else if stage === 'done'}
-        <div class="space-y-3">
-            {#if generatedCfUrl}
+        <!-- 생성 결과 (done 상태) -->
+        {#if stage === 'done' && generatedCfUrl}
+            <div class="space-y-3">
                 <img
                     src={generatedCfUrl}
                     alt="AI Generated"
                     class="w-full rounded-md object-contain"
                     style="max-height: 180px;"
                 />
-            {/if}
 
-            <div class="space-y-2">
-                <label class="text-sm font-medium">크기</label>
-                <RadioGroup.Root bind:value={size}>
-                    <div class="flex gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="100" id="gen-size-100" />
-                            <label for="gen-size-100" class="text-sm">100%</label>
+                <div class="space-y-2">
+                    <span class="text-sm font-medium">크기</span>
+                    <RadioGroup.Root bind:value={size}>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="100" id="gen-size-100" />
+                                <label for="gen-size-100" class="text-sm">100%</label>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="75" id="gen-size-75" />
+                                <label for="gen-size-75" class="text-sm">75%</label>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="50" id="gen-size-50" />
+                                <label for="gen-size-50" class="text-sm">50%</label>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="75" id="gen-size-75" />
-                            <label for="gen-size-75" class="text-sm">75%</label>
+                    </RadioGroup.Root>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="text-sm font-medium">정렬</span>
+                    <RadioGroup.Root bind:value={align}>
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="left" id="gen-align-left" />
+                                <label for="gen-align-left" class="text-sm">좌측</label>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="center" id="gen-align-center" />
+                                <label for="gen-align-center" class="text-sm">중앙</label>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <RadioGroup.Item value="right" id="gen-align-right" />
+                                <label for="gen-align-right" class="text-sm">우측</label>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="50" id="gen-size-50" />
-                            <label for="gen-size-50" class="text-sm">50%</label>
-                        </div>
-                    </div>
-                </RadioGroup.Root>
+                    </RadioGroup.Root>
+                </div>
             </div>
+        {/if}
 
-            <div class="space-y-2">
-                <label class="text-sm font-medium">정렬</label>
-                <RadioGroup.Root bind:value={align}>
-                    <div class="flex gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="left" id="gen-align-left" />
-                            <label for="gen-align-left" class="text-sm">좌측</label>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="center" id="gen-align-center" />
-                            <label for="gen-align-center" class="text-sm">중앙</label>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <RadioGroup.Item value="right" id="gen-align-right" />
-                            <label for="gen-align-right" class="text-sm">우측</label>
-                        </div>
-                    </div>
-                </RadioGroup.Root>
-            </div>
-
-            {#if errorMessage}
-                <p class="text-sm text-destructive">{errorMessage}</p>
+        <!-- 버튼 -->
+        <div class="flex gap-2 border-t pt-3">
+            {#if stage === 'done' && generatedCfUrl}
+                <Button variant="outline" class="flex-1" onclick={handleNewGeneration}>
+                    <RefreshCw class="mr-1 size-4" />
+                    새로 생성
+                </Button>
+                <Button class="flex-1" onclick={handleInsert}>
+                    <Check class="mr-1 size-4" />
+                    삽입
+                </Button>
+            {:else}
+                <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
+                <Button size="sm" onclick={generate} disabled={i2iUploading}>
+                    <Sparkles class="mr-1 size-4" />
+                    생성
+                </Button>
             {/if}
         </div>
 
-        <div class="flex justify-end gap-2 border-t pt-3">
-            <Button variant="outline" size="sm" onclick={handleCancel}>취소</Button>
-            <Button size="sm" onclick={handleInsert}>삽입</Button>
+    {:else if stage === 'generating' || stage === 'uploading'}
+        <!-- 생성 중 상태 -->
+        <div class="flex flex-col items-center gap-3 py-6">
+            <Spinner class="size-6" />
+            <div class="text-center">
+                <p class="text-sm font-medium">{statusMessage}</p>
+                <p class="text-xs text-muted-foreground">잠시만 기다려 주세요</p>
+            </div>
+        </div>
+
+        <div class="flex justify-end border-t pt-3">
+            <Button variant="outline" size="sm" onclick={handleCancelGeneration}>
+                취소
+            </Button>
         </div>
     {/if}
 </div>
