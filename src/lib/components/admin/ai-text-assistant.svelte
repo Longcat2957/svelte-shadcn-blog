@@ -452,27 +452,28 @@
         {/if}
 
         <!-- 버튼 -->
-        <div class="flex gap-2">
+        <div class="flex justify-between border-t pt-3">
             {#if stage === 'done' && generatedResult}
-                <Button variant="outline" class="flex-1" onclick={handleNewGeneration}>
+                <Button variant="outline" size="sm" onclick={handleNewGeneration}>
                     <RefreshCw class="mr-1 size-4" />
                     새로 생성
                 </Button>
-                <Button class="flex-1" onclick={handleInsert}>
+                <Button size="sm" onclick={handleInsert}>
                     <Check class="mr-1 size-4" />
                     삽입
                 </Button>
             {:else}
+                <Button variant="outline" size="sm" onclick={onClose}>취소</Button>
                 <Button
-                    class="w-full"
+                    size="sm"
                     onclick={handleGenerate}
                     disabled={isGenerating || isLoadingModels || models.length === 0 || (!hasSelectedText && !userPrompt.trim())}
                 >
                     {#if isGenerating}
-                        <Spinner class="mr-2 size-4" />
+                        <Spinner class="mr-1 size-4" />
                         생성 중...
                     {:else}
-                        <Sparkles class="mr-2 size-4" />
+                        <Sparkles class="mr-1 size-4" />
                         생성
                     {/if}
                 </Button>

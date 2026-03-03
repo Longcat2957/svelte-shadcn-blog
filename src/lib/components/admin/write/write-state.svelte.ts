@@ -70,6 +70,12 @@ export class WriteState {
     imageAssistantPrompt = $state('');
     imageAssistantMode = $state<'t2i' | 'i2i'>('t2i');
 
+    // 이미지 프롬프트 자동 생성 관련 상태
+    imageAssistantSelectedText = $state('');
+    imageAssistantSelectionStart = $state(0);
+    imageAssistantSelectionEnd = $state(0);
+    isGeneratingImagePrompt = $state(false);
+
     // Description 자동 요약 관련 상태
     isGeneratingDescription = $state(false);
 
@@ -291,6 +297,67 @@ export class WriteState {
         this.isImagePopoverOpen = false;
     }
 
+    openImageAssistant() {
+        if (!this.textareaRef) return;
+        const start = this.textareaRef.selectionStart;
+        const end = this.textareaRef.selectionEnd;
+        this.imageAssistantSelectionStart = start;
+        this.imageAssistantSelectionEnd = end;
+        this.imageAssistantSelectedText = this.content.substring(start, end);
+        this.isImagePopoverOpen = true;
+    }
+
+    async generateImagePrompt(): Promise<string | null> {
+        if (this.isGeneratingImagePrompt) return null;
+        
+        // 선택된 텍스트 또는 전체 내용 사용
+        const sourceText = this.imageAssistantSelectedText || this.content;
+        if (!sourceText.trim()) {
+            this.errorMessage = '프롬프트 생성을 위한 콘텐츠가 없습니다.';
+            return null;
+        }
+
+        this.isGeneratingImagePrompt = true;
+        this.errorMessage = null;
+
+        try {
+            const res = await fetch('/api/ai/llm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemPrompt: `당신은 이미지 생성 AI를 위한 프롬프트 작성 전문가입니다.
+주어진 텍스트 콘텐츠를 분석하여, 해당 내용을 가장 잘 시각화할 수 있는 이미지 프롬프트를 작성하세요.
+
+지침:
+1. 텍스트의 핵심 주제, 분위기, 키워드를 추출하세요.
+2. 추상적인 개념은 구체적인 시각 요소로 변환하세요.
+3. 스타일, 색상, 조명, 구도 등을 명시하세요.
+4. 프롬프트는 영어로 작성하세요 (이미지 생성 AI가 영어를 더 잘 이해함).
+5. 간결하면서도 상세하게 작성하세요 (50-100단어 권장).
+6. 불필요한 설명 없이 프롬프트만 출력하세요.
+
+예시:
+입력: "인공지능과 머신러닝의 발전으로 우리 삶이 변화하고 있다."
+출력: "A futuristic AI brain neural network visualization, glowing blue and purple neurons connecting in a dark space, digital particles floating around, minimalist clean design, cinematic lighting, 4k quality, tech aesthetic"`,
+                    userPrompt: sourceText
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || '프롬프트 생성 실패');
+            }
+
+            const data = await res.json();
+            return data.content ?? '';
+        } catch (e: unknown) {
+            this.errorMessage = e instanceof Error ? e.message : '프롬프트 생성 중 오류가 발생했습니다.';
+            return null;
+        } finally {
+            this.isGeneratingImagePrompt = false;
+        }
+    }
+
     async generateDescription() {
         if (!this.content.trim() || this.isGeneratingDescription) return;
         this.isGeneratingDescription = true;
@@ -300,7 +367,7 @@ export class WriteState {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     systemPrompt:
-                        '주어진 마크다운 콘텐츠를 한글로 요약하세요. SEO에 적합한 간결한 설명으로 1-2문장으로 작성하세요. 불필요한 마크다운 문법은 제거하고 자연스러운 문장으로 작성하세요.',
+                        '주어진 마크다운 콘텐츠를 한글로 요약하세요. 반드시 1문장, 100자 이내로 작성하세요. 핵심 내용만 간결하게 표현하고 불필요한 마크다운 문법은 제거하세요.',
                     userPrompt: this.content
                 })
             });

@@ -47,6 +47,8 @@
                 <Popover.Content
                     class="w-auto p-0"
                     align="end"
+                    side="top"
+                    collisionPadding={16}
                     onInteractOutside={(e) => {
                         if (state.textAssistantStage === 'generating') {
                             e.preventDefault();
@@ -83,7 +85,12 @@
             <Popover.Root bind:open={state.isImagePopoverOpen}>
                 <Popover.Trigger>
                     {#snippet child({ props })}
-                        <Button {...props} variant="outline" size="sm">
+                        <Button 
+                            {...props} 
+                            variant="outline" 
+                            size="sm"
+                            onclick={() => state.openImageAssistant()}
+                        >
                             <WandSparkles class="mr-1 size-4" />
                             이미지 어시스턴트
                         </Button>
@@ -95,7 +102,8 @@
                     onInteractOutside={(e) => {
                         if (
                             state.imageAssistantStage === 'generating' ||
-                            state.imageAssistantStage === 'uploading'
+                            state.imageAssistantStage === 'uploading' ||
+                            state.isGeneratingImagePrompt
                         ) {
                             e.preventDefault();
                         }
@@ -104,7 +112,8 @@
                         if (
                             e.key === 'Escape' &&
                             (state.imageAssistantStage === 'generating' ||
-                                state.imageAssistantStage === 'uploading')
+                                state.imageAssistantStage === 'uploading' ||
+                                state.isGeneratingImagePrompt)
                         ) {
                             e.preventDefault();
                         }
@@ -113,11 +122,14 @@
                     <AIImageGenerator
                         prompt={state.imageAssistantPrompt}
                         mode={state.imageAssistantMode}
+                        selectedText={state.imageAssistantSelectedText}
+                        isGeneratingPrompt={state.isGeneratingImagePrompt}
                         onInsert={(event) => state.handleAIImageInsert(event)}
                         onClose={() => (state.isImagePopoverOpen = false)}
                         onStageChange={(stage) => (state.imageAssistantStage = stage)}
                         onPromptChange={(prompt) => (state.imageAssistantPrompt = prompt)}
                         onModeChange={(mode) => (state.imageAssistantMode = mode)}
+                        onGeneratePrompt={() => state.generateImagePrompt()}
                     />
                 </Popover.Content>
             </Popover.Root>

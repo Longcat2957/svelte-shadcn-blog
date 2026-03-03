@@ -129,14 +129,25 @@
 </script>
 
 <svelte:head>
-    <title>블로그</title>
-    <meta name="description" content="개발, 설계, 그리고 일상에 대한 이야기를 담은 블로그입니다." />
-    <meta property="og:title" content="블로그" />
-    <meta
-        property="og:description"
-        content="개발, 설계, 그리고 일상에 대한 이야기를 담은 블로그입니다."
-    />
+    <title>{$page.data.siteConfig?.name}</title>
+    <meta name="description" content={$page.data.siteConfig?.description} />
+    <meta property="og:title" content={$page.data.siteConfig?.name} />
+    <meta property="og:description" content={$page.data.siteConfig?.description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={$page.url.href} />
+    <link rel="canonical" href={$page.data.siteConfig?.url} />
+    {@html `<script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: $page.data.siteConfig?.name,
+        description: $page.data.siteConfig?.description,
+        url: $page.data.siteConfig?.url,
+        potentialAction: {
+            '@type': 'SearchAction',
+            target: `${$page.data.siteConfig?.url}/?q={search_term_string}`,
+            'query-input': 'required name=search_term_string'
+        }
+    })}</script>`}
 </svelte:head>
 
 <div class="space-y-8">

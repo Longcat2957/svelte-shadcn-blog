@@ -11,6 +11,7 @@
     import RefreshCw from '@lucide/svelte/icons/refresh-cw';
     import Check from '@lucide/svelte/icons/check';
     import Clock from '@lucide/svelte/icons/clock';
+    import FileText from '@lucide/svelte/icons/file-text';
     import type { Size, Align, InsertEvent } from './image-upload-types';
 
     type Mode = 't2i' | 'i2i';
@@ -28,21 +29,27 @@
     interface Props {
         prompt?: string;
         mode?: Mode;
+        selectedText?: string;
+        isGeneratingPrompt?: boolean;
         onInsert?: (event: InsertEvent) => void;
         onClose?: () => void;
         onStageChange?: (stage: Stage) => void;
         onPromptChange?: (prompt: string) => void;
         onModeChange?: (mode: Mode) => void;
+        onGeneratePrompt?: () => Promise<string | null>;
     }
 
     let { 
         prompt: propPrompt = '',
         mode: propMode = 't2i',
+        selectedText = '',
+        isGeneratingPrompt = false,
         onInsert, 
         onClose, 
         onStageChange,
         onPromptChange,
-        onModeChange
+        onModeChange,
+        onGeneratePrompt
     }: Props = $props();
 
     // 내부 상태
@@ -61,6 +68,19 @@
 
     function updateMode(value: Mode) {
         onModeChange?.(value);
+    }
+
+    // 선택된 텍스트 유무 확인
+    let hasSelectedText = $derived(selectedText.length > 0);
+
+    // 프롬프트 자동 생성 핸들러
+    async function handleGeneratePrompt() {
+        if (!onGeneratePrompt || isGeneratingPrompt) return;
+        
+        const generatedPrompt = await onGeneratePrompt();
+        if (generatedPrompt) {
+            updatePrompt(generatedPrompt);
+        }
     }
 
     // i2i 전용: 업로드된 fal.ai URL 목록
@@ -359,11 +379,30 @@
                         <Textarea
                             id="t2i-prompt"
                             placeholder="생성할 이미지를 설명하세요..."
-                            class="min-h-[80px] resize-none"
+                            class="min-h-20 resize-none"
                             value={prompt}
                             onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
+                    
+                    <!-- 내용에서 프롬프트 생성 버튼 -->
+                    {#if onGeneratePrompt}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            class="w-full"
+                            onclick={handleGeneratePrompt}
+                            disabled={isGeneratingPrompt}
+                        >
+                            {#if isGeneratingPrompt}
+                                <Spinner class="mr-1 size-3" />
+                                프롬프트 생성 중...
+                            {:else}
+                                <FileText class="mr-1 size-3" />
+                                {hasSelectedText ? '선택한 텍스트에서 프롬프트 생성' : '포스트 내용에서 프롬프트 생성'}
+                            {/if}
+                        </Button>
+                    {/if}
                 </Tabs.Content>
 
                 <Tabs.Content value="i2i" class="space-y-3 pt-3">
@@ -409,11 +448,30 @@
                         <Textarea
                             id="i2i-prompt"
                             placeholder="이미지를 어떻게 변환할지 설명하세요..."
-                            class="min-h-[60px] resize-none"
+                            class="min-h-15 resize-none"
                             value={prompt}
                             onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
+                    
+                    <!-- 내용에서 프롬프트 생성 버튼 -->
+                    {#if onGeneratePrompt}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            class="w-full"
+                            onclick={handleGeneratePrompt}
+                            disabled={isGeneratingPrompt}
+                        >
+                            {#if isGeneratingPrompt}
+                                <Spinner class="mr-1 size-3" />
+                                프롬프트 생성 중...
+                            {:else}
+                                <FileText class="mr-1 size-3" />
+                                {hasSelectedText ? '선택한 텍스트에서 프롬프트 생성' : '포스트 내용에서 프롬프트 생성'}
+                            {/if}
+                        </Button>
+                    {/if}
                 </Tabs.Content>
             </Tabs.Root>
         </div>
@@ -500,13 +558,13 @@
         {/if}
 
         <!-- 버튼 -->
-        <div class="flex gap-2 border-t pt-3">
+        <div class="flex justify-between border-t pt-3">
             {#if stage === 'done' && generatedCfUrl}
-                <Button variant="outline" class="flex-1" onclick={handleNewGeneration}>
+                <Button variant="outline" size="sm" onclick={handleNewGeneration}>
                     <RefreshCw class="mr-1 size-4" />
                     새로 생성
                 </Button>
-                <Button class="flex-1" onclick={handleInsert}>
+                <Button size="sm" onclick={handleInsert}>
                     <Check class="mr-1 size-4" />
                     삽입
                 </Button>

@@ -2,7 +2,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = ({ url }) => {
     const body = `User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /api/
 
 Sitemap: ${url.origin}/sitemap.xml
 `;

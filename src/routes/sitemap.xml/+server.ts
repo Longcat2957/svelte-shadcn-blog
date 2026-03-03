@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
     const posts = await db.query.post.findMany({
         where: eq(post.published, true),
-        columns: { id: true, created_at: true }
+        columns: { id: true, updated_at: true }
     });
 
     const staticRoutes = ['', '/about'];
@@ -28,7 +28,7 @@ ${posts
     .map(
         (p) => `  <url>
     <loc>${origin}/blog/${p.id}</loc>
-    <lastmod>${p.created_at.toISOString().split('T')[0]}</lastmod>
+    <lastmod>${p.updated_at.toISOString().split('T')[0]}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`

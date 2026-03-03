@@ -7,12 +7,18 @@
     import TopNav from '$lib/components/layout/top-nav.svelte';
     import Footer from '$lib/components/layout/footer.svelte';
     import Fab from '$lib/components/layout/fab.svelte';
-    import { navigating } from '$app/stores';
+    import { navigating, page } from '$app/stores';
     import { Spinner } from '$lib/components/ui/spinner';
 
     let { children } = $props();
     let mobileMenuOpen = $state(false);
 </script>
+
+<svelte:head>
+    <meta property="og:site_name" content={$page.data.siteConfig?.name} />
+    <meta property="og:locale" content={$page.data.siteConfig?.locale} />
+    <link rel="alternate" type="application/rss+xml" title={$page.data.siteConfig?.name} href="/rss.xml" />
+</svelte:head>
 
 <div class="flex min-h-screen flex-col">
     <!-- Top Navigation Area -->

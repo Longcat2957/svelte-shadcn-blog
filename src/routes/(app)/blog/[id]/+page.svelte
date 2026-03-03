@@ -44,16 +44,22 @@
 </script>
 
 <svelte:head>
-    <title>{data.post.title} | 블로그</title>
+    <title>{data.post.title} | {$page.data.siteConfig?.name}</title>
     {#if data.post.description}
         <meta name="description" content={data.post.description} />
         <meta property="og:description" content={data.post.description} />
         <meta name="twitter:description" content={data.post.description} />
     {/if}
-    <meta property="og:title" content={data.post.title} />
+    <meta property="og:title" content="{data.post.title} | {$page.data.siteConfig?.name}" />
     <meta property="og:type" content="article" />
     <meta property="og:url" content={$page.url.href} />
-    <meta name="twitter:title" content={data.post.title} />
+    <meta property="article:published_time" content={data.post.date} />
+    <meta property="article:modified_time" content={data.post.updatedAt} />
+    {#each data.post.tags as tag}
+        <meta property="article:tag" content={tag} />
+    {/each}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{data.post.title} | {$page.data.siteConfig?.name}" />
     <link rel="canonical" href={$page.url.href} />
     {@html `<script type="application/ld+json">${JSON.stringify({
         '@context': 'https://schema.org',
@@ -61,8 +67,18 @@
         headline: data.post.title,
         description: data.post.description ?? undefined,
         datePublished: data.post.date,
+        dateModified: data.post.updatedAt,
         keywords: data.post.tags.join(', '),
         author: data.author ? { '@type': 'Person', name: data.author.username } : undefined,
+        publisher: {
+            '@type': 'Organization',
+            name: $page.data.siteConfig?.name,
+            url: $page.data.siteConfig?.url
+        },
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': $page.url.href
+        },
         url: $page.url.href
     })}</script>`}
 </svelte:head>
