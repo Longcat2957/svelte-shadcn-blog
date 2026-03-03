@@ -1,12 +1,10 @@
 <script lang="ts">
     import { Button } from '$lib/components/ui/button';
-    import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
-    import PenBox from '@lucide/svelte/icons/pen-box';
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+    import X from '@lucide/svelte/icons/x';
     import { page, navigating } from '$app/stores';
     import { Spinner } from '$lib/components/ui/spinner';
     import TopNav from '$lib/components/layout/top-nav.svelte';
-    import MobileHeader from '$lib/components/layout/mobile-header.svelte';
     let { children } = $props();
     let mobileMenuOpen = $state(false);
 
@@ -45,7 +43,7 @@
             >
                 <!-- Admin Sidebar (Styled like App Sidebar) -->
                 <aside
-                    class="sticky top-14 flex h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
+                    class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-background/50 backdrop-blur-sm md:flex"
                 >
                     <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
                         <div
@@ -83,9 +81,64 @@
 
                 </aside>
 
-                <!-- User side uses MobileHeader, but we might want admin-specific mobile layout? 
-                         Let's keep it consistent for now. -->
-                <MobileHeader bind:open={mobileMenuOpen} />
+                <!-- Mobile Admin Sidebar (Slide-over drawer) -->
+                {#if mobileMenuOpen}
+                    <!-- Backdrop -->
+                    <div
+                        class="fixed inset-0 z-40 bg-black/50 md:hidden"
+                        onclick={() => (mobileMenuOpen = false)}
+                        role="button"
+                        tabindex="-1"
+                        aria-label="Close menu"
+                    ></div>
+
+                    <!-- Drawer -->
+                    <aside
+                        class="fixed inset-y-0 left-0 z-50 w-72 transform overflow-y-auto border-r bg-background shadow-xl transition-transform duration-300 ease-in-out md:hidden"
+                    >
+                        <div class="flex items-center justify-between border-b px-4 py-3">
+                            <span class="text-lg font-bold">Admin Menu</span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="size-8"
+                                onclick={() => (mobileMenuOpen = false)}
+                                aria-label="Close menu"
+                            >
+                                <X class="size-5" />
+                            </Button>
+                        </div>
+                        <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
+                            <nav class="space-y-1">
+                                {#each adminNavItems as item}
+                                    <a
+                                        href={item.href}
+                                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all {$page
+                                            .url.pathname === item.href
+                                            ? 'bg-accent text-accent-foreground'
+                                            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'}"
+                                        onclick={() => (mobileMenuOpen = false)}
+                                    >
+                                        <item.icon class="size-4" />
+                                        {item.name}
+                                    </a>
+                                {/each}
+                            </nav>
+
+                            <div class="border-t pt-4">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    class="w-full justify-start gap-3 px-3 text-muted-foreground transition-all hover:bg-accent/50 hover:text-accent-foreground"
+                                    onclick={() => (window.location.href = '/')}
+                                >
+                                    <ArrowLeft class="size-4" />
+                                    Return to Blog
+                                </Button>
+                            </div>
+                        </div>
+                    </aside>
+                {/if}
 
                 <main class="min-w-0 flex-1 bg-background p-4 md:p-8">
                     {#if $navigating}

@@ -186,13 +186,13 @@
     }
 </script>
 
-<div class="mx-auto max-w-4xl space-y-8">
-    <div class="flex items-end justify-between border-b pb-6">
+<div class="mx-auto max-w-4xl space-y-6 pb-12">
+    <div class="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between sm:pb-6">
         <div class="space-y-1">
-            <h1 class="text-3xl font-bold tracking-tight">카테고리 아키텍처</h1>
-            <p class="text-muted-foreground">블로그의 계층 구조를 정의하고 관리합니다.</p>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">카테고리 아키텍처</h1>
+            <p class="text-sm text-muted-foreground sm:text-base">블로그의 계층 구조를 정의하고 관리합니다.</p>
         </div>
-        <Button onclick={addRootCategory} variant="default" class="gap-2 shadow-sm">
+        <Button onclick={addRootCategory} variant="default" size="sm" class="self-start gap-2 shadow-sm sm:self-auto">
             <FolderPlus class="size-4" />
             최상위 추가
         </Button>
@@ -234,10 +234,10 @@
             )}
                 <div class="group relative">
                     <div
-                        class="flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 {category.isEditing
+                        class="flex flex-wrap items-center gap-1 rounded-lg px-2 py-2 transition-all duration-200 hover:bg-accent/50 sm:gap-2 sm:px-3 {category.isEditing
                             ? 'bg-accent/30 ring-1 ring-primary/20'
                             : ''}"
-                        style="margin-left: {depth * 1.5}rem"
+                        style="margin-left: {depth * 0.75}rem"
                     >
                         <!-- Toggle Arrow -->
                         <div class="flex size-5 items-center justify-center">
@@ -306,7 +306,7 @@
 
                         <!-- Actions -->
                         <div
-                            class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+                            class="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                         >
                             {#if category.isEditing}
                                 <Button

@@ -117,8 +117,8 @@
     );
 </script>
 
-<div class="space-y-8 pb-12">
-    <h1 class="text-3xl font-bold tracking-tight">Comments</h1>
+<div class="space-y-6 pb-12">
+    <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Comments</h1>
 
     {#if errorMessage}
         <Alert.Root variant="destructive" class="flex items-start justify-between gap-4">
@@ -170,17 +170,17 @@
     >
         {#each comments as comment}
             <div
-                class="group flex items-center justify-between px-6 py-5 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30"
+                class="group flex flex-col gap-3 px-4 py-4 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
             >
-                <div class="flex min-w-0 flex-col gap-2 pr-4">
-                    <div class="flex items-center gap-3">
+                <div class="flex min-w-0 flex-col gap-2">
+                    <div class="flex items-start gap-3">
                         <Avatar.Root class="h-8 w-8 shrink-0 border">
                             <Avatar.Fallback class="bg-muted text-[10px] text-muted-foreground">
                                 {comment.authorName[0]}
                             </Avatar.Fallback>
                         </Avatar.Root>
                         <div class="flex min-w-0 flex-col gap-0.5">
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <span class="text-sm font-semibold">{comment.authorName}</span>
                                 {#if comment.isSecret}
                                     <Badge variant="secondary" class="h-5 px-1.5 text-[10px]">
@@ -194,16 +194,16 @@
                                 {/if}
                             </div>
                             <p class="text-sm text-muted-foreground">
-                                {truncate(comment.content, 80)}
+                                {truncate(comment.content, 60)}
                             </p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3">
                         <time class="font-mono">
                             {formatDate(comment.createdAt)}
                         </time>
                         {#if comment.postTitle}
-                            <span class="h-3 w-px bg-border"></span>
+                            <span class="hidden h-3 w-px bg-border sm:block"></span>
                             <span class="truncate">{comment.postTitle}</span>
                         {/if}
                     </div>
@@ -212,7 +212,7 @@
                 <Button
                     variant="outline"
                     size="sm"
-                    class="h-8 shrink-0"
+                    class="h-8 w-full shrink-0 sm:w-auto"
                     href="/blog/{comment.postId}#comment-{comment.id}"
                     target="_blank"
                 >

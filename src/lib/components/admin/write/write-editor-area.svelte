@@ -16,16 +16,17 @@
 </script>
 
 <div class="flex h-full flex-col space-y-2">
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <label for="content" class="ml-1 text-sm font-semibold text-foreground/80"
             >Content (Markdown)</label
         >
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {#if state.canUndo}
-                <Button variant="outline" size="sm" onclick={() => state.undoHistory()}>
-                    <Undo class="mr-2 size-4" />
-                    실행 취소
+                <Button variant="outline" size="sm" onclick={() => state.undoHistory()} class="text-xs sm:text-sm">
+                    <Undo class="mr-1 size-3 sm:mr-2 sm:size-4" />
+                    <span class="hidden sm:inline">실행 취소</span>
+                    <span class="sm:hidden">취소</span>
                 </Button>
             {/if}
 
@@ -38,9 +39,11 @@
                             variant="outline"
                             size="sm"
                             onclick={() => state.openAITextAssistant()}
+                            class="text-xs sm:text-sm"
                         >
-                            <Sparkles class="mr-1 size-4" />
-                            텍스트 어시스턴트
+                            <Sparkles class="mr-1 size-3 sm:size-4" />
+                            <span class="hidden sm:inline">텍스트 어시스턴트</span>
+                            <span class="sm:hidden">텍스트</span>
                         </Button>
                     {/snippet}
                 </Popover.Trigger>
@@ -90,9 +93,11 @@
                             variant="outline" 
                             size="sm"
                             onclick={() => state.openImageAssistant()}
+                            class="text-xs sm:text-sm"
                         >
-                            <WandSparkles class="mr-1 size-4" />
-                            이미지 어시스턴트
+                            <WandSparkles class="mr-1 size-3 sm:size-4" />
+                            <span class="hidden sm:inline">이미지 어시스턴트</span>
+                            <span class="sm:hidden">이미지</span>
                         </Button>
                     {/snippet}
                 </Popover.Trigger>
@@ -135,9 +140,10 @@
             </Popover.Root>
 
             <!-- 이미지 업로드 -->
-            <Button variant="outline" size="sm" onclick={() => state.openImageUploadDialog()}>
-                <Image class="mr-1 size-4" />
-                이미지 업로드
+            <Button variant="outline" size="sm" onclick={() => state.openImageUploadDialog()} class="text-xs sm:text-sm">
+                <Image class="mr-1 size-3 sm:size-4" />
+                <span class="hidden sm:inline">이미지 업로드</span>
+                <span class="sm:hidden">업로드</span>
             </Button>
         </div>
     </div>

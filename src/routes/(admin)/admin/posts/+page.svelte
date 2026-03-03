@@ -72,9 +72,9 @@
 </script>
 
 <div class="space-y-6 pb-12">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold tracking-tight">Posts</h1>
-        <Button href="/admin/write">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Posts</h1>
+        <Button href="/admin/write" size="sm" class="self-start sm:self-auto">
             <Plus class="mr-2 h-4 w-4" /> New Post
         </Button>
     </div>
@@ -107,7 +107,7 @@
         />
     </div>
 
-    <div class="grid gap-4 md:grid-cols-[1fr_200px_auto]">
+    <div class="grid gap-3 sm:grid-cols-[1fr_200px_auto]">
         <div class="relative">
             <Search class="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -140,7 +140,7 @@
                 </button>
             {/if}
         </div>
-        <Button variant="secondary" onclick={() => loadPosts(true)} disabled={loading}>
+        <Button variant="secondary" onclick={() => loadPosts(true)} disabled={loading} class="w-full sm:w-auto">
             Search
         </Button>
     </div>
@@ -151,12 +151,12 @@
     >
         {#each posts as post}
             <div
-                class="group flex items-center justify-between px-6 py-5 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30"
+                class="group flex flex-col gap-2 px-4 py-4 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
             >
-                <div class="flex min-w-0 flex-col gap-1 pr-4">
-                    <div class="flex items-center gap-3">
+                <div class="flex min-w-0 flex-col gap-1">
+                    <div class="flex flex-wrap items-center gap-2">
                         <span
-                            class="truncate text-lg font-bold tracking-tight transition-colors group-hover:text-primary"
+                            class="truncate text-base font-bold tracking-tight transition-colors group-hover:text-primary sm:text-lg"
                         >
                             {post.title}
                         </span>
@@ -167,7 +167,7 @@
                         {/if}
                     </div>
 
-                    <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3">
                         <time class="font-mono">
                             {new Date(post.createdAt).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
@@ -176,8 +176,8 @@
                             })}
                         </time>
                         {#if post.tags.length > 0}
-                            <span class="h-3 w-px bg-border"></span>
-                            <div class="flex gap-2">
+                            <span class="hidden h-3 w-px bg-border sm:block"></span>
+                            <div class="flex flex-wrap gap-1 sm:gap-2">
                                 {#each post.tags as tag}
                                     <button
                                         class="hover:text-primary hover:underline"
@@ -197,7 +197,7 @@
                 <Button
                     variant="outline"
                     size="sm"
-                    class="h-8 shrink-0"
+                    class="h-8 w-full shrink-0 sm:w-auto"
                     href={`/admin/write?id=${post.id}`}
                 >
                     Edit

@@ -132,9 +132,9 @@
     });
 </script>
 
-<div class="mx-auto max-w-5xl space-y-8 pb-12">
+<div class="mx-auto max-w-5xl space-y-6 pb-12">
     <div class="space-y-1">
-        <h1 class="text-3xl font-bold tracking-tight">User Profile</h1>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">User Profile</h1>
         <p class="text-sm text-muted-foreground">Manage your admin profile settings.</p>
     </div>
 

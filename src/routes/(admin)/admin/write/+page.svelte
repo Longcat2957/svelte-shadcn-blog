@@ -38,17 +38,17 @@
 </script>
 
 <div
-    class="mx-auto space-y-8 pb-12 {state.viewMode === 'split' ? 'h-[calc(100vh-8rem)]' : 'max-w-5xl'}"
+    class="mx-auto space-y-6 pb-12 {state.viewMode === 'split' ? 'h-[calc(100vh-8rem)]' : 'max-w-5xl'}"
 >
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="space-y-1">
-            <h1 class="text-3xl font-bold tracking-tight">Write Post</h1>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Write Post</h1>
             <p class="text-sm text-muted-foreground">
                 Create or edit your blog post with markdown support.
             </p>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
             <div class="flex items-center gap-2">
                 <Switch id="published" bind:checked={state.published} />
                 <label
@@ -87,9 +87,9 @@
         {/if}
 
         {#if state.viewMode === 'split'}
-            <div class="grid h-full min-h-0 grid-cols-2 gap-8">
+            <div class="grid h-full min-h-0 gap-4 lg:grid-cols-2 lg:gap-8">
                 <!-- Left Pane: Editor -->
-                <div class="flex h-full flex-col gap-6 overflow-y-auto pr-4">
+                <div class="flex h-full flex-col gap-4 overflow-y-auto lg:gap-6 lg:pr-4">
                     <WriteInputFields {state} isSplit={true} />
                     <WriteTagPicker {state} />
                     <div class="min-h-100 flex-1">
@@ -98,7 +98,7 @@
                 </div>
 
                 <!-- Right Pane: Preview -->
-                <div class="h-full overflow-y-auto border-l pl-8">
+                <div class="h-full overflow-y-auto border-t pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
                     <WritePreviewArea {state} fullPage={false} />
                 </div>
             </div>

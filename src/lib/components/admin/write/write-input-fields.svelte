@@ -70,7 +70,7 @@
         />
     </div>
 
-    <div class="space-y-2">
+    <div class="space-y-1">
         <div class="ml-1 flex items-center gap-2">
             <label for="description" class="text-sm font-semibold text-foreground/80"
                 >Description</label

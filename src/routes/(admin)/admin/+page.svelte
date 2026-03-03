@@ -187,7 +187,7 @@
 
     <!-- Views Chart -->
     <div class="space-y-2">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-1">
                 <h2 class="text-lg font-bold">Views</h2>
                 <p class="text-sm text-muted-foreground">
@@ -265,15 +265,15 @@
             {#each referrerFull as row}
                 {@const pct = referrerTotal > 0 ? Math.round((row.views / referrerTotal) * 100) : 0}
                 {@const color = SOURCE_COLORS[row.source]}
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="w-20 shrink-0 font-medium">{row.source}</span>
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                    <span class="w-20 shrink-0 text-sm font-medium">{row.source}</span>
                     <div class="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                         <div
                             class="h-full rounded-full"
                             style="width: {pct}%; background-color: {color}"
                         ></div>
                     </div>
-                    <span class="w-24 shrink-0 text-right text-muted-foreground">
+                    <span class="w-24 shrink-0 text-right text-xs text-muted-foreground sm:text-sm">
                         {row.views.toLocaleString()}회 ({pct}%)
                     </span>
                 </div>
