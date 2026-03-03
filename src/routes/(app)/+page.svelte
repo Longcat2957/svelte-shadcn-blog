@@ -8,6 +8,7 @@
         id: number;
         title: string;
         description: string | null;
+        thumbnailUrl: string | null;
         tags: string[];
         createdAt: string;
         updatedAt: string;
@@ -193,36 +194,47 @@
                 href="/blog/{post.id}"
                 class="group -mx-4 rounded-lg px-4 py-6 transition-colors outline-none hover:bg-muted/30"
             >
-                <article class="flex flex-col gap-2">
-                    <div class="flex items-start justify-between gap-4">
-                        <h2
-                            class="text-xl font-bold tracking-tight transition-colors group-hover:text-primary"
-                        >
-                            {post.title}
-                        </h2>
-                        <time
-                            datetime={post.createdAt}
-                            class="mt-1.5 shrink-0 font-mono text-xs whitespace-nowrap text-muted-foreground"
-                        >
-                            {new Date(post.createdAt).toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit'
-                            })}
-                        </time>
-                    </div>
-
-                    {#if post.description}
-                        <p class="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                            {post.description}
-                        </p>
+                <article class="flex gap-4">
+                    {#if post.thumbnailUrl}
+                        <div class="shrink-0">
+                            <img
+                                src={post.thumbnailUrl.replace('/public', '/thumbnail')}
+                                alt={post.title}
+                                class="h-24 w-32 rounded-lg object-cover"
+                            />
+                        </div>
                     {/if}
+                    <div class="flex min-w-0 flex-1 flex-col gap-2">
+                        <div class="flex items-start justify-between gap-4">
+                            <h2
+                                class="text-xl font-bold tracking-tight transition-colors group-hover:text-primary"
+                            >
+                                {post.title}
+                            </h2>
+                            <time
+                                datetime={post.createdAt}
+                                class="mt-1.5 shrink-0 font-mono text-xs whitespace-nowrap text-muted-foreground"
+                            >
+                                {new Date(post.createdAt).toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit'
+                                })}
+                            </time>
+                        </div>
 
-                    <div class="flex items-center gap-3 pt-1">
-                        <div class="flex gap-2 text-xs text-muted-foreground">
-                            {#each post.tags as tag}
-                                <span class="transition-colors hover:text-foreground">#{tag}</span>
-                            {/each}
+                        {#if post.description}
+                            <p class="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                                {post.description}
+                            </p>
+                        {/if}
+
+                        <div class="flex items-center gap-3 pt-1">
+                            <div class="flex gap-2 text-xs text-muted-foreground">
+                                {#each post.tags as tag}
+                                    <span class="transition-colors hover:text-foreground">#{tag}</span>
+                                {/each}
+                            </div>
                         </div>
                     </div>
                 </article>

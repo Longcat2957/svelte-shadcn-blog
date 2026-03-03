@@ -6,6 +6,9 @@
     import CommentSection from '$lib/components/blog/comment-section.svelte';
     import MarkdownRenderer from '$lib/components/markdown/markdown-renderer.svelte';
     import * as Avatar from '$lib/components/ui/avatar';
+    import * as Collapsible from '$lib/components/ui/collapsible';
+    import ChevronDown from '@lucide/svelte/icons/chevron-down';
+    import ImageIcon from '@lucide/svelte/icons/image';
 
     let { data }: { data: PageData } = $props();
 
@@ -139,6 +142,26 @@
         </div>
     </div>
     <hr class="mt-2" />
+
+    {#if data.post.thumbnailUrl}
+        <Collapsible.Root class="pt-2" open={true}>
+            <Collapsible.Trigger class="flex w-full items-center gap-2 rounded-md px-1 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+                <ImageIcon class="size-4" />
+                <span>썸네일 보기</span>
+                <ChevronDown class="ml-auto size-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+            </Collapsible.Trigger>
+            <Collapsible.Content class="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                <div class="py-2">
+                    <img
+                        src={data.post.thumbnailUrl}
+                        alt="Post thumbnail"
+                        class="w-full rounded-lg object-cover"
+                    />
+                </div>
+            </Collapsible.Content>
+        </Collapsible.Root>
+    {/if}
+
     <MarkdownRenderer
         class="prose min-h-100 max-w-none pt-4 prose-zinc dark:prose-invert"
         md={data.post.content}

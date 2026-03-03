@@ -30,6 +30,7 @@ export const GET: RequestHandler = async (event) => {
             tags: found.tags,
             published: found.published,
             views: found.views,
+            thumbnailUrl: found.thumbnail_url,
             createdAt: found.created_at,
             updatedAt: found.updated_at
         }
@@ -52,6 +53,7 @@ export const PATCH: RequestHandler = async (event) => {
         categoryId?: number;
         tags?: string[];
         published?: boolean;
+        thumbnailUrl?: string | null;
     }>(event);
     if (body instanceof Response) return body;
 
@@ -62,6 +64,7 @@ export const PATCH: RequestHandler = async (event) => {
         category_id?: number;
         tags?: string[];
         published?: boolean;
+        thumbnail_url?: string | null;
     } = {};
 
     if (body.title !== undefined) {
@@ -92,6 +95,8 @@ export const PATCH: RequestHandler = async (event) => {
 
     if (body.published !== undefined) next.published = body.published;
 
+    if (body.thumbnailUrl !== undefined) next.thumbnail_url = body.thumbnailUrl;
+
     const [updated] = await db.update(post).set(next).where(eq(post.id, id)).returning();
     if (!updated) return json({ message: 'post not found' }, { status: 404 });
 
@@ -105,6 +110,7 @@ export const PATCH: RequestHandler = async (event) => {
             tags: updated.tags,
             published: updated.published,
             views: updated.views,
+            thumbnailUrl: updated.thumbnail_url,
             createdAt: updated.created_at,
             updatedAt: updated.updated_at
         }

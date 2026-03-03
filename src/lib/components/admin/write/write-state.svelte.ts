@@ -35,6 +35,7 @@ export class WriteState {
     description = $state('');
     content = $state('');
     categoryId = $state<number | null>(null);
+    thumbnailUrl = $state<string | null>(null);
     viewMode = $state<'edit' | 'preview' | 'split'>('edit');
     tags = $state<string[]>([]);
     tagInput = $state('');
@@ -78,6 +79,13 @@ export class WriteState {
 
     // Description 자동 요약 관련 상태
     isGeneratingDescription = $state(false);
+
+    // 썸네일 AI 생성 관련 상태
+    isThumbnailPopoverOpen = $state(false);
+    thumbnailAssistantStage = $state<'config' | 'generating' | 'uploading' | 'done'>('config');
+    thumbnailPrompt = $state('');
+    thumbnailPreviewUrl = $state<string | null>(null);
+    isGeneratingThumbnail = $state(false);
 
     // 롤백 기능을 위한 히스토리
     contentHistory = $state<HistoryEntry[]>([]);
@@ -149,6 +157,7 @@ export class WriteState {
                 tags: string[];
                 categoryId: number;
                 published: boolean;
+                thumbnailUrl: string | null;
             };
         };
         this.title = data.item.title;
@@ -157,6 +166,7 @@ export class WriteState {
         this.tags = data.item.tags;
         this.categoryId = data.item.categoryId;
         this.published = data.item.published;
+        this.thumbnailUrl = data.item.thumbnailUrl;
     }
 
     async save(): Promise<boolean> {
@@ -171,7 +181,8 @@ export class WriteState {
                 content: this.content,
                 categoryId: this.categoryId,
                 tags: this.tags,
-                published: this.published
+                published: this.published,
+                thumbnailUrl: this.thumbnailUrl
             };
 
             const postId = this.postId;
@@ -309,7 +320,7 @@ export class WriteState {
 
     async generateImagePrompt(): Promise<string | null> {
         if (this.isGeneratingImagePrompt) return null;
-        
+
         // 선택된 텍스트 또는 전체 내용 사용
         const sourceText = this.imageAssistantSelectedText || this.content;
         if (!sourceText.trim()) {
@@ -432,6 +443,145 @@ export class WriteState {
         const result = await this.imageUploadDialogRef.openDialog();
         if (!result) return;
         this.insertImageMarkdown(result);
+    }
+
+    // 썸네일 AI 생성 관련 메서드
+    openThumbnailAssistant() {
+        this.isThumbnailPopoverOpen = true;
+        this.thumbnailAssistantStage = 'config';
+        this.thumbnailPrompt = '';
+        this.thumbnailPreviewUrl = null;
+    }
+
+    async generateThumbnail() {
+        if (this.isGeneratingThumbnail || !this.content.trim()) return;
+
+        this.isGeneratingThumbnail = true;
+        this.errorMessage = null;
+
+        try {
+            // 1. 프롬프트 생성
+            this.thumbnailAssistantStage = 'generating';
+            
+            const promptRes = await fetch('/api/ai/llm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemPrompt: `당신은 블로그 포스트용 썸네일 이미지를 생성하기 위한 프롬프트 작성 전문가입니다.
+주어진 콘텐츠를 분석하여, 독자의 관심을 끌 수 있는 매력적인 썸네일 이미지 프롬프트를 작성하세요.
+
+지침:
+1. 콘텐츠의 핵심 주제를 시각적으로 표현하세요.
+2. 텍스트가 없는 순수 이미지로 구성하세요 (제목은 별도 표시).
+3. 깔끔하고 현대적인 디자인 스타일을 적용하세요.
+4. 적절한 색상 조화와 조명을 명시하세요.
+5. 프롬프트는 영어로 작성하세요.
+6. 50-80단어로 간결하게 작성하세요.
+7. 불필요한 설명 없이 프롬프트만 출력하세요.
+
+예시:
+입력: "React 19의 새로운 기능과 성능 개선 사항"
+출력: "Modern tech thumbnail design, abstract React logo morphing into performance graphs, gradient blue and purple colors, clean minimalist composition, soft studio lighting, 4k quality, professional blog aesthetic"`,
+                    userPrompt: this.content
+                })
+            });
+
+            if (!promptRes.ok) {
+                const errData = await promptRes.json();
+                throw new Error(errData.message || '프롬프트 생성 실패');
+            }
+
+            const promptData = await promptRes.json();
+            this.thumbnailPrompt = promptData.content ?? '';
+
+            // 2. t2i API 호출
+            const submitRes = await fetch('/api/ai/t2i', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: this.thumbnailPrompt })
+            });
+
+            if (!submitRes.ok) {
+                const errData = await submitRes.json();
+                throw new Error(errData.message || '이미지 생성 요청 실패');
+            }
+
+            const submitData = await submitRes.json();
+            const requestId = submitData.requestId;
+
+            // 3. 폴링
+            const falImageUrl = await this.pollThumbnailGeneration(requestId);
+
+            // 4. CF Images 업로드
+            this.thumbnailAssistantStage = 'uploading';
+
+            const imageResponse = await fetch(falImageUrl);
+            const imageBlob = await imageResponse.blob();
+            const contentType = imageResponse.headers.get('content-type');
+            const mimeType = contentType?.startsWith('image/') ? contentType : 'image/jpeg';
+            const imageFile = new File([imageBlob], 'ai-thumbnail.jpg', { type: mimeType });
+
+            const cfFormData = new FormData();
+            cfFormData.append('file', imageFile);
+
+            const cfRes = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                body: cfFormData
+            });
+
+            if (!cfRes.ok) {
+                const errData = await cfRes.json();
+                throw new Error(errData.message || '이미지 업로드 실패');
+            }
+
+            const cfData = await cfRes.json();
+            this.thumbnailPreviewUrl = cfData.url;
+            this.thumbnailAssistantStage = 'done';
+        } catch (e: unknown) {
+            this.errorMessage = e instanceof Error ? e.message : '썸네일 생성 중 오류가 발생했습니다.';
+            this.thumbnailAssistantStage = 'config';
+        } finally {
+            this.isGeneratingThumbnail = false;
+        }
+    }
+
+    async pollThumbnailGeneration(requestId: string): Promise<string> {
+        while (true) {
+            await new Promise((r) => setTimeout(r, 1500));
+
+            const res = await fetch(`/api/ai/t2i?requestId=${encodeURIComponent(requestId)}`);
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || '상태 확인 실패');
+            }
+
+            const data = await res.json();
+
+            if (data.status === 'COMPLETED') {
+                if (!data.images || data.images.length === 0) {
+                    throw new Error('생성된 이미지가 없습니다.');
+                }
+                return data.images[0].url;
+            }
+
+            if (data.status === 'FAILED') {
+                throw new Error('이미지 생성에 실패했습니다.');
+            }
+        }
+    }
+
+    confirmThumbnail() {
+        if (this.thumbnailPreviewUrl) {
+            this.thumbnailUrl = this.thumbnailPreviewUrl;
+            this.isThumbnailPopoverOpen = false;
+            this.resetThumbnailAssistant();
+        }
+    }
+
+    resetThumbnailAssistant() {
+        this.thumbnailAssistantStage = 'config';
+        this.thumbnailPrompt = '';
+        this.thumbnailPreviewUrl = null;
     }
 }
 

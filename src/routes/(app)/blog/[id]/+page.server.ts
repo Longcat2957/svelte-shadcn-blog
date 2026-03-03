@@ -110,6 +110,7 @@ export const load: PageServerLoad = async ({ params, cookies, request, url }) =>
             description: found.description,
             content: found.content,
             tags: found.tags,
+            thumbnailUrl: found.thumbnail_url,
             date: found.created_at.toISOString(),
             updatedAt: found.updated_at.toISOString()
         },

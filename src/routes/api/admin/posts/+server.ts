@@ -50,6 +50,7 @@ export const GET: RequestHandler = async (event) => {
             tags: post.tags,
             published: post.published,
             views: post.views,
+            thumbnailUrl: post.thumbnail_url,
             createdAt: post.created_at,
             updatedAt: post.updated_at
         })
@@ -78,6 +79,7 @@ export const POST: RequestHandler = async (event) => {
         categoryId?: number;
         tags?: string[];
         published?: boolean;
+        thumbnailUrl?: string | null;
     }>(event);
     if (body instanceof Response) return body;
 
@@ -104,7 +106,8 @@ export const POST: RequestHandler = async (event) => {
             content,
             category_id: categoryId,
             tags,
-            published
+            published,
+            thumbnail_url: body.thumbnailUrl ?? null
         })
         .returning();
 
@@ -119,6 +122,7 @@ export const POST: RequestHandler = async (event) => {
                 tags: created.tags,
                 published: created.published,
                 views: created.views,
+                thumbnailUrl: created.thumbnail_url,
                 createdAt: created.created_at,
                 updatedAt: created.updated_at
             }

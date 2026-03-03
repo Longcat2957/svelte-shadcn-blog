@@ -48,6 +48,7 @@ export const post = pgTable(
         id: serial('id').primaryKey(),
         title: text('title').notNull(),
         description: text('description'), // 목록 노출용 요약
+        thumbnail_url: text('thumbnail_url'), // 썸네일 이미지 URL (선택적)
 
         // 마크다운 문법의 경우 상당히 많은 양의 데이터가 포함될 가능성이 있음 -> text 타입 사용
         content: text('content').notNull(),

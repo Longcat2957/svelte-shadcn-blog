@@ -49,6 +49,7 @@ export const GET: RequestHandler = async (event) => {
             id: post.id,
             title: post.title,
             description: post.description,
+            thumbnailUrl: post.thumbnail_url,
             tags: post.tags,
             createdAt: post.created_at,
             updatedAt: post.updated_at,

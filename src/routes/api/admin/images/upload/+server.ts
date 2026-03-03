@@ -27,9 +27,10 @@ export const POST: RequestHandler = async (event) => {
 
     try {
         const data = await CloudflareImages.upload(file);
-        // data.result.variants usually contains URLs like https://imagedelivery.net/<hash>/<variant>
-        // We'll return the first one as the default URL.
-        const url = data.result.variants[0];
+        // data.result.variants contains URLs like https://imagedelivery.net/<account_hash>/<image_id>/<variant>
+        // Find the /public variant for original quality, fallback to first variant
+        const publicUrl = data.result.variants.find(v => v.endsWith('/public'));
+        const url = publicUrl ?? data.result.variants[0];
         console.log('[API] Upload successful, URL:', url);
         return json({ url });
     } catch (e: any) {
