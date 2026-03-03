@@ -100,6 +100,15 @@
                             e.preventDefault();
                         }
                     }}
+                    onkeydown={(e) => {
+                        if (
+                            e.key === 'Escape' &&
+                            (state.imageAssistantStage === 'generating' ||
+                                state.imageAssistantStage === 'uploading')
+                        ) {
+                            e.preventDefault();
+                        }
+                    }}
                 >
                     <AIImageGenerator
                         prompt={state.imageAssistantPrompt}

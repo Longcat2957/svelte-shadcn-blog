@@ -201,7 +201,7 @@
             const { requestId } = submitData;
 
             // 2. 폴링
-            statusMessage = '이미지 생성 중... (잠시 기다려 주세요)';
+            statusMessage = '이미지 생성 중...';
             const falImageUrl = await pollUntilDone(endpoint, requestId);
             
             // 취소된 경우
@@ -214,8 +214,15 @@
             stage = 'uploading';
             statusMessage = '이미지 저장 중...';
 
-            const imageBlob = await fetch(falImageUrl).then((r) => r.blob());
-            const imageFile = new File([imageBlob], 'ai-generated.webp', { type: imageBlob.type });
+            const imageResponse = await fetch(falImageUrl);
+            const imageBlob = await imageResponse.blob();
+            
+            // CF Images는 특정 MIME 타입만 허용하므로 명시적으로 설정
+            // fal.ai는 주로 JPEG 또는 WebP로 반환
+            const contentType = imageResponse.headers.get('content-type');
+            const mimeType = contentType?.startsWith('image/') ? contentType : 'image/jpeg';
+            
+            const imageFile = new File([imageBlob], 'ai-generated.jpg', { type: mimeType });
 
             const cfFormData = new FormData();
             cfFormData.append('file', imageFile);
