@@ -230,22 +230,12 @@
                 return;
             }
 
-            // 3. fal.ai 이미지 → CF Images 업로드
+            // 3. fal.ai 이미지 URL → 서버에서 CF Images 업로드 (CORS 우회)
             stage = 'uploading';
             statusMessage = '이미지 저장 중...';
 
-            const imageResponse = await fetch(falImageUrl);
-            const imageBlob = await imageResponse.blob();
-            
-            // CF Images는 특정 MIME 타입만 허용하므로 명시적으로 설정
-            // fal.ai는 주로 JPEG 또는 WebP로 반환
-            const contentType = imageResponse.headers.get('content-type');
-            const mimeType = contentType?.startsWith('image/') ? contentType : 'image/jpeg';
-            
-            const imageFile = new File([imageBlob], 'ai-generated.jpg', { type: mimeType });
-
             const cfFormData = new FormData();
-            cfFormData.append('file', imageFile);
+            cfFormData.append('url', falImageUrl);
 
             const cfRes = await fetch('/api/admin/images/upload', {
                 method: 'POST',
