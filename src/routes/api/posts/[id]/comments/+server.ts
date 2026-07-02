@@ -4,11 +4,10 @@ import { db } from '$lib/server/db';
 import { comment, post } from '$lib/server/db/schema';
 import { and, asc, eq } from 'drizzle-orm';
 import { assertSameOrigin, readJson } from '../../../_utils';
-
-function parseId(id: string) {
-    const n = Number(id);
-    return Number.isFinite(n) ? n : null;
-}
+import { hashPassword } from '$lib/server/auth/password';
+import { consumeRateLimit } from '$lib/server/rate-limit';
+import { commentInputSchema, parseId, requiresSecretPassword } from '$lib/server/comment-input';
+import { maskSecretCommentsForViewer } from '$lib/server/comment-output';
 
 export const GET: RequestHandler = async (event) => {
     const postId = parseId(event.params.id);
@@ -33,15 +32,9 @@ export const GET: RequestHandler = async (event) => {
         .where(eq(comment.post_id, postId))
         .orderBy(asc(comment.created_at));
 
-    const isAdmin = !!event.locals.user;
-    const items = itemsRaw.map((item) => {
-        if (item.is_secret && !isAdmin) {
-            return {
-                ...item,
-                content: '비밀 댓글입니다.'
-            };
-        }
-        return item;
+    const items = maskSecretCommentsForViewer({
+        items: itemsRaw,
+        isAdmin: !!event.locals.user
     });
 
     return json({ items });
@@ -54,30 +47,37 @@ export const POST: RequestHandler = async (event) => {
     const postId = parseId(event.params.id);
     if (postId === null) return json({ message: 'invalid id' }, { status: 400 });
 
+    const limit = consumeRateLimit(`comment:${event.getClientAddress()}:${postId}`, {
+        windowMs: 10 * 60 * 1000,
+        max: 5
+    });
+    if (limit.limited) {
+        return json(
+            { message: 'Too many comment attempts. Please try again later.' },
+            { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+        );
+    }
+
     // published 글에만 댓글 허용
     const foundPost = await db.query.post.findFirst({
         where: and(eq(post.id, postId), eq(post.published, true))
     });
     if (!foundPost) return json({ message: 'post not found' }, { status: 404 });
 
-    const body = await readJson<{
-        authorName?: string;
-        content?: string;
-        parentId?: number | null;
-        password?: string;
-        isSecret?: boolean;
-    }>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    const authorName = (body.authorName ?? '').trim();
-    const content = (body.content ?? '').trim();
-    const parentId = body.parentId ?? null;
-    const password = (body.password ?? '').trim();
-    const isSecret = !!body.isSecret;
+    const parsed = commentInputSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid comment body.' },
+            { status: 400 }
+        );
+    }
 
-    if (!authorName) return json({ message: 'authorName is required' }, { status: 400 });
-    if (!content) return json({ message: 'content is required' }, { status: 400 });
-    if (isSecret && !password)
+    const { authorName, content, password, isSecret } = parsed.data;
+    const parentId = parsed.data.parentId ?? null;
+    if (requiresSecretPassword(parsed.data))
         return json({ message: '비밀 댓글은 비밀번호가 필요합니다.' }, { status: 400 });
 
     if (parentId !== null) {
@@ -87,6 +87,8 @@ export const POST: RequestHandler = async (event) => {
             return json({ message: 'parentId mismatch' }, { status: 400 });
     }
 
+    const passwordHash = password ? await hashPassword(password) : null;
+
     const [created] = await db
         .insert(comment)
         .values({
@@ -94,7 +96,7 @@ export const POST: RequestHandler = async (event) => {
             author_name: authorName,
             content,
             parent_id: parentId,
-            password: password || null,
+            password: passwordHash,
             is_secret: isSecret
         })
         .returning();

@@ -42,7 +42,7 @@
             <RangeCalendar.Root bind:value {locale} class="p-3">
                 {#snippet children({ months })}
                     <div class="flex gap-4">
-                        {#each months as month}
+                        {#each months as month (month.value.toString())}
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between pt-1">
                                     <RangeCalendar.PrevButton
@@ -68,7 +68,7 @@
                                 <RangeCalendar.Grid class="w-full border-collapse">
                                     <RangeCalendar.GridHead>
                                         <RangeCalendar.GridRow class="flex">
-                                            {#each WEEKDAYS as day}
+                                            {#each WEEKDAYS as day (day)}
                                                 <RangeCalendar.HeadCell
                                                     class="w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground"
                                                 >
@@ -78,9 +78,9 @@
                                         </RangeCalendar.GridRow>
                                     </RangeCalendar.GridHead>
                                     <RangeCalendar.GridBody>
-                                        {#each month.weeks as week}
+                                        {#each month.weeks as week (week[0]?.toString())}
                                             <RangeCalendar.GridRow class="mt-2 flex w-full">
-                                                {#each week as date}
+                                                {#each week as date (date.toString())}
                                                     <RangeCalendar.Cell
                                                         {date}
                                                         month={month.value}

@@ -7,6 +7,7 @@
     import * as TreeView from '$lib/components/ui/tree-view';
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import FileIcon from '@lucide/svelte/icons/file';
     import FolderIcon from '@lucide/svelte/icons/folder';
     import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -89,7 +90,7 @@
             (item.children?.length ?? 0) === 0 && (item.postsTotal ?? 0) === 0}
 
         {#if isEmptyCategory}
-            {#snippet categoryIcon({ name: _name }: { name: string })}
+            {#snippet categoryIcon()}
                 <FolderIcon class="size-4" />
             {/snippet}
 
@@ -97,7 +98,7 @@
             <TreeView.File
                 name={item.name}
                 icon={categoryIcon}
-                onclick={() => goto(`/?category=${item.id}`)}
+                onclick={() => goto(resolve(`/?category=${item.id}` as '/'))}
                 class="pl-0"
             />
         {:else}
@@ -105,7 +106,7 @@
                 name={item.name}
                 open={true}
                 class="w-full"
-                onclick={() => goto(`/?category=${item.id}`)}
+                onclick={() => goto(resolve(`/?category=${item.id}` as '/'))}
             >
                 <div class="pl-5">
                     {#if item.children?.length}
@@ -113,13 +114,13 @@
                     {/if}
 
                     {#each item.postsPreview ?? [] as p (p.id)}
-                        {#snippet postIcon({ name: _name }: { name: string })}
+                        {#snippet postIcon()}
                             <FileIcon class="size-4" />
                         {/snippet}
                         <TreeView.File
                             name={p.title}
                             icon={postIcon}
-                            onclick={() => goto(`/blog/${p.id}`)}
+                            onclick={() => goto(resolve('/(app)/blog/[id]', { id: String(p.id) }))}
                             class={$currentPage.url.pathname === `/blog/${p.id}`
                                 ? 'bg-accent text-accent-foreground'
                                 : ''}
@@ -137,13 +138,13 @@
                     {/if}
 
                     {#each loadedPostsByCategoryId[item.id]?.items ?? [] as p (p.id)}
-                        {#snippet postIcon2({ name: _name }: { name: string })}
+                        {#snippet postIcon2()}
                             <FileIcon class="size-4" />
                         {/snippet}
                         <TreeView.File
                             name={p.title}
                             icon={postIcon2}
-                            onclick={() => goto(`/blog/${p.id}`)}
+                            onclick={() => goto(resolve('/(app)/blog/[id]', { id: String(p.id) }))}
                             class={$currentPage.url.pathname === `/blog/${p.id}`
                                 ? 'bg-accent text-accent-foreground'
                                 : ''}

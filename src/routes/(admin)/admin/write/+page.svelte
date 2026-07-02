@@ -38,7 +38,9 @@
 </script>
 
 <div
-    class="mx-auto space-y-6 pb-12 {state.viewMode === 'split' ? 'h-[calc(100vh-8rem)]' : 'max-w-5xl'}"
+    class="mx-auto space-y-6 pb-12 {state.viewMode === 'split'
+        ? 'h-[calc(100vh-8rem)]'
+        : 'max-w-5xl'}"
 >
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="space-y-1">
@@ -98,7 +100,9 @@
                 </div>
 
                 <!-- Right Pane: Preview -->
-                <div class="h-full overflow-y-auto border-t pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                <div
+                    class="h-full overflow-y-auto border-t pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
+                >
                     <WritePreviewArea {state} fullPage={false} />
                 </div>
             </div>

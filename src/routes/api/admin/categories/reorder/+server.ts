@@ -4,11 +4,7 @@ import { db } from '$lib/server/db';
 import { category } from '$lib/server/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
-
-type Body = {
-    parentId: number | null;
-    orderedIds: number[];
-};
+import { categoryReorderSchema, sameCategoryParent } from '$lib/server/admin-category-input';
 
 export const PATCH: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
@@ -16,13 +12,18 @@ export const PATCH: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const body = await readJson<Body>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    const parentId = body.parentId ?? null;
-    const orderedIds = Array.from(new Set(body.orderedIds ?? [])).filter((n) => Number.isFinite(n));
-    if (orderedIds.length === 0)
-        return json({ message: 'orderedIds is required' }, { status: 400 });
+    const parsed = categoryReorderSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid reorder body.' },
+            { status: 400 }
+        );
+    }
+
+    const { parentId, orderedIds } = parsed.data;
 
     // 입력된 orderedIds가 모두 같은 parent에 속하는지 검증
     const rows = await db
@@ -34,8 +35,7 @@ export const PATCH: RequestHandler = async (event) => {
         return json({ message: 'some categories not found' }, { status: 404 });
     }
     for (const r of rows) {
-        const sameParent = (r.parentId === null && parentId === null) || r.parentId === parentId;
-        if (!sameParent)
+        if (!sameCategoryParent(r.parentId, parentId))
             return json(
                 { message: 'all categories must share the same parentId' },
                 { status: 400 }

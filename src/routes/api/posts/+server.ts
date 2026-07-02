@@ -3,24 +3,10 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post } from '$lib/server/db/schema';
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
-
-function parseOptionalInt(v: string | null): number | null {
-    if (v === null) return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-}
+import { parsePostListQuery } from '$lib/server/post-query';
 
 export const GET: RequestHandler = async (event) => {
-    const limit = Math.min(
-        Math.max(parseOptionalInt(event.url.searchParams.get('limit')) ?? 20, 1),
-        100
-    );
-    const page = Math.max(parseOptionalInt(event.url.searchParams.get('page')) ?? 1, 1);
-    const offset = (page - 1) * limit;
-
-    const categoryId = parseOptionalInt(event.url.searchParams.get('categoryId'));
-    const tag = (event.url.searchParams.get('tag') ?? '').trim();
-    const q = (event.url.searchParams.get('q') ?? '').trim();
+    const { limit, page, offset, categoryId, tag, q } = parsePostListQuery(event.url.searchParams);
 
     const filters: SQL[] = [];
     filters.push(eq(post.published, true));

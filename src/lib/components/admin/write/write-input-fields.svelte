@@ -99,8 +99,7 @@
     </div>
 
     <div class="space-y-2">
-        <label for="directory" class="ml-1 text-sm font-semibold text-foreground/80"
-            >Category</label
+        <label for="directory" class="ml-1 text-sm font-semibold text-foreground/80">Category</label
         >
         <DropdownMenu.Root>
             <DropdownMenu.Trigger>
@@ -113,8 +112,9 @@
                         <div class="flex items-center gap-2">
                             <Folder class="size-4 text-muted-foreground" />
                             <span>
-                                {writeState.categoryOptions.find((c) => c.id === writeState.categoryId)
-                                    ?.label ?? 'Select category...'}
+                                {writeState.categoryOptions.find(
+                                    (c) => c.id === writeState.categoryId
+                                )?.label ?? 'Select category...'}
                             </span>
                         </div>
                         <ChevronDown class="size-4 opacity-50" />
@@ -124,7 +124,7 @@
             <DropdownMenu.Content
                 class="max-h-64 w-[--bits-dropdown-menu-anchor-width] overflow-y-auto"
             >
-                {#each writeState.categoryOptions as c}
+                {#each writeState.categoryOptions as c (c.id)}
                     <DropdownMenu.Item onclick={() => (writeState.categoryId = c.id)}>
                         {c.label}
                     </DropdownMenu.Item>
@@ -228,7 +228,9 @@
                                 <Spinner class="size-6" />
                                 <div class="text-center">
                                     <p class="text-sm font-medium">이미지 생성 중...</p>
-                                    <p class="text-xs text-muted-foreground">잠시만 기다려 주세요</p>
+                                    <p class="text-xs text-muted-foreground">
+                                        잠시만 기다려 주세요
+                                    </p>
                                 </div>
                             </div>
                         {:else if writeState.thumbnailAssistantStage === 'uploading'}
@@ -236,7 +238,9 @@
                                 <Spinner class="size-6" />
                                 <div class="text-center">
                                     <p class="text-sm font-medium">이미지 저장 중...</p>
-                                    <p class="text-xs text-muted-foreground">잠시만 기다려 주세요</p>
+                                    <p class="text-xs text-muted-foreground">
+                                        잠시만 기다려 주세요
+                                    </p>
                                 </div>
                             </div>
                         {:else if writeState.thumbnailAssistantStage === 'done' && writeState.thumbnailPreviewUrl}
@@ -259,19 +263,16 @@
 
                             <!-- 버튼 -->
                             <div class="flex justify-between border-t pt-3">
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
+                                <Button
+                                    variant="outline"
+                                    size="sm"
                                     onclick={() => writeState.generateThumbnail()}
                                     disabled={writeState.isGeneratingThumbnail}
                                 >
                                     <RefreshCw class="mr-1 size-4" />
                                     다시 생성
                                 </Button>
-                                <Button 
-                                    size="sm" 
-                                    onclick={() => writeState.confirmThumbnail()}
-                                >
+                                <Button size="sm" onclick={() => writeState.confirmThumbnail()}>
                                     <Check class="mr-1 size-4" />
                                     사용
                                 </Button>
@@ -284,17 +285,20 @@
                                 </p>
                                 {#if writeState.errorMessage}
                                     <div class="rounded-md bg-destructive/10 p-3">
-                                        <p class="text-sm text-destructive">{writeState.errorMessage}</p>
+                                        <p class="text-sm text-destructive">
+                                            {writeState.errorMessage}
+                                        </p>
                                     </div>
                                 {/if}
                             </div>
 
                             <!-- 버튼 -->
                             <div class="flex justify-end border-t pt-3">
-                                <Button 
-                                    size="sm" 
+                                <Button
+                                    size="sm"
                                     onclick={() => writeState.generateThumbnail()}
-                                    disabled={writeState.isGeneratingThumbnail || !writeState.content.trim()}
+                                    disabled={writeState.isGeneratingThumbnail ||
+                                        !writeState.content.trim()}
                                 >
                                     {#if writeState.isGeneratingThumbnail}
                                         <Spinner class="mr-1 size-4" />

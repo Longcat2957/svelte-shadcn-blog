@@ -13,6 +13,7 @@
     import * as Alert from '$lib/components/ui/alert';
     import { readErrorMessage } from '$lib/utils/http';
     import { CalendarDate, type DateValue } from '@internationalized/date';
+    import { SvelteDate } from 'svelte/reactivity';
 
     type DashboardStats = {
         postsTotal: number;
@@ -59,8 +60,8 @@
 
     const referrerTotal = $derived(referrerFull.reduce((sum, r) => sum + r.views, 0));
 
-    const today = new Date();
-    const fifteenDaysAgo = new Date();
+    const today = new SvelteDate();
+    const fifteenDaysAgo = new SvelteDate();
     fifteenDaysAgo.setDate(today.getDate() - 14);
 
     const initialDateRange = {
@@ -172,7 +173,7 @@
 
     <!-- Stats -->
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-        {#each statCards as stat, i}
+        {#each statCards as stat, i (stat.label)}
             {@const Icon = stat.icon}
             {#if i > 0}<span class="text-border">•</span>{/if}
             <div class="flex items-center gap-1.5">
@@ -262,7 +263,7 @@
             <p class="text-sm text-muted-foreground">선택한 기간의 방문자 유입 채널 분포</p>
         </div>
         <div class="space-y-2">
-            {#each referrerFull as row}
+            {#each referrerFull as row (row.source)}
                 {@const pct = referrerTotal > 0 ? Math.round((row.views / referrerTotal) * 100) : 0}
                 {@const color = SOURCE_COLORS[row.source]}
                 <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">

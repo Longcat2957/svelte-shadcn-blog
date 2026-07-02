@@ -187,12 +187,21 @@
 </script>
 
 <div class="mx-auto max-w-4xl space-y-6 pb-12">
-    <div class="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between sm:pb-6">
+    <div
+        class="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between sm:pb-6"
+    >
         <div class="space-y-1">
             <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">카테고리 아키텍처</h1>
-            <p class="text-sm text-muted-foreground sm:text-base">블로그의 계층 구조를 정의하고 관리합니다.</p>
+            <p class="text-sm text-muted-foreground sm:text-base">
+                블로그의 계층 구조를 정의하고 관리합니다.
+            </p>
         </div>
-        <Button onclick={addRootCategory} variant="default" size="sm" class="self-start gap-2 shadow-sm sm:self-auto">
+        <Button
+            onclick={addRootCategory}
+            variant="default"
+            size="sm"
+            class="gap-2 self-start shadow-sm sm:self-auto"
+        >
             <FolderPlus class="size-4" />
             최상위 추가
         </Button>

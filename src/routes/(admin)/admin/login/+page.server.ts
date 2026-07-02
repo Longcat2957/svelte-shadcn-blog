@@ -5,6 +5,7 @@ import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { signAuthToken, AUTH_COOKIE_NAME } from '$lib/server/auth/jwt';
 import { verifyPassword } from '$lib/server/auth/password';
+import { consumeRateLimit } from '$lib/server/rate-limit';
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (locals.user) {
@@ -14,13 +15,27 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-    default: async ({ request, cookies }) => {
+    default: async ({ request, cookies, getClientAddress, setHeaders }) => {
         const formData = await request.formData();
         const username = String(formData.get('username') ?? '').trim();
         const password = String(formData.get('password') ?? '');
 
         if (!username || !password) {
             return fail(400, { message: '아이디와 비밀번호를 입력해주세요.' });
+        }
+
+        const limit = consumeRateLimit(
+            `admin-login:${getClientAddress()}:${username.toLowerCase()}`,
+            {
+                windowMs: 15 * 60 * 1000,
+                max: 10
+            }
+        );
+        if (limit.limited) {
+            setHeaders({ 'Retry-After': String(limit.retryAfterSeconds) });
+            return fail(429, {
+                message: '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.'
+            });
         }
 
         const found = await db.query.user.findFirst({

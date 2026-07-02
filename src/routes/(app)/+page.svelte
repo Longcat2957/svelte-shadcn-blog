@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { resolve } from '$app/paths';
     import { page } from '$app/stores';
     import { untrack } from 'svelte';
     import { Badge } from '$lib/components/ui/badge';
@@ -94,15 +95,22 @@
         }
     }
 
+    function trackDependencies(...dependencies: unknown[]) {
+        void dependencies;
+    }
+
+    function toJsonLdScript(data: unknown): string {
+        const json = JSON.stringify(data).replace(/</g, '\\u003c');
+        return `<script type="application/ld+json">${json}<` + `/script>`;
+    }
+
     $effect(() => {
         loadTags();
     });
 
     // Reset pagination when filters change
     $effect(() => {
-        const _q = query;
-        const _t = selectedTag;
-        const _c = selectedCategoryId;
+        trackDependencies(query, selectedTag, selectedCategoryId);
 
         untrack(() => {
             currentPage = 1;
@@ -111,10 +119,7 @@
 
     // Load posts when Page or Filters change
     $effect(() => {
-        const _q = query;
-        const _t = selectedTag;
-        const _c = selectedCategoryId;
-        const _p = currentPage; // triggering dependency
+        trackDependencies(query, selectedTag, selectedCategoryId, currentPage);
 
         untrack(() => {
             // Need to clear "loading" if it was stuck? No.
@@ -127,6 +132,20 @@
     });
 
     const filteredPosts = $derived(posts);
+    const websiteJsonLdScript = $derived(
+        toJsonLdScript({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: $page.data.siteConfig?.name,
+            description: $page.data.siteConfig?.description,
+            url: $page.data.siteConfig?.url,
+            potentialAction: {
+                '@type': 'SearchAction',
+                target: `${$page.data.siteConfig?.url}/?q={search_term_string}`,
+                'query-input': 'required name=search_term_string'
+            }
+        })
+    );
 </script>
 
 <svelte:head>
@@ -137,18 +156,8 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content={$page.url.href} />
     <link rel="canonical" href={$page.data.siteConfig?.url} />
-    {@html `<script type="application/ld+json">${JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: $page.data.siteConfig?.name,
-        description: $page.data.siteConfig?.description,
-        url: $page.data.siteConfig?.url,
-        potentialAction: {
-            '@type': 'SearchAction',
-            target: `${$page.data.siteConfig?.url}/?q={search_term_string}`,
-            'query-input': 'required name=search_term_string'
-        }
-    })}</script>`}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html websiteJsonLdScript}
 </svelte:head>
 
 <div class="space-y-8">
@@ -173,7 +182,7 @@
             >
                 All
             </Badge>
-            {#each tags as tag}
+            {#each tags as tag (tag)}
                 <Badge
                     variant={selectedTag === tag ? 'default' : 'secondary'}
                     class="cursor-pointer"
@@ -189,9 +198,9 @@
         class="flex flex-col divide-y divide-border/40 transition-opacity duration-200"
         class:opacity-50={loading}
     >
-        {#each filteredPosts as post}
+        {#each filteredPosts as post (post.id)}
             <a
-                href="/blog/{post.id}"
+                href={resolve(`/blog/${post.id}`)}
                 class="group -mx-4 rounded-lg px-4 py-6 transition-colors outline-none hover:bg-muted/30"
             >
                 <article class="flex gap-4">
@@ -231,8 +240,10 @@
 
                         <div class="flex items-center gap-3 pt-1">
                             <div class="flex gap-2 text-xs text-muted-foreground">
-                                {#each post.tags as tag}
-                                    <span class="transition-colors hover:text-foreground">#{tag}</span>
+                                {#each post.tags as tag (tag)}
+                                    <span class="transition-colors hover:text-foreground"
+                                        >#{tag}</span
+                                    >
                                 {/each}
                             </div>
                         </div>

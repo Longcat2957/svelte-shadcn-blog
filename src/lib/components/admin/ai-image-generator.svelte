@@ -39,13 +39,13 @@
         onGeneratePrompt?: () => Promise<string | null>;
     }
 
-    let { 
+    let {
         prompt: propPrompt = '',
         mode: propMode = 't2i',
         selectedText = '',
         isGeneratingPrompt = false,
-        onInsert, 
-        onClose, 
+        onInsert,
+        onClose,
         onStageChange,
         onPromptChange,
         onModeChange,
@@ -76,7 +76,7 @@
     // 프롬프트 자동 생성 핸들러
     async function handleGeneratePrompt() {
         if (!onGeneratePrompt || isGeneratingPrompt) return;
-        
+
         const generatedPrompt = await onGeneratePrompt();
         if (generatedPrompt) {
             updatePrompt(generatedPrompt);
@@ -109,13 +109,13 @@
         const now = new Date();
         const diff = now.getTime() - date.getTime();
         const minutes = Math.floor(diff / 60000);
-        
+
         if (minutes < 1) return '방금 전';
         if (minutes < 60) return `${minutes}분 전`;
-        
+
         const hours = Math.floor(minutes / 60);
         if (hours < 24) return `${hours}시간 전`;
-        
+
         return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
     }
 
@@ -127,7 +127,7 @@
             prompt: promptText,
             mode: promptMode
         };
-        
+
         promptHistory = [entry, ...promptHistory].slice(0, MAX_HISTORY);
     }
 
@@ -158,11 +158,11 @@
                 });
 
                 if (!res.ok) {
-                    const data = await res.json().catch(() => ({})) as { message?: string };
+                    const data = (await res.json().catch(() => ({}))) as { message?: string };
                     throw new Error(data.message ?? 'Image upload failed');
                 }
 
-                const data = await res.json() as { url: string };
+                const data = (await res.json()) as { url: string };
                 i2iImages = [...i2iImages, { file, url: data.url }];
             }
         } catch (err: unknown) {
@@ -191,7 +191,7 @@
         }
 
         isPollingCancelled = false;
-        
+
         // 히스토리에 추가
         addToHistory(prompt.trim(), mode);
 
@@ -213,17 +213,17 @@
             });
 
             if (!submitRes.ok) {
-                const data = await submitRes.json().catch(() => ({})) as { message?: string };
+                const data = (await submitRes.json().catch(() => ({}))) as { message?: string };
                 throw new Error(data.message ?? '생성 요청 실패');
             }
 
-            const submitData = await submitRes.json() as { requestId: string };
+            const submitData = (await submitRes.json()) as { requestId: string };
             const { requestId } = submitData;
 
             // 2. 폴링
             statusMessage = '이미지 생성 중...';
             const falImageUrl = await pollUntilDone(endpoint, requestId);
-            
+
             // 취소된 경우
             if (isPollingCancelled) {
                 stage = 'config';
@@ -243,11 +243,11 @@
             });
 
             if (!cfRes.ok) {
-                const data = await cfRes.json().catch(() => ({})) as { message?: string };
+                const data = (await cfRes.json().catch(() => ({}))) as { message?: string };
                 throw new Error(data.message ?? 'CF 업로드 실패');
             }
 
-            const cfData = await cfRes.json() as { url: string };
+            const cfData = (await cfRes.json()) as { url: string };
             generatedCfUrl = cfData.url;
             stage = 'done';
         } catch (err: unknown) {
@@ -261,16 +261,16 @@
             if (isPollingCancelled) {
                 throw new Error('CANCELLED');
             }
-            
+
             await new Promise((r) => setTimeout(r, 1500));
 
             const res = await fetch(`${endpoint}?requestId=${encodeURIComponent(requestId)}`);
             if (!res.ok) {
-                const data = await res.json().catch(() => ({})) as { message?: string };
+                const data = (await res.json().catch(() => ({}))) as { message?: string };
                 throw new Error(data.message ?? '상태 확인 실패');
             }
 
-            const data = await res.json() as {
+            const data = (await res.json()) as {
                 status: string;
                 images?: { url: string }[];
             };
@@ -374,12 +374,12 @@
                             onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
-                    
+
                     <!-- 내용에서 프롬프트 생성 버튼 -->
                     {#if onGeneratePrompt}
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            variant="outline"
+                            size="sm"
                             class="w-full"
                             onclick={handleGeneratePrompt}
                             disabled={isGeneratingPrompt}
@@ -389,7 +389,9 @@
                                 프롬프트 생성 중...
                             {:else}
                                 <FileText class="mr-1 size-3" />
-                                {hasSelectedText ? '선택한 텍스트에서 프롬프트 생성' : '포스트 내용에서 프롬프트 생성'}
+                                {hasSelectedText
+                                    ? '선택한 텍스트에서 프롬프트 생성'
+                                    : '포스트 내용에서 프롬프트 생성'}
                             {/if}
                         </Button>
                     {/if}
@@ -414,7 +416,7 @@
                         </label>
                         {#if i2iImages.length > 0}
                             <div class="flex flex-wrap gap-2">
-                                {#each i2iImages as img, i}
+                                {#each i2iImages as img, i (img.url)}
                                     <div class="relative">
                                         <img
                                             src={img.url}
@@ -423,7 +425,7 @@
                                         />
                                         <button
                                             onclick={() => removeI2IImage(i)}
-                                            class="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                                            class="text-destructive-foreground absolute -top-1 -right-1 rounded-full bg-destructive p-0.5"
                                         >
                                             <X class="size-3" />
                                         </button>
@@ -443,12 +445,12 @@
                             onchange={(e) => updatePrompt(e.currentTarget.value)}
                         />
                     </div>
-                    
+
                     <!-- 내용에서 프롬프트 생성 버튼 -->
                     {#if onGeneratePrompt}
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            variant="outline"
+                            size="sm"
                             class="w-full"
                             onclick={handleGeneratePrompt}
                             disabled={isGeneratingPrompt}
@@ -458,7 +460,9 @@
                                 프롬프트 생성 중...
                             {:else}
                                 <FileText class="mr-1 size-3" />
-                                {hasSelectedText ? '선택한 텍스트에서 프롬프트 생성' : '포스트 내용에서 프롬프트 생성'}
+                                {hasSelectedText
+                                    ? '선택한 텍스트에서 프롬프트 생성'
+                                    : '포스트 내용에서 프롬프트 생성'}
                             {/if}
                         </Button>
                     {/if}
@@ -474,7 +478,7 @@
                     최근 프롬프트
                 </div>
                 <div class="max-h-24 space-y-1 overflow-y-auto">
-                    {#each promptHistory as entry}
+                    {#each promptHistory as entry (entry.id)}
                         <button
                             type="button"
                             class="w-full rounded-md border bg-muted/30 p-2 text-left text-xs transition-colors hover:bg-muted/50"
@@ -484,7 +488,9 @@
                                 <span class="text-xs text-muted-foreground">
                                     {entry.mode === 't2i' ? '텍스트→이미지' : '이미지→이미지'}
                                 </span>
-                                <span class="text-muted-foreground">{formatTime(entry.timestamp)}</span>
+                                <span class="text-muted-foreground"
+                                    >{formatTime(entry.timestamp)}</span
+                                >
                             </div>
                             <p class="mt-1 truncate">
                                 {entry.prompt}
@@ -566,7 +572,6 @@
                 </Button>
             {/if}
         </div>
-
     {:else if stage === 'generating' || stage === 'uploading'}
         <!-- 생성 중 상태 -->
         <div class="flex flex-col items-center gap-3 py-6">
@@ -578,9 +583,7 @@
         </div>
 
         <div class="flex justify-end border-t pt-3">
-            <Button variant="outline" size="sm" onclick={handleCancelGeneration}>
-                취소
-            </Button>
+            <Button variant="outline" size="sm" onclick={handleCancelGeneration}>취소</Button>
         </div>
     {/if}
 </div>

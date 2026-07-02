@@ -2,8 +2,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
-import { and, arrayContains, desc, eq, ilike, lt, or } from 'drizzle-orm';
+import { and, arrayContains, desc, eq, ilike, lt, or, type SQL } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../_utils';
+import { postCreateSchema } from '$lib/server/post-input';
 
 function parseOptionalInt(v: string | null): number | null {
     if (v === null) return null;
@@ -25,14 +26,15 @@ export const GET: RequestHandler = async (event) => {
     const q = (event.url.searchParams.get('q') ?? '').trim();
     const tag = (event.url.searchParams.get('tag') ?? '').trim();
 
-    const filters = [] as any[];
+    const filters: SQL[] = [];
     if (publishedParam === 'true') filters.push(eq(post.published, true));
     if (publishedParam === 'false') filters.push(eq(post.published, false));
     if (categoryId !== null) filters.push(eq(post.category_id, categoryId));
     if (cursor !== null) filters.push(lt(post.id, cursor));
     if (q) {
         // title/description에 대한 간단 검색
-        filters.push(or(ilike(post.title, `%${q}%`), ilike(post.description, `%${q}%`)));
+        const searchFilter = or(ilike(post.title, `%${q}%`), ilike(post.description, `%${q}%`));
+        if (searchFilter) filters.push(searchFilter);
     }
     if (tag) {
         filters.push(arrayContains(post.tags, [tag]));
@@ -72,28 +74,18 @@ export const POST: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const body = await readJson<{
-        title?: string;
-        description?: string | null;
-        content?: string;
-        categoryId?: number;
-        tags?: string[];
-        published?: boolean;
-        thumbnailUrl?: string | null;
-    }>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    const title = (body.title ?? '').trim();
-    const content = body.content ?? '';
-    const categoryId = body.categoryId;
-    const tags = body.tags ?? [];
-    const published = body.published ?? false;
+    const parsed = postCreateSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid post body.' },
+            { status: 400 }
+        );
+    }
 
-    if (!title) return json({ message: 'title is required' }, { status: 400 });
-    if (!content) return json({ message: 'content is required' }, { status: 400 });
-    if (typeof categoryId !== 'number')
-        return json({ message: 'categoryId is required' }, { status: 400 });
-    if (!Array.isArray(tags)) return json({ message: 'tags must be an array' }, { status: 400 });
+    const { title, description, content, categoryId, tags, published, thumbnailUrl } = parsed.data;
 
     const cat = await db.query.category.findFirst({ where: eq(category.id, categoryId) });
     if (!cat) return json({ message: 'category not found' }, { status: 404 });
@@ -102,12 +94,12 @@ export const POST: RequestHandler = async (event) => {
         .insert(post)
         .values({
             title,
-            description: body.description ?? null,
+            description,
             content,
             category_id: categoryId,
             tags,
             published,
-            thumbnail_url: body.thumbnailUrl ?? null
+            thumbnail_url: thumbnailUrl
         })
         .returning();
 

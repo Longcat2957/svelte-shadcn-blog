@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
+import { postUpdateSchema } from '$lib/server/post-input';
 
 function parseId(id: string) {
     const n = Number(id);
@@ -46,16 +47,17 @@ export const PATCH: RequestHandler = async (event) => {
     const id = parseId(event.params.id);
     if (id === null) return json({ message: 'invalid id' }, { status: 400 });
 
-    const body = await readJson<{
-        title?: string;
-        description?: string | null;
-        content?: string;
-        categoryId?: number;
-        tags?: string[];
-        published?: boolean;
-        thumbnailUrl?: string | null;
-    }>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
+
+    const parsed = postUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid post body.' },
+            { status: 400 }
+        );
+    }
+    const bodyData = parsed.data;
 
     const next: {
         title?: string;
@@ -67,35 +69,30 @@ export const PATCH: RequestHandler = async (event) => {
         thumbnail_url?: string | null;
     } = {};
 
-    if (body.title !== undefined) {
-        const title = body.title.trim();
-        if (!title) return json({ message: 'title cannot be empty' }, { status: 400 });
-        next.title = title;
+    if (bodyData.title !== undefined) {
+        next.title = bodyData.title;
     }
 
-    if (body.description !== undefined) next.description = body.description;
+    if (bodyData.description !== undefined) next.description = bodyData.description;
 
-    if (body.content !== undefined) {
-        if (!body.content) return json({ message: 'content cannot be empty' }, { status: 400 });
-        next.content = body.content;
+    if (bodyData.content !== undefined) {
+        next.content = bodyData.content;
     }
 
-    if (body.categoryId !== undefined) {
-        const categoryId = body.categoryId;
+    if (bodyData.categoryId !== undefined) {
+        const categoryId = bodyData.categoryId;
         const cat = await db.query.category.findFirst({ where: eq(category.id, categoryId) });
         if (!cat) return json({ message: 'category not found' }, { status: 404 });
         next.category_id = categoryId;
     }
 
-    if (body.tags !== undefined) {
-        if (!Array.isArray(body.tags))
-            return json({ message: 'tags must be an array' }, { status: 400 });
-        next.tags = body.tags;
+    if (bodyData.tags !== undefined) {
+        next.tags = bodyData.tags;
     }
 
-    if (body.published !== undefined) next.published = body.published;
+    if (bodyData.published !== undefined) next.published = bodyData.published;
 
-    if (body.thumbnailUrl !== undefined) next.thumbnail_url = body.thumbnailUrl;
+    if (bodyData.thumbnailUrl !== undefined) next.thumbnail_url = bodyData.thumbnailUrl;
 
     const [updated] = await db.update(post).set(next).where(eq(post.id, id)).returning();
     if (!updated) return json({ message: 'post not found' }, { status: 404 });

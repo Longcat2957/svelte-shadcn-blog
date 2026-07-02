@@ -7,8 +7,13 @@
     import remarkMath from 'remark-math';
     import rehypeKatex from 'rehype-katex';
     import CodeBlock from './code-block.svelte';
+    import type { HTMLAttributes } from 'svelte/elements';
 
     type Props = { md: string; class?: string };
+    type CodeBlockSnippetProps = HTMLAttributes<HTMLPreElement> & {
+        code?: string;
+        lang?: string | null;
+    };
     let { md, class: className }: Props = $props();
 
     const plugins = [
@@ -21,8 +26,9 @@
     ];
 </script>
 
-{#snippet customPre(props: any)}
-    <CodeBlock {...props} />
+{#snippet customPre(props: CodeBlockSnippetProps)}
+    {@const { code, lang, ...rest } = props}
+    <CodeBlock {...rest} {code} lang={lang ?? undefined} />
 {/snippet}
 
 <div class={className}>

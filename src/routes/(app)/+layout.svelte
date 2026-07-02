@@ -1,7 +1,5 @@
 <script lang="ts">
     import '../layout.css';
-    import favicon from '$lib/assets/favicon.ico';
-    import { ModeWatcher } from 'mode-watcher';
     import Sidebar from '$lib/components/layout/sidebar.svelte';
     import MobileHeader from '$lib/components/layout/mobile-header.svelte';
     import TopNav from '$lib/components/layout/top-nav.svelte';
@@ -17,7 +15,12 @@
 <svelte:head>
     <meta property="og:site_name" content={$page.data.siteConfig?.name} />
     <meta property="og:locale" content={$page.data.siteConfig?.locale} />
-    <link rel="alternate" type="application/rss+xml" title={$page.data.siteConfig?.name} href="/rss.xml" />
+    <link
+        rel="alternate"
+        type="application/rss+xml"
+        title={$page.data.siteConfig?.name}
+        href="/rss.xml"
+    />
 </svelte:head>
 
 <div class="flex min-h-screen flex-col">

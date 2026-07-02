@@ -3,6 +3,7 @@
     import Search from '@lucide/svelte/icons/search';
     import { cn } from '$lib/utils';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
 
     let {
         class: className,
@@ -20,7 +21,7 @@
     function handleSearch(e: SubmitEvent) {
         e.preventDefault();
         if (searchQuery.trim()) {
-            void goto(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+            void goto(resolve(`/?q=${encodeURIComponent(searchQuery.trim())}` as '/'));
         }
     }
 </script>

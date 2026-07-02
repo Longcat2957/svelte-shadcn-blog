@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { category } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../_utils';
+import { categoryCreateSchema } from '$lib/server/admin-category-input';
 
 type CategoryNode = {
     id: number;
@@ -12,6 +13,14 @@ type CategoryNode = {
     sortOrder: number;
     postsTotal?: number;
     children: CategoryNode[];
+};
+
+type CategoryCountRow = {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    sort_order: number;
+    postsTotal: number;
 };
 
 function buildTree(
@@ -87,13 +96,7 @@ export const GET: RequestHandler = async (event) => {
         ) p on p.category_id = c.id;
     `);
 
-    const items = (rows as unknown as { rows: any[] }).rows as {
-        id: number;
-        name: string;
-        parent_id: number | null;
-        sort_order: number;
-        postsTotal: number;
-    }[];
+    const items = (rows as unknown as { rows: CategoryCountRow[] }).rows;
 
     return json({ items: buildTree(items) });
 };
@@ -104,12 +107,18 @@ export const POST: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const body = await readJson<{ name?: string; parentId?: number | null }>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    const name = (body.name ?? '').trim();
-    const parentId = body.parentId ?? null;
-    if (!name) return json({ message: 'name is required' }, { status: 400 });
+    const parsed = categoryCreateSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid category body.' },
+            { status: 400 }
+        );
+    }
+
+    const { name, parentId } = parsed.data;
 
     // parentId가 있을 때 존재 여부 간단 체크
     if (parentId !== null) {

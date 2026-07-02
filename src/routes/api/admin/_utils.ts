@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 
-export { assertSameOrigin, readJson } from '../_utils';
+export { assertSameOrigin, readJson } from '../_utils.js';
 
 export function requireAdmin(event: RequestEvent) {
     if (!event.locals.user) {

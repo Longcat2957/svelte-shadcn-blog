@@ -13,8 +13,6 @@ const client = postgres(process.env.DATABASE_URL, {
 const db = drizzle(client);
 
 async function reset() {
-    const start = Date.now();
-
     const query = sql`
 		-- Delete all tables
 		DO $$ DECLARE
@@ -42,10 +40,9 @@ async function reset() {
 
     await db.execute(query);
 
-    const end = Date.now();
     process.exit(0);
 }
 
-reset().catch((err) => {
+reset().catch(() => {
     process.exit(1);
 });

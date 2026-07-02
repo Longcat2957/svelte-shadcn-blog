@@ -32,17 +32,19 @@
 
     export type ButtonVariant = VariantProps<typeof buttonVariants>['variant'];
     export type ButtonSize = VariantProps<typeof buttonVariants>['size'];
+    type AnchorClickEvent = MouseEvent & {
+        currentTarget: EventTarget & HTMLAnchorElement;
+    };
+    type NativeButtonClickEvent = MouseEvent & {
+        currentTarget: EventTarget & HTMLButtonElement;
+    };
 
     export type ButtonPropsWithoutHTML = WithChildren<{
         ref?: HTMLElement | null;
         variant?: ButtonVariant;
         size?: ButtonSize;
         loading?: boolean;
-        onClickPromise?: (
-            e: MouseEvent & {
-                currentTarget: EventTarget & HTMLButtonElement;
-            }
-        ) => Promise<void>;
+        onClickPromise?: (e: NativeButtonClickEvent) => Promise<void>;
     }>;
 
     export type AnchorElementProps = ButtonPropsWithoutHTML &
@@ -81,6 +83,29 @@
         children,
         ...rest
     }: ButtonProps = $props();
+
+    async function handleClick(e: MouseEvent) {
+        if (href) {
+            const anchorEvent = e as AnchorClickEvent;
+            const anchorClick = onclick as ((event: AnchorClickEvent) => void) | undefined;
+            anchorClick?.(anchorEvent);
+            return;
+        }
+
+        const buttonEvent = e as NativeButtonClickEvent;
+        const buttonClick = onclick as ((event: NativeButtonClickEvent) => void) | undefined;
+        buttonClick?.(buttonEvent);
+
+        if (type === undefined) return;
+
+        if (onClickPromise) {
+            loading = true;
+
+            await onClickPromise(buttonEvent);
+
+            loading = false;
+        }
+    }
 </script>
 
 <!-- This approach to disabled links is inspired by bits-ui see: https://github.com/huntabyte/bits-ui/pull/1055 -->
@@ -96,22 +121,7 @@
     tabindex={href && disabled ? -1 : tabindex}
     class={cn(buttonVariants({ variant, size }), className)}
     bind:this={ref}
-    onclick={async (
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        e: any
-    ) => {
-        onclick?.(e);
-
-        if (type === undefined) return;
-
-        if (onClickPromise) {
-            loading = true;
-
-            await onClickPromise(e);
-
-            loading = false;
-        }
-    }}
+    onclick={handleClick}
 >
     {#if type !== undefined && loading}
         <div class="flex animate-spin place-items-center justify-center">

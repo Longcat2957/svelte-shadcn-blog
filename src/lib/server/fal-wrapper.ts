@@ -109,10 +109,10 @@ export interface FalUploadResult {
 
 /**
  * fal.ai API 클라이언트 래퍼
- * 
+ *
  * fal.ai의 기본 메서드들을 래핑하여 타입 안전하게 사용할 수 있습니다.
  * 환경 변수 FAL_KEY에서 API 키를 자동으로 로드합니다.
- * 
+ *
  * @example
  * // 이미지 생성 (결과까지 대기)
  * const wrapper = new FalWrapper();
@@ -120,16 +120,16 @@ export interface FalUploadResult {
  *   input: { prompt: 'A beautiful sunset over the ocean' }
  * });
  * console.log(result.images[0].url);
- * 
+ *
  * @example
  * // 큐 사용 (비동기 처리)
  * const { request_id } = await wrapper.queueSubmit('fal-ai/flux/schnell', {
  *   input: { prompt: 'A beautiful sunset over the ocean' }
  * });
- * 
+ *
  * // 상태 확인
  * const status = await wrapper.queueStatus('fal-ai/flux/schnell', { requestId: request_id });
- * 
+ *
  * // 결과 가져오기
  * if (status.status === 'COMPLETED') {
  *   const result = await wrapper.queueResult<FalImageResult>('fal-ai/flux/schnell', { requestId: request_id });
@@ -155,14 +155,14 @@ export class FalWrapper {
 
     /**
      * fal.subscribe() - 요청을 제출하고 결과가 완료될 때까지 대기
-     * 
+     *
      * 가장 간단한 방법으로, 요청을 제출하고 완료되면 결과를 반환합니다.
      * 진행 상황을 모니터링하려면 onQueueUpdate 콜백을 사용하세요.
-     * 
+     *
      * @param endpoint - fal.ai 엔드포인트 (예: 'fal-ai/flux/schnell')
      * @param options - 요청 옵션
      * @returns 결과 데이터와 requestId
-     * 
+     *
      * @example
      * const result = await wrapper.subscribe<FalImageResult>('fal-ai/flux/schnell', {
      *   input: { prompt: 'A cat sitting on a fence' },
@@ -200,14 +200,14 @@ export class FalWrapper {
 
     /**
      * fal.queue.submit() - 큐에 요청을 제출
-     * 
+     *
      * 장기 실행 요청의 경우 큐에 요청을 제출하고 request_id를 반환받습니다.
      * 결과를 가져오려면 queueStatus()로 상태를 확인한 후 queueResult()를 호출하세요.
-     * 
+     *
      * @param endpoint - fal.ai 엔드포인트 (예: 'fal-ai/flux/schnell')
      * @param options - 요청 옵션
      * @returns 요청 ID
-     * 
+     *
      * @example
      * const { request_id } = await wrapper.queueSubmit('fal-ai/flux/dev', {
      *   input: { prompt: 'A dog running in a park' }
@@ -237,19 +237,19 @@ export class FalWrapper {
 
     /**
      * fal.queue.status() - 요청 상태 확인
-     * 
+     *
      * 큐에 제출된 요청의 현재 상태를 확인합니다.
-     * 
+     *
      * @param endpoint - fal.ai 엔드포인트
      * @param options - 상태 확인 옵션
      * @returns 큐 상태 정보
-     * 
+     *
      * @example
      * const status = await wrapper.queueStatus('fal-ai/flux/dev', {
      *   requestId: '764cabcf-b745-4b3e-ae38-1200304cf45b',
      *   logs: true
      * });
-     * 
+     *
      * if (status.status === 'IN_PROGRESS') {
      *   console.log('Still processing...');
      * } else if (status.status === 'COMPLETED') {
@@ -277,13 +277,13 @@ export class FalWrapper {
 
     /**
      * fal.queue.result() - 요청 결과 가져오기
-     * 
+     *
      * 완료된 요청의 결과를 가져옵니다. 요청이 완료되지 않은 경우 오류가 발생할 수 있습니다.
-     * 
+     *
      * @param endpoint - fal.ai 엔드포인트
      * @param options - 결과 요청 옵션
      * @returns 결과 데이터와 requestId
-     * 
+     *
      * @example
      * const result = await wrapper.queueResult<FalImageResult>('fal-ai/flux/dev', {
      *   requestId: '764cabcf-b745-4b3e-ae38-1200304cf45b'
@@ -313,13 +313,13 @@ export class FalWrapper {
 
     /**
      * fal.storage.upload() - 파일 업로드
-     * 
+     *
      * 파일을 fal.ai 스토리지에 업로드하고 URL을 반환받습니다.
      * 업로드된 파일 URL은 fal.ai API 요청에서 사용할 수 있습니다.
-     * 
+     *
      * @param file - 업로드할 파일 (File 객체)
      * @returns 업로드된 파일의 URL
-     * 
+     *
      * @example
      * const file = new File(['Hello, World!'], 'hello.txt', { type: 'text/plain' });
      * const url = await wrapper.upload(file);

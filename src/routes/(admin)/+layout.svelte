@@ -3,6 +3,7 @@
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
     import X from '@lucide/svelte/icons/x';
     import { page, navigating } from '$app/stores';
+    import { resolve } from '$app/paths';
     import { Spinner } from '$lib/components/ui/spinner';
     import TopNav from '$lib/components/layout/top-nav.svelte';
     let { children } = $props();
@@ -52,9 +53,9 @@
                             Admin Menu
                         </div>
                         <nav class="space-y-1">
-                            {#each adminNavItems as item}
+                            {#each adminNavItems as item (item.href)}
                                 <a
-                                    href={item.href}
+                                    href={resolve(item.href)}
                                     class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all {$page
                                         .url.pathname === item.href
                                         ? 'bg-accent text-accent-foreground'
@@ -78,19 +79,17 @@
                             </Button>
                         </div>
                     </div>
-
                 </aside>
 
                 <!-- Mobile Admin Sidebar (Slide-over drawer) -->
                 {#if mobileMenuOpen}
                     <!-- Backdrop -->
-                    <div
+                    <button
+                        type="button"
                         class="fixed inset-0 z-40 bg-black/50 md:hidden"
                         onclick={() => (mobileMenuOpen = false)}
-                        role="button"
-                        tabindex="-1"
                         aria-label="Close menu"
-                    ></div>
+                    ></button>
 
                     <!-- Drawer -->
                     <aside
@@ -110,9 +109,9 @@
                         </div>
                         <div class="flex-1 space-y-4 overflow-y-auto px-4 py-6">
                             <nav class="space-y-1">
-                                {#each adminNavItems as item}
+                                {#each adminNavItems as item (item.href)}
                                     <a
-                                        href={item.href}
+                                        href={resolve(item.href)}
                                         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all {$page
                                             .url.pathname === item.href
                                             ? 'bg-accent text-accent-foreground'

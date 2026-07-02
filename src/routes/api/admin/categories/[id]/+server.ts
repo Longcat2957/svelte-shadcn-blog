@@ -4,11 +4,12 @@ import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
-
-function parseId(id: string) {
-    const n = Number(id);
-    return Number.isFinite(n) ? n : null;
-}
+import {
+    categoryUpdateSchema,
+    hasAncestorCycle,
+    isSelfParent,
+    parseAdminCategoryId
+} from '$lib/server/admin-category-input';
 
 export const PATCH: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
@@ -16,24 +17,41 @@ export const PATCH: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const id = parseId(event.params.id);
+    const id = parseAdminCategoryId(event.params.id);
     if (id === null) return json({ message: 'invalid id' }, { status: 400 });
 
-    const body = await readJson<{ name?: string; parentId?: number | null }>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    const next: { name?: string; parent_id?: number | null; sort_order?: number } = {};
-    if (body.name !== undefined) {
-        const name = body.name.trim();
-        if (!name) return json({ message: 'name cannot be empty' }, { status: 400 });
-        next.name = name;
+    const parsed = categoryUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid category body.' },
+            { status: 400 }
+        );
     }
-    if (body.parentId !== undefined) {
-        const parentId = body.parentId;
-        if (parentId === id) return json({ message: 'parentId cannot be self' }, { status: 400 });
+    const bodyData = parsed.data;
+
+    const next: { name?: string; parent_id?: number | null; sort_order?: number } = {};
+    if (bodyData.name !== undefined) {
+        next.name = bodyData.name;
+    }
+    if (bodyData.parentId !== undefined) {
+        const parentId = bodyData.parentId;
+        if (isSelfParent(id, parentId))
+            return json({ message: 'parentId cannot be self' }, { status: 400 });
         if (parentId !== null) {
             const parent = await db.query.category.findFirst({ where: eq(category.id, parentId) });
             if (!parent) return json({ message: 'parent category not found' }, { status: 404 });
+
+            const rows = await db
+                .select({ id: category.id, parentId: category.parent_id })
+                .from(category);
+            const parentById = new Map<number, number | null>(
+                rows.map((row) => [row.id, row.parentId])
+            );
+            if (hasAncestorCycle({ id, parentId, parentById }))
+                return json({ message: 'cannot move into descendant' }, { status: 400 });
         }
 
         // 부모가 바뀌면 새 parent 내 맨 뒤로 sort_order를 붙인다.
@@ -64,7 +82,7 @@ export const DELETE: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const id = parseId(event.params.id);
+    const id = parseAdminCategoryId(event.params.id);
     if (id === null) return json({ message: 'invalid id' }, { status: 400 });
 
     try {

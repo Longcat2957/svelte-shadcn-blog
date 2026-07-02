@@ -22,7 +22,14 @@ export const GET: RequestHandler = async ({ url }) => {
 
     const posts = await db.query.post.findMany({
         where: eq(post.published, true),
-        columns: { id: true, title: true, description: true, tags: true, created_at: true, updated_at: true },
+        columns: {
+            id: true,
+            title: true,
+            description: true,
+            tags: true,
+            created_at: true,
+            updated_at: true
+        },
         orderBy: (p, { desc }) => desc(p.created_at),
         limit: 50
     });

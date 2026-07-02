@@ -3,93 +3,14 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { category, post } from '$lib/server/db/schema';
 import { asc, desc, eq, sql } from 'drizzle-orm';
-
-type CategoryRow = {
-    id: number;
-    name: string;
-    parent_id: number | null;
-    sort_order: number;
-};
-
-type PostPreview = {
-    id: number;
-    title: string;
-};
-
-type CategoryTreeNodeInternal = {
-    type: 'category';
-    id: number;
-    name: string;
-    parentId: number | null;
-    children: CategoryTreeNodeInternal[];
-    postsPreview: PostPreview[];
-    postsTotal: number;
-    sortOrder: number;
-};
-
-export type CategoryTreeNode = {
-    type: 'category';
-    id: number;
-    name: string;
-    parentId: number | null;
-    children: CategoryTreeNode[];
-    postsPreview: PostPreview[];
-    postsTotal: number;
-};
-
-function parseBool(v: string | null): boolean {
-    if (!v) return false;
-    return v === '1' || v.toLowerCase() === 'true' || v.toLowerCase() === 'yes';
-}
-
-function parseOptionalInt(v: string | null): number | null {
-    if (v === null) return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-}
-
-function buildTree(rows: CategoryRow[]): CategoryTreeNode[] {
-    const map = new Map<number, CategoryTreeNodeInternal>();
-    const roots: CategoryTreeNodeInternal[] = [];
-
-    for (const r of rows) {
-        map.set(r.id, {
-            type: 'category',
-            id: r.id,
-            name: r.name,
-            parentId: r.parent_id,
-            children: [],
-            postsPreview: [],
-            postsTotal: 0,
-            sortOrder: r.sort_order
-        });
-    }
-
-    for (const node of map.values()) {
-        if (node.parentId !== null && map.has(node.parentId)) {
-            map.get(node.parentId)!.children.push(node);
-        } else {
-            roots.push(node);
-        }
-    }
-
-    const sortNodes = (nodes: CategoryTreeNodeInternal[]) => {
-        nodes.sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
-        for (const n of nodes) {
-            sortNodes(n.children);
-        }
-    };
-    sortNodes(roots);
-
-    // 응답에서 내부 정렬키 제거
-    const strip = (nodes: CategoryTreeNodeInternal[]): CategoryTreeNode[] =>
-        nodes.map(({ sortOrder: _sortOrder, ...rest }) => ({
-            ...rest,
-            children: strip(rest.children)
-        }));
-
-    return strip(roots);
-}
+import {
+    attachCategoryPostSummaries,
+    buildCategoryTree,
+    parseBool,
+    parseOptionalInt,
+    type CategoryRow,
+    type PostPreview
+} from '$lib/server/category-tree';
 
 export const GET: RequestHandler = async (event) => {
     // 공개 API: 카테고리 트리 반환 (선택적으로 카테고리별 글 프리뷰 포함)
@@ -108,7 +29,7 @@ export const GET: RequestHandler = async (event) => {
         })
         .from(category);
 
-    const tree = buildTree(categoryRows as CategoryRow[]);
+    const tree = buildCategoryTree(categoryRows as CategoryRow[]);
     if (!includePosts) return json({ items: tree });
 
     // 카테고리별 published 글 개수
@@ -145,13 +66,11 @@ export const GET: RequestHandler = async (event) => {
         previewsByCategoryId.set(p.categoryId, list);
     }
 
-    const attach = (nodes: CategoryTreeNode[]): CategoryTreeNode[] =>
-        nodes.map((n) => ({
-            ...n,
-            postsTotal: totalsByCategoryId.get(n.id) ?? 0,
-            postsPreview: previewsByCategoryId.get(n.id) ?? [],
-            children: attach(n.children)
-        }));
-
-    return json({ items: attach(tree) });
+    return json({
+        items: attachCategoryPostSummaries({
+            tree,
+            totalsByCategoryId,
+            previewsByCategoryId
+        })
+    });
 };

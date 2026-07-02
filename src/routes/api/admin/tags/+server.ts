@@ -2,8 +2,12 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { post } from '$lib/server/db/schema';
+import { requireAdmin } from '../_utils';
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async (event) => {
+    const auth = requireAdmin(event);
+    if (auth) return auth;
+
     // 모든 포스트(발행 여부 관계없이)에서 태그 수집
     const rows = await db.select({ tags: post.tags }).from(post);
 

@@ -15,7 +15,7 @@
 
     {#if state.tags.length > 0}
         <div class="flex flex-wrap gap-2">
-            {#each state.tags as tag}
+            {#each state.tags as tag (tag)}
                 <Badge variant="secondary" class="gap-1 pr-1">
                     {tag}
                     <button
@@ -42,7 +42,7 @@
 
     {#if state.allTags.length > 0}
         <div class="flex flex-wrap gap-1">
-            {#each state.favoriteTags as tagItem}
+            {#each state.favoriteTags as tagItem (tagItem.name)}
                 <Button
                     size="sm"
                     variant={state.tags.includes(tagItem.name) ? 'default' : 'outline'}
@@ -73,7 +73,7 @@
 
         {#if state.tagExpanded && state.remainingTags.length > 0}
             <div class="flex flex-wrap gap-1">
-                {#each state.remainingTags as tagItem}
+                {#each state.remainingTags as tagItem (tagItem.name)}
                     <Button
                         size="sm"
                         variant={state.tags.includes(tagItem.name) ? 'default' : 'outline'}

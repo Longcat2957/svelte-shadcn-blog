@@ -1,12 +1,42 @@
 import { visit } from 'unist-util-visit';
 
+type MarkdownNode = {
+    type: string;
+    value?: string;
+    children?: MarkdownNode[];
+};
+
+type MarkdownRoot = {
+    type: 'root';
+    children: MarkdownNode[];
+};
+
+type InlineCodeNode = MarkdownNode & {
+    type: 'inlineCode';
+    value: string;
+};
+
+type HtmlNode = {
+    type: 'html';
+    value: string;
+};
+
+type ParentNode = {
+    children: Array<MarkdownNode | HtmlNode>;
+};
+
 export const remarkInlineCode = () => {
-    return (tree: any) => {
-        visit(tree, 'inlineCode', (node: any, index: number | undefined, parent: any) => {
-            if (index === undefined || !parent) return;
-            const html = `<inline-code>${escapeHtml(node.value)}</inline-code>`;
-            parent.children.splice(index, 1, { type: 'html', value: html });
-        });
+    return (tree: MarkdownRoot) => {
+        visit(
+            tree,
+            'inlineCode',
+            (node: InlineCodeNode, index: number | undefined, parent: ParentNode | undefined) => {
+                if (index === undefined || !parent) return;
+                const html = `<inline-code>${escapeHtml(node.value)}</inline-code>`;
+                const htmlNode: HtmlNode = { type: 'html', value: html };
+                parent.children.splice(index, 1, htmlNode);
+            }
+        );
     };
 };
 

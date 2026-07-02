@@ -44,6 +44,34 @@
             hour12: false
         }).format(date);
     }
+
+    function toJsonLdScript(data: unknown): string {
+        const json = JSON.stringify(data).replace(/</g, '\\u003c');
+        return `<script type="application/ld+json">${json}<` + `/script>`;
+    }
+
+    const articleJsonLdScript = $derived(
+        toJsonLdScript({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: data.post.title,
+            description: data.post.description ?? undefined,
+            datePublished: data.post.date,
+            dateModified: data.post.updatedAt,
+            keywords: data.post.tags.join(', '),
+            author: data.author ? { '@type': 'Person', name: data.author.username } : undefined,
+            publisher: {
+                '@type': 'Organization',
+                name: $page.data.siteConfig?.name,
+                url: $page.data.siteConfig?.url
+            },
+            mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': $page.url.href
+            },
+            url: $page.url.href
+        })
+    );
 </script>
 
 <svelte:head>
@@ -58,32 +86,14 @@
     <meta property="og:url" content={$page.url.href} />
     <meta property="article:published_time" content={data.post.date} />
     <meta property="article:modified_time" content={data.post.updatedAt} />
-    {#each data.post.tags as tag}
+    {#each data.post.tags as tag (tag)}
         <meta property="article:tag" content={tag} />
     {/each}
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="{data.post.title} | {$page.data.siteConfig?.name}" />
     <link rel="canonical" href={$page.url.href} />
-    {@html `<script type="application/ld+json">${JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: data.post.title,
-        description: data.post.description ?? undefined,
-        datePublished: data.post.date,
-        dateModified: data.post.updatedAt,
-        keywords: data.post.tags.join(', '),
-        author: data.author ? { '@type': 'Person', name: data.author.username } : undefined,
-        publisher: {
-            '@type': 'Organization',
-            name: $page.data.siteConfig?.name,
-            url: $page.data.siteConfig?.url
-        },
-        mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': $page.url.href
-        },
-        url: $page.url.href
-    })}</script>`}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html articleJsonLdScript}
 </svelte:head>
 
 <article class="animate-in duration-500 fade-in slide-in-from-bottom-4">
@@ -133,7 +143,7 @@
             <div
                 class="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-                {#each data.post.tags as tag}
+                {#each data.post.tags as tag (tag)}
                     <Badge variant="secondary" class="rounded-md px-2 py-0.5 text-xs font-normal"
                         >{tag}</Badge
                     >
@@ -145,12 +155,18 @@
 
     {#if data.post.thumbnailUrl}
         <Collapsible.Root class="pt-2" open={true}>
-            <Collapsible.Trigger class="flex w-full items-center gap-2 rounded-md px-1 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+            <Collapsible.Trigger
+                class="flex w-full items-center gap-2 rounded-md px-1 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            >
                 <ImageIcon class="size-4" />
                 <span>썸네일 보기</span>
-                <ChevronDown class="ml-auto size-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+                <ChevronDown
+                    class="ml-auto size-4 transition-transform duration-200 data-[state=open]:rotate-180"
+                />
             </Collapsible.Trigger>
-            <Collapsible.Content class="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+            <Collapsible.Content
+                class="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+            >
                 <div class="py-2">
                     <img
                         src={data.post.thumbnailUrl}

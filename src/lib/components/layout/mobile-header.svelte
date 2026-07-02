@@ -2,13 +2,19 @@
     import * as TreeView from '$lib/components/ui/tree-view';
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
+    import { resolve } from '$app/paths';
     import FileIcon from '@lucide/svelte/icons/file';
 
     let { open = $bindable(false) } = $props<{ open: boolean }>();
 
-    function navigate(href: string) {
+    function navigateToCategory(id: number) {
         open = false;
-        goto(href);
+        goto(resolve(`/?category=${id}` as '/'));
+    }
+
+    function navigateToPost(id: number) {
+        open = false;
+        goto(resolve('/(app)/blog/[id]', { id: String(id) }));
     }
 
     type PostPreview = { id: number; title: string };
@@ -81,7 +87,7 @@
             name={item.name}
             open={true}
             class="w-full text-left"
-            onclick={() => navigate(`/?category=${item.id}`)}
+            onclick={() => navigateToCategory(item.id)}
         >
             <div class="pl-5">
                 {#if item.children?.length}
@@ -89,13 +95,13 @@
                 {/if}
 
                 {#each item.postsPreview ?? [] as p (p.id)}
-                    {#snippet postIcon({ name: _name }: { name: string })}
+                    {#snippet postIcon()}
                         <FileIcon class="size-4" />
                     {/snippet}
                     <TreeView.File
                         name={p.title}
                         icon={postIcon}
-                        onclick={() => navigate(`/blog/${p.id}`)}
+                        onclick={() => navigateToPost(p.id)}
                         class={$page.url.pathname === `/blog/${p.id}`
                             ? 'bg-accent text-accent-foreground'
                             : ''}
@@ -113,13 +119,13 @@
                 {/if}
 
                 {#each loadedPostsByCategoryId[item.id]?.items ?? [] as p (p.id)}
-                    {#snippet postIcon2({ name: _name }: { name: string })}
+                    {#snippet postIcon2()}
                         <FileIcon class="size-4" />
                     {/snippet}
                     <TreeView.File
                         name={p.title}
                         icon={postIcon2}
-                        onclick={() => navigate(`/blog/${p.id}`)}
+                        onclick={() => navigateToPost(p.id)}
                         class={$page.url.pathname === `/blog/${p.id}`
                             ? 'bg-accent text-accent-foreground'
                             : ''}

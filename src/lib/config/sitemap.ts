@@ -4,12 +4,13 @@ import UserRoundPen from '@lucide/svelte/icons/user-round-pen';
 import FolderTree from '@lucide/svelte/icons/folder-tree';
 import List from '@lucide/svelte/icons/list';
 import MessageSquareMore from '@lucide/svelte/icons/message-square-more';
+import type { Component } from 'svelte';
 
 export type SitemapItem = {
     name: string;
     type: 'file' | 'folder';
     open?: boolean;
-    icon?: any;
+    icon?: Component;
     href?: string;
     children?: SitemapItem[];
 };
@@ -21,4 +22,4 @@ export const adminSitemap = [
     { name: 'Categories', icon: FolderTree, href: '/admin/categories' },
     { name: 'Comments', icon: MessageSquareMore, href: '/admin/comments' },
     { name: 'User', icon: UserRoundPen, href: '/admin/user' }
-];
+] as const;

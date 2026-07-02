@@ -7,9 +7,9 @@
     import Menu from '@lucide/svelte/icons/menu';
     import { ThemeSelector } from '$lib/components/ui/theme-selector';
     import { page } from '$app/stores';
-    import { sidebarOpen } from '$lib/components/layout/sidebar.svelte';
     import SearchBar from './search-bar.svelte';
     import { browser } from '$app/environment';
+    import { resolve } from '$app/paths';
 
     let { onMenuClick } = $props<{ onMenuClick?: () => void }>();
 
@@ -44,7 +44,7 @@
             </Button>
 
             <div class="flex items-center gap-2">
-                <a href="/" class="mr-2 flex items-center space-x-2">
+                <a href={resolve('/')} class="mr-2 flex items-center space-x-2">
                     <span class="inline-block text-lg font-bold">Blog</span>
                 </a>
             </div>
@@ -52,7 +52,7 @@
 
         <nav class="hidden items-center gap-4 text-sm font-medium md:flex">
             <a
-                href="/about"
+                href={resolve('/about')}
                 class="transition-colors hover:text-foreground/80 {$page.url.pathname === '/about'
                     ? 'text-foreground'
                     : 'text-foreground/60'}">About</a

@@ -64,7 +64,7 @@
     }
 
     $effect(() => {
-        const _f = filter;
+        void filter;
         untrack(() => {
             loadPosts(true);
         });
@@ -140,7 +140,12 @@
                 </button>
             {/if}
         </div>
-        <Button variant="secondary" onclick={() => loadPosts(true)} disabled={loading} class="w-full sm:w-auto">
+        <Button
+            variant="secondary"
+            onclick={() => loadPosts(true)}
+            disabled={loading}
+            class="w-full sm:w-auto"
+        >
             Search
         </Button>
     </div>
@@ -149,7 +154,7 @@
     <div
         class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm"
     >
-        {#each posts as post}
+        {#each posts as post (post.id)}
             <div
                 class="group flex flex-col gap-2 px-4 py-4 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
             >
@@ -167,7 +172,9 @@
                         {/if}
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3">
+                    <div
+                        class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3"
+                    >
                         <time class="font-mono">
                             {new Date(post.createdAt).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
@@ -178,7 +185,7 @@
                         {#if post.tags.length > 0}
                             <span class="hidden h-3 w-px bg-border sm:block"></span>
                             <div class="flex flex-wrap gap-1 sm:gap-2">
-                                {#each post.tags as tag}
+                                {#each post.tags as tag (tag)}
                                     <button
                                         class="hover:text-primary hover:underline"
                                         onclick={() => {

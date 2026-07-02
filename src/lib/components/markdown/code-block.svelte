@@ -15,6 +15,13 @@
     let copied = $state(false);
     let cleanCode = $derived(code.endsWith('\n') ? code.slice(0, -1) : code);
     let lines = $derived(cleanCode.split('\n'));
+    let lineNumbers = $derived(Array.from({ length: lines.length }, (_, i) => i + 1));
+    let skeletonLines = $derived(
+        lines.map((line, i) => ({
+            id: i,
+            width: Math.max(20, Math.min(line.length * 0.6, 80))
+        }))
+    );
 
     // Shiki 싱글톤 초기화
     $effect(() => {
@@ -130,23 +137,21 @@
             <div
                 class="min-w-12 flex-none border-r border-border pr-2 pl-2 text-right text-muted-foreground/50 select-none"
             >
-                {#each lines as _, i}
-                    <div class="leading-6">{i + 1}</div>
+                {#each lineNumbers as lineNumber (lineNumber)}
+                    <div class="leading-6">{lineNumber}</div>
                 {/each}
             </div>
 
             <!-- Code -->
             <div class="code-content min-w-0 flex-1 pr-10 pl-2">
                 {#if highlightedCode}
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                     {@html highlightedCode}
                 {:else}
                     <div class="space-y-1">
-                        {#each lines as line, i}
+                        {#each skeletonLines as line (line.id)}
                             <div class="flex items-center gap-2">
-                                <Skeleton
-                                    class="h-4"
-                                    style="width: {Math.max(20, Math.min(line.length * 0.6, 80))}%"
-                                />
+                                <Skeleton class="h-4" style="width: {line.width}%" />
                             </div>
                         {/each}
                     </div>

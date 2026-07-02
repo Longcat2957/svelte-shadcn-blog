@@ -362,7 +362,8 @@ export class WriteState {
             const data = await res.json();
             return data.content ?? '';
         } catch (e: unknown) {
-            this.errorMessage = e instanceof Error ? e.message : '프롬프트 생성 중 오류가 발생했습니다.';
+            this.errorMessage =
+                e instanceof Error ? e.message : '프롬프트 생성 중 오류가 발생했습니다.';
             return null;
         } finally {
             this.isGeneratingImagePrompt = false;
@@ -429,11 +430,15 @@ export class WriteState {
                 throw new Error(err || 'Upload failed');
             }
             const data = await res.json();
-            this.insertImageMarkdown({ url: data.url, alt: file.name, size: '100', align: 'center' });
+            this.insertImageMarkdown({
+                url: data.url,
+                alt: file.name,
+                size: '100',
+                align: 'center'
+            });
             this.content = this.content.replace(placeholder, '');
         } catch (err: unknown) {
-            this.errorMessage =
-                err instanceof Error ? err.message : 'Image upload failed';
+            this.errorMessage = err instanceof Error ? err.message : 'Image upload failed';
             this.content = this.content.replace(placeholder, `[Upload Failed: ${file.name}]`);
         }
     }
@@ -462,7 +467,7 @@ export class WriteState {
         try {
             // 1. 프롬프트 생성
             this.thumbnailAssistantStage = 'generating';
-            
+
             const promptRes = await fetch('/api/ai/llm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -538,7 +543,8 @@ export class WriteState {
             this.thumbnailPreviewUrl = cfData.url;
             this.thumbnailAssistantStage = 'done';
         } catch (e: unknown) {
-            this.errorMessage = e instanceof Error ? e.message : '썸네일 생성 중 오류가 발생했습니다.';
+            this.errorMessage =
+                e instanceof Error ? e.message : '썸네일 생성 중 오류가 발생했습니다.';
             this.thumbnailAssistantStage = 'config';
         } finally {
             this.isGeneratingThumbnail = false;

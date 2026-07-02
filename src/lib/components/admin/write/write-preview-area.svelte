@@ -26,7 +26,7 @@
                     </p>
                 {/if}
                 <div class="flex flex-wrap gap-2 py-2">
-                    {#each state.tags as tag}
+                    {#each state.tags as tag (tag)}
                         <Badge variant="outline">{tag}</Badge>
                     {/each}
                 </div>

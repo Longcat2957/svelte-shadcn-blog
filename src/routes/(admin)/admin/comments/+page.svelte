@@ -85,7 +85,7 @@
     });
 
     $effect(() => {
-        const _f = filter;
+        void filter;
         untrack(() => {
             loadComments(true);
         });
@@ -139,7 +139,7 @@
 
     <!-- Stats -->
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-        {#each statItems as stat, i}
+        {#each statItems as stat, i (stat.label)}
             {@const Icon = stat.icon}
             {#if i > 0}<span class="text-border">•</span>{/if}
             <div class="flex items-center gap-1.5">
@@ -168,7 +168,7 @@
     <div
         class="flex flex-col divide-y divide-border/40 rounded-xl border bg-card/30 backdrop-blur-sm"
     >
-        {#each comments as comment}
+        {#each comments as comment (comment.id)}
             <div
                 class="group flex flex-col gap-3 px-4 py-4 transition-colors first:rounded-t-xl last:rounded-b-xl hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5"
             >
@@ -198,7 +198,9 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3">
+                    <div
+                        class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:gap-3"
+                    >
                         <time class="font-mono">
                             {formatDate(comment.createdAt)}
                         </time>

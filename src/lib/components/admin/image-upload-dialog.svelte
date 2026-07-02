@@ -74,8 +74,8 @@
 
             const data = await res.json();
             uploadedUrl = data.url;
-        } catch (err: any) {
-            errorMessage = err.message || 'Upload failed';
+        } catch (err: unknown) {
+            errorMessage = err instanceof Error ? err.message : 'Upload failed';
         } finally {
             uploading = false;
         }

@@ -24,15 +24,15 @@
 
     // 메이저 모델 제공사 프리픽스 (OpenRouter 형식)
     const MAJOR_PROVIDERS = [
-        'openai/',      // OpenAI (GPT 시리즈)
-        'anthropic/',   // Anthropic (Claude 시리즈)
-        'google/',      // Google (Gemini 시리즈)
+        'openai/', // OpenAI (GPT 시리즈)
+        'anthropic/', // Anthropic (Claude 시리즈)
+        'google/' // Google (Gemini 시리즈)
     ] as const;
 
     // 메이저 제공사 모델만 필터링
     function filterMajorModels(models: ModelInfo[]): ModelInfo[] {
-        return models.filter(model => 
-            MAJOR_PROVIDERS.some(prefix => model.id.startsWith(prefix))
+        return models.filter((model) =>
+            MAJOR_PROVIDERS.some((prefix) => model.id.startsWith(prefix))
         );
     }
 
@@ -59,7 +59,12 @@
         insertMode?: 'replace' | 'append';
         result?: string | null;
         history?: GenerationHistory[];
-        onInsert?: (text: string, mode: 'replace' | 'append', selectionStart: number, selectionEnd: number) => void;
+        onInsert?: (
+            text: string,
+            mode: 'replace' | 'append',
+            selectionStart: number,
+            selectionEnd: number
+        ) => void;
         onClose?: () => void;
         onStageChange?: (stage: Stage) => void;
         onModelChange?: (model: string) => void;
@@ -70,9 +75,9 @@
         onHistoryChange?: (history: GenerationHistory[]) => void;
     }
 
-    let { 
-        selectedText = '', 
-        selectionStart = 0, 
+    let {
+        selectedText = '',
+        selectionStart = 0,
         selectionEnd = 0,
         stage: propStage = 'config',
         model: propModel = 'default',
@@ -81,8 +86,8 @@
         insertMode: propInsertMode = 'append',
         result: propResult = null,
         history: propHistory = [],
-        onInsert, 
-        onClose, 
+        onInsert,
+        onClose,
         onStageChange,
         onModelChange,
         onSystemPromptChange,
@@ -167,7 +172,7 @@
             selectedText,
             result
         };
-        
+
         history = [entry, ...history].slice(0, MAX_HISTORY);
         onHistoryChange?.(history);
     }
@@ -186,13 +191,13 @@
         const now = new Date();
         const diff = now.getTime() - date.getTime();
         const minutes = Math.floor(diff / 60000);
-        
+
         if (minutes < 1) return '방금 전';
         if (minutes < 60) return `${minutes}분 전`;
-        
+
         const hours = Math.floor(minutes / 60);
         if (hours < 24) return `${hours}시간 전`;
-        
+
         return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
     }
 
@@ -208,7 +213,7 @@
         } else if (userPrompt.trim()) {
             finalUserPrompt = userPrompt.trim();
         }
-        
+
         if (!finalUserPrompt) return;
 
         isGenerating = true;
@@ -235,13 +240,13 @@
 
             const data = await res.json();
             const result = data.content ?? '';
-            
+
             // 결과 업데이트
             updateResult(result);
-            
+
             // 히스토리에 추가
             addToHistory(result);
-            
+
             updateStage('done');
         } catch (e: unknown) {
             if (e instanceof Error && e.name === 'AbortError') {
@@ -284,7 +289,7 @@
     }
 </script>
 
-<div class="w-80 max-h-[80vh] space-y-4 overflow-y-auto p-4">
+<div class="max-h-[80vh] w-80 space-y-4 overflow-y-auto p-4">
     <!-- 헤더 -->
     <div class="flex items-center gap-2 border-b pb-3">
         <Sparkles class="size-5 text-primary" />
@@ -305,7 +310,9 @@
     {#if stage === 'config' || stage === 'done'}
         <!-- 모델 선택 -->
         <div class="space-y-2">
-            <label for="model-select" class="text-sm font-medium text-foreground/80">모델 선택</label>
+            <label for="model-select" class="text-sm font-medium text-foreground/80"
+                >모델 선택</label
+            >
             {#if isLoadingModels}
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
                     <Spinner class="size-4" />
@@ -323,7 +330,12 @@
                                 variant="outline"
                                 class="w-full justify-between"
                             >
-                                <span>{selectedModel === 'default' ? '기본값' : models.find(m => m.id === selectedModel)?.name ?? '모델 선택'}</span>
+                                <span
+                                    >{selectedModel === 'default'
+                                        ? '기본값'
+                                        : (models.find((m) => m.id === selectedModel)?.name ??
+                                          '모델 선택')}</span
+                                >
                                 <ChevronDown class="size-4 opacity-50" />
                             </Button>
                         {/snippet}
@@ -337,7 +349,7 @@
                             <span class="text-xs text-muted-foreground">서버 기본 모델 사용</span>
                         </DropdownMenu.Item>
                         <DropdownMenu.Separator />
-                        {#each models as model}
+                        {#each models as model (model.id)}
                             <DropdownMenu.Item
                                 onclick={() => updateModel(model.id)}
                                 class="flex flex-col items-start"
@@ -397,14 +409,18 @@
             <label for="user-prompt" class="text-sm font-medium text-foreground/80">
                 {#if hasSelectedText}
                     추가 지시사항
-                    <span class="text-xs text-muted-foreground">(선택된 텍스트에 대한 추가 요청)</span>
+                    <span class="text-xs text-muted-foreground"
+                        >(선택된 텍스트에 대한 추가 요청)</span
+                    >
                 {:else}
                     유저 프롬프트
                 {/if}
             </label>
             <Textarea
                 id="user-prompt"
-                placeholder={hasSelectedText ? "선택된 텍스트를 어떻게 수정할지 입력하세요..." : "요청 내용을 입력하세요..."}
+                placeholder={hasSelectedText
+                    ? '선택된 텍스트를 어떻게 수정할지 입력하세요...'
+                    : '요청 내용을 입력하세요...'}
                 value={userPrompt}
                 onchange={(e) => updateUserPrompt(e.currentTarget.value)}
                 rows={4}
@@ -420,7 +436,7 @@
                     최근 생성
                 </div>
                 <div class="max-h-32 space-y-1 overflow-y-auto">
-                    {#each history as entry}
+                    {#each history as entry (entry.id)}
                         <button
                             type="button"
                             class="w-full rounded-md border bg-muted/30 p-2 text-left text-xs transition-colors hover:bg-muted/50"
@@ -428,9 +444,14 @@
                         >
                             <div class="flex items-center justify-between">
                                 <span class="truncate font-medium">
-                                    {entry.model === 'default' ? '기본값' : models.find(m => m.id === entry.model)?.name ?? '알 수 없음'}
+                                    {entry.model === 'default'
+                                        ? '기본값'
+                                        : (models.find((m) => m.id === entry.model)?.name ??
+                                          '알 수 없음')}
                                 </span>
-                                <span class="text-muted-foreground">{formatTime(entry.timestamp)}</span>
+                                <span class="text-muted-foreground"
+                                    >{formatTime(entry.timestamp)}</span
+                                >
                             </div>
                             <p class="mt-1 truncate text-muted-foreground">
                                 {(entry.result ?? '').slice(0, 50)}...
@@ -446,7 +467,7 @@
             <div class="space-y-2">
                 <span class="text-sm font-medium text-foreground/80">생성 결과</span>
                 <div class="max-h-60 overflow-y-auto rounded-md border bg-muted/30 p-3">
-                    <p class="whitespace-pre-wrap text-sm">{generatedResult}</p>
+                    <p class="text-sm whitespace-pre-wrap">{generatedResult}</p>
                 </div>
             </div>
         {/if}
@@ -467,7 +488,10 @@
                 <Button
                     size="sm"
                     onclick={handleGenerate}
-                    disabled={isGenerating || isLoadingModels || models.length === 0 || (!hasSelectedText && !userPrompt.trim())}
+                    disabled={isGenerating ||
+                        isLoadingModels ||
+                        models.length === 0 ||
+                        (!hasSelectedText && !userPrompt.trim())}
                 >
                     {#if isGenerating}
                         <Spinner class="mr-1 size-4" />
@@ -479,7 +503,6 @@
                 </Button>
             {/if}
         </div>
-
     {:else if stage === 'generating'}
         <!-- 생성 중 상태 -->
         <div class="flex flex-col items-center gap-3 py-6">
@@ -491,9 +514,7 @@
         </div>
 
         <div class="flex justify-end border-t pt-3">
-            <Button variant="outline" size="sm" onclick={handleCancelGeneration}>
-                취소
-            </Button>
+            <Button variant="outline" size="sm" onclick={handleCancelGeneration}>취소</Button>
         </div>
     {/if}
 </div>

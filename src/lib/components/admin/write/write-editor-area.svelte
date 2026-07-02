@@ -11,8 +11,10 @@
     import ImageUploadDialog from '$lib/components/admin/image-upload-dialog.svelte';
     import type { WriteState } from './write-state.svelte';
 
-    let { state, minHeightClass = 'min-h-[600px]' }: { state: WriteState; minHeightClass?: string } =
-        $props();
+    let {
+        state,
+        minHeightClass = 'min-h-[600px]'
+    }: { state: WriteState; minHeightClass?: string } = $props();
 </script>
 
 <div class="flex h-full flex-col space-y-2">
@@ -23,7 +25,12 @@
 
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {#if state.canUndo}
-                <Button variant="outline" size="sm" onclick={() => state.undoHistory()} class="text-xs sm:text-sm">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onclick={() => state.undoHistory()}
+                    class="text-xs sm:text-sm"
+                >
                     <Undo class="mr-1 size-3 sm:mr-2 sm:size-4" />
                     <span class="hidden sm:inline">실행 취소</span>
                     <span class="sm:hidden">취소</span>
@@ -88,9 +95,9 @@
             <Popover.Root bind:open={state.isImagePopoverOpen}>
                 <Popover.Trigger>
                     {#snippet child({ props })}
-                        <Button 
-                            {...props} 
-                            variant="outline" 
+                        <Button
+                            {...props}
+                            variant="outline"
                             size="sm"
                             onclick={() => state.openImageAssistant()}
                             class="text-xs sm:text-sm"
@@ -140,7 +147,12 @@
             </Popover.Root>
 
             <!-- 이미지 업로드 -->
-            <Button variant="outline" size="sm" onclick={() => state.openImageUploadDialog()} class="text-xs sm:text-sm">
+            <Button
+                variant="outline"
+                size="sm"
+                onclick={() => state.openImageUploadDialog()}
+                class="text-xs sm:text-sm"
+            >
                 <Image class="mr-1 size-3 sm:size-4" />
                 <span class="hidden sm:inline">이미지 업로드</span>
                 <span class="sm:hidden">업로드</span>

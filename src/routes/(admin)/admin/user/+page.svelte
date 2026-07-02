@@ -38,7 +38,7 @@
             } else {
                 errorMessage = await readErrorMessage(res);
             }
-        } catch (e) {
+        } catch {
             errorMessage = 'Failed to load user data';
         } finally {
             loading = false;
@@ -88,7 +88,7 @@
             } else {
                 errorMessage = await readErrorMessage(res);
             }
-        } catch (e) {
+        } catch {
             errorMessage = 'Failed to save changes';
         } finally {
             saving = false;
@@ -119,8 +119,8 @@
             const data = await res.json();
             avatarUrl = data.url;
             successMessage = "Image uploaded successfully. Don't forget to save changes.";
-        } catch (err: any) {
-            errorMessage = err.message || 'Image upload failed';
+        } catch (err: unknown) {
+            errorMessage = err instanceof Error ? err.message : 'Image upload failed';
         } finally {
             uploading = false;
             if (fileInput) fileInput.value = '';

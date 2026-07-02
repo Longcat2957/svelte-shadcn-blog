@@ -4,16 +4,12 @@ import { db } from '$lib/server/db';
 import { category } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { assertSameOrigin, readJson, requireAdmin } from '../../_utils';
-
-type Body = {
-    id: number;
-    parentId: number | null;
-    beforeId?: number | null;
-};
-
-function isFiniteNumber(v: unknown): v is number {
-    return typeof v === 'number' && Number.isFinite(v);
-}
+import {
+    categoryMoveSchema,
+    hasAncestorCycle,
+    isSelfParent,
+    sameCategoryParent
+} from '$lib/server/admin-category-input';
 
 export const PATCH: RequestHandler = async (event) => {
     const auth = requireAdmin(event);
@@ -21,15 +17,21 @@ export const PATCH: RequestHandler = async (event) => {
     const origin = assertSameOrigin(event);
     if (origin) return origin;
 
-    const body = await readJson<Body>(event);
+    const body = await readJson(event);
     if (body instanceof Response) return body;
 
-    if (!isFiniteNumber(body.id)) return json({ message: 'id is required' }, { status: 400 });
-    const id = body.id;
-    const parentId = body.parentId ?? null;
-    const beforeId = body.beforeId ?? null;
+    const parsed = categoryMoveSchema.safeParse(body);
+    if (!parsed.success) {
+        return json(
+            { message: parsed.error.issues[0]?.message ?? 'Invalid move body.' },
+            { status: 400 }
+        );
+    }
 
-    if (parentId === id) return json({ message: 'parentId cannot be self' }, { status: 400 });
+    const { id, parentId, beforeId } = parsed.data;
+
+    if (isSelfParent(id, parentId))
+        return json({ message: 'parentId cannot be self' }, { status: 400 });
 
     const moving = await db.query.category.findFirst({ where: eq(category.id, id) });
     if (!moving) return json({ message: 'category not found' }, { status: 404 });
@@ -43,21 +45,14 @@ export const PATCH: RequestHandler = async (event) => {
             .select({ id: category.id, parentId: category.parent_id })
             .from(category);
         const parentById = new Map<number, number | null>(rows.map((r) => [r.id, r.parentId]));
-        let cur: number | null = parentId;
-        while (cur !== null) {
-            if (cur === id)
-                return json({ message: 'cannot move into descendant' }, { status: 400 });
-            cur = parentById.get(cur) ?? null;
-        }
+        if (hasAncestorCycle({ id, parentId, parentById }))
+            return json({ message: 'cannot move into descendant' }, { status: 400 });
     }
 
     if (beforeId !== null) {
         const target = await db.query.category.findFirst({ where: eq(category.id, beforeId) });
         if (!target) return json({ message: 'beforeId category not found' }, { status: 404 });
-        const sameParent =
-            (target.parent_id === null && parentId === null) ||
-            (target.parent_id !== null && target.parent_id === parentId);
-        if (!sameParent)
+        if (!sameCategoryParent(target.parent_id, parentId))
             return json(
                 { message: 'beforeId must be within the destination parent' },
                 { status: 400 }

@@ -6,7 +6,8 @@ import {
     integer,
     timestamp,
     index,
-    unique
+    unique,
+    type AnyPgColumn
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -27,7 +28,9 @@ export const category = pgTable(
         name: text('name').notNull(),
         // 같은 parent_id 그룹 내에서 정렬 순서를 제어한다.
         sort_order: integer('sort_order').default(0).notNull(),
-        parent_id: integer('parent_id').references((): any => category.id, { onDelete: 'cascade' }),
+        parent_id: integer('parent_id').references((): AnyPgColumn => category.id, {
+            onDelete: 'cascade'
+        }),
         created_at: timestamp('created_at').defaultNow().notNull()
     },
     (table) => {
@@ -133,7 +136,9 @@ export const comment = pgTable('comment', {
     post_id: integer('post_id')
         .references(() => post.id, { onDelete: 'cascade' })
         .notNull(),
-    parent_id: integer('parent_id').references((): any => comment.id, { onDelete: 'cascade' }),
+    parent_id: integer('parent_id').references((): AnyPgColumn => comment.id, {
+        onDelete: 'cascade'
+    }),
     author_name: text('author_name').notNull(),
     password: text('password'),
     is_secret: boolean('is_secret').default(false).notNull(),
